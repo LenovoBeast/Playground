@@ -1,6 +1,7 @@
 // 3D Breakout — paddle + ball shatter crystalline bricks in 3D space
 import * as THREE from 'three'
 import { createBreakoutState, hitsBrick, hitsPaddle, movePaddle, BREAKOUT_BOUNDS } from './gameLogic.js'
+import { playBeep } from './sound.js'
 
 export function createBreakout(canvas, scoreEl, statusEl) {
   const scene = new THREE.Scene()
@@ -83,7 +84,7 @@ export function createBreakout(canvas, scoreEl, statusEl) {
         b.alive = false
         scene.remove(b.mesh)
         ballVel.y *= -1
-        score += 10
+        score += 10; playBeep();
         scoreEl.textContent = `SCORE: ${score}`
         if (bricks.every(brick => !brick.alive)) {
           alive = false

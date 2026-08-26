@@ -1,5 +1,6 @@
 // Sky Sling — an original aim-and-launch physics game
 import { adjustLaunchAim, createLaunchState, launchProjectile, stepLaunch } from './gameLogic.js'
+import { playBeep } from './sound.js'
 
 export function createLaunch(canvas, scoreEl, statusEl) {
   const context = canvas.getContext('2d')
@@ -43,7 +44,8 @@ export function createLaunch(canvas, scoreEl, statusEl) {
 
   function launch() {
     if (state.projectile || !state.alive || state.won) return
-    state = launchProjectile(state)
+    state = launchProjectile(state);
+        playBeep();
     statusEl.textContent = 'Watch the arc · drag to aim the next shot'
     scoreEl.textContent = `SCORE: ${state.score} · SHOTS: ${state.shots}`
   }
