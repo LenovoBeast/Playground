@@ -62,8 +62,9 @@ Deployment is configured in [`.github/workflows/deploy.yml`](.github/workflows/d
 For the first deployment, open the repository settings:
 
 1. Go to **Settings > Pages**.
-2. Set **Source** to **GitHub Actions**.
-3. Push changes to `main`, or manually run **Deploy to GitHub Pages** from the **Actions** tab.
+2. Set **Source** to **GitHub Actions** and save it.
+3. Open the **Actions** tab and select **Deploy to GitHub Pages**.
+4. Choose **Run workflow**, select `main`, and run it. Future pushes to `main` deploy automatically.
 
 The generated site uses the `/Playground/` base path configured in [`vite.config.js`](vite.config.js).
 
