@@ -1,5 +1,6 @@
 // 3D Breakout — paddle + ball shatter crystalline bricks in 3D space
 import * as THREE from 'three'
+import { createBreakoutState, hitsBrick, hitsPaddle, movePaddle, BREAKOUT_BOUNDS } from './gameLogic.js'
 
 export function createBreakout(canvas, scoreEl) {
   const scene = new THREE.Scene()
@@ -31,7 +32,7 @@ export function createBreakout(canvas, scoreEl) {
   let bricks = []
   let ballVel = new THREE.Vector3()
   let score = 0, frame, ro, alive = true, mouseX = 0
-  const bounds = { left: -W / 2, right: W / 2, top: H / 2 - 2, bottom: -H / 2 + 1 }
+  const bounds = BREAKOUT_BOUNDS
 
   function buildBricks() {
     bricks.forEach(b => scene.remove(b.mesh))
@@ -51,12 +52,13 @@ export function createBreakout(canvas, scoreEl) {
   }
 
   function reset() {
-    score = 0
+    const state = createBreakoutState()
+    score = state.score
     scoreEl.textContent = `SCORE: ${score}`
-    paddle.position.x = 0
-    ball.position.set(0, -H / 2 + 1, 0)
-    ballVel.set((Math.random() - 0.5) * 3, 5, 0)
-    alive = true
+    paddle.position.x = state.paddleX
+    ball.position.set(state.ball.x, state.ball.y, 0)
+    ballVel.set(state.ballVelocity.x, state.ballVelocity.y, state.ballVelocity.z)
+    alive = state.alive
     buildBricks()
   }
 
@@ -67,23 +69,19 @@ export function createBreakout(canvas, scoreEl) {
       if (ball.position.x > bounds.right - 0.2) { ball.position.x = bounds.right - 0.2; ballVel.x *= -1 }
       if (ball.position.y > bounds.top + 0.2) { ball.position.y = bounds.top + 0.2; ballVel.y *= -1 }
       if (ball.position.y < -H / 2 - 0.5) alive = false
-      if (Math.abs(ball.position.y - paddle.position.y) < 0.3 &&
-          Math.abs(ball.position.x - paddle.position.x) < 0.95 &&
-          ballVel.y < 0) {
+      if (hitsPaddle(ball.position, paddle.position, ballVel)) {
         ballVel.y *= -1
         ballVel.x += (ball.position.x - paddle.position.x) * 1.5
         ballVel.clampLength(2, 9)
       }
       for (const b of bricks) {
-        if (!b.alive) continue
-        if (Math.abs(ball.position.x - b.x) < 0.6 && Math.abs(ball.position.y - b.y) < 0.22) {
-          b.alive = false
-          scene.remove(b.mesh)
-          ballVel.y *= -1
-          score += 10
-          scoreEl.textContent = `SCORE: ${score}`
-          break
-        }
+        if (!hitsBrick(ball.position, b)) continue
+        b.alive = false
+        scene.remove(b.mesh)
+        ballVel.y *= -1
+        score += 10
+        scoreEl.textContent = `SCORE: ${score}`
+        break
       }
     }
     // Track paddle with mouse
@@ -98,8 +96,9 @@ export function createBreakout(canvas, scoreEl) {
     mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1
   }
   function onKey(e) {
-    if (e.key === 'ArrowLeft' || e.key === 'a') paddle.position.x = Math.max(bounds.left, paddle.position.x - 0.5)
-    if (e.key === 'ArrowRight' || e.key === 'd') paddle.position.x = Math.min(bounds.right, paddle.position.x + 0.5)
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'ArrowRight' || e.key === 'd') {
+      paddle.position.x = movePaddle(paddle.position.x, e.key, bounds)
+    }
     if (e.key === ' ' && !alive) reset()
   }
 

@@ -1,5 +1,6 @@
 // Micro Racer — toy car on a 3D track loop
 import * as THREE from 'three'
+import { createRacerState, resetRacerState } from './gameLogic.js'
 
 export function createRacer(canvas, scoreEl) {
   const scene = new THREE.Scene()
@@ -55,7 +56,8 @@ export function createRacer(canvas, scoreEl) {
   car.add(cabin)
   scene.add(car)
 
-  let t = 0, speed = 0, targetSpeed = 0, lap = 0, prevPos = null, frame, ro, running = true
+  let { t, speed, lap, prevPos, running } = createRacerState()
+  let targetSpeed = 0, frame, ro
   const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false }
 
   function update(dt) {
@@ -95,7 +97,7 @@ export function createRacer(canvas, scoreEl) {
     }
   }
   function start() {
-    t = 0; lap = 0; prevPos = null; speed = 0
+    ({ t, speed, lap, prevPos, running } = resetRacerState())
     ro = new ResizeObserver(resize); ro.observe(canvas)
     resize()
     window.addEventListener('keydown', onKey)

@@ -78,8 +78,11 @@
       display: flex; align-items: center; justify-content: center; z-index: 100;
       opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
     }
+    .game-overlay h2 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .game-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--muted); font: 12px 'JetBrains Mono', monospace; pointer-events: none; }
+    .game-overlay[aria-busy="true"] .game-canvas { opacity: 0.15; }
     .game-overlay.active { opacity: 1; pointer-events: auto; }
-    .game-canvas { width: 90vw; max-width: 800px; height: 70vh; max-height: 600px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 20px 60px var(--glow); }
+    .game-canvas { width: 90vw; max-width: 800px; height: 70vh; max-height: 600px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 20px 60px var(--glow); touch-action: none; }
     .close-btn { position: absolute; top: 24px; right: 24px; width: 44px; height: 44px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: var(--fg); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .close-btn:hover { background: var(--accent); border-color: var(--accent); color: var(--bg); }
     .score-board { position: absolute; top: 24px; left: 24px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--accent); }
@@ -118,17 +121,23 @@
     <div class="hint" aria-hidden="true">drag to orbit · scroll to zoom · click a card to play</div>
   </div>
   <div class="game-overlay" id="snakeOverlay" role="dialog" aria-modal="true" aria-labelledby="snakeTitle">
-    <canvas class="game-canvas" id="snakeCanvas"></canvas>
+    <h2 id="snakeTitle">Serpent Monitor</h2>
+    <div class="game-loading" aria-live="polite"></div>
+    <canvas class="game-canvas" id="snakeCanvas" aria-label="Snake game"></canvas>
     <button class="close-btn" aria-label="Close Snake game">×</button>
     <div class="score-board" id="snakeScore">SCORE: 0</div>
   </div>
   <div class="game-overlay" id="breakoutOverlay" role="dialog" aria-modal="true" aria-labelledby="breakoutTitle">
-    <canvas class="game-canvas" id="breakoutCanvas"></canvas>
+    <h2 id="breakoutTitle">Void Breakout</h2>
+    <div class="game-loading" aria-live="polite"></div>
+    <canvas class="game-canvas" id="breakoutCanvas" aria-label="Breakout game"></canvas>
     <button class="close-btn" aria-label="Close Breakout game">×</button>
     <div class="score-board" id="breakoutScore">SCORE: 0</div>
   </div>
   <div class="game-overlay" id="racerOverlay" role="dialog" aria-modal="true" aria-labelledby="racerTitle">
-    <canvas class="game-canvas" id="racerCanvas"></canvas>
+    <h2 id="racerTitle">Micro Racer</h2>
+    <div class="game-loading" aria-live="polite"></div>
+    <canvas class="game-canvas" id="racerCanvas" aria-label="Racing game"></canvas>
     <button class="close-btn" aria-label="Close Racer game">×</button>
     <div class="score-board" id="racerScore">LAP: 0 / 3</div>
   </div>

@@ -1,8 +1,5 @@
 import * as THREE from 'three'
 import { setupScene, buildWorld, clickObjects } from './world.js'
-import { createSnake } from './games/snake.js'
-import { createBreakout } from './games/breakout.js'
-import { createRacer } from './games/racer.js'
 
 const { scene, camera, renderer, controls, update, dispose } = setupScene(document.getElementById('canvas'))
 const world = buildWorld(scene)
@@ -22,31 +19,72 @@ const worldTick = (t) => {
 }
 requestAnimationFrame(worldTick)
 
-// Game launchers — wire each overlay to its module
-const games = {
-  snake: createSnake(document.getElementById('snakeCanvas'), document.getElementById('snakeScore')),
-  breakout: createBreakout(document.getElementById('breakoutCanvas'), document.getElementById('breakoutScore')),
-  racer: createRacer(document.getElementById('racerCanvas'), document.getElementById('racerScore'))
+// Load each game only when it is first opened. Vite emits one lazy chunk per module.
+const gameLoaders = {
+  snake: () => import('./games/snake.js').then(({ createSnake }) => createSnake(
+    document.getElementById('snakeCanvas'),
+    document.getElementById('snakeScore')
+  )),
+  breakout: () => import('./games/breakout.js').then(({ createBreakout }) => createBreakout(
+    document.getElementById('breakoutCanvas'),
+    document.getElementById('breakoutScore')
+  )),
+  racer: () => import('./games/racer.js').then(({ createRacer }) => createRacer(
+    document.getElementById('racerCanvas'),
+    document.getElementById('racerScore')
+  ))
+}
+const games = new Map()
+const gameLoads = new Map()
+
+function loadGame(name) {
+  if (games.has(name)) return Promise.resolve(games.get(name))
+  if (!gameLoads.has(name)) {
+    gameLoads.set(name, gameLoaders[name]().then(game => {
+      games.set(name, game)
+      return game
+    }))
+  }
+  return gameLoads.get(name)
 }
 
 document.querySelectorAll('.game-card').forEach(card => {
   const name = card.dataset.game
   const overlay = document.getElementById(`${name}Overlay`)
-  const open = () => {
+  const loading = overlay.querySelector('.game-loading')
+  let openRequest = 0
+  const open = async () => {
+    if (overlay.classList.contains('active')) return
+    const request = ++openRequest
     worldRunning = false
     overlay.classList.add('active')
-    games[name].start()
+    overlay.setAttribute('aria-busy', 'true')
+    loading.textContent = 'Loading game…'
+    try {
+      const game = await loadGame(name)
+      if (request !== openRequest || !overlay.classList.contains('active')) return
+      loading.textContent = ''
+      overlay.removeAttribute('aria-busy')
+      game.start()
+    } catch (error) {
+      console.error(`Unable to load ${name}`, error)
+      if (request === openRequest) loading.textContent = 'Unable to load game. Please try again.'
+    }
   }
   const close = () => {
+    openRequest++
     overlay.classList.remove('active')
-    games[name].stop()
+    overlay.removeAttribute('aria-busy')
+    games.get(name)?.stop()
     worldRunning = true
     requestAnimationFrame(worldTick)
   }
+  const onKey = e => { if (e.key === 'Escape' && overlay.classList.contains('active')) close() }
   card.addEventListener('click', open)
   card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open() } })
   overlay.querySelector('.close-btn').addEventListener('click', close)
   overlay.addEventListener('click', e => { if (e.target === overlay) close() })
+  document.addEventListener('keydown', onKey)
 })
 
 // Click 3D objects in the world to launch their matching game

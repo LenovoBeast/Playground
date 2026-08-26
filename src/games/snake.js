@@ -1,5 +1,6 @@
 // Snake — rendered as 3D orbs on a holographic grid
 import * as THREE from 'three'
+import { advanceSnake, createSnakeState, directionForKey, SNAKE_GRID } from './gameLogic.js'
 
 export function createSnake(canvas, scoreEl) {
   const scene = new THREE.Scene()
@@ -11,7 +12,7 @@ export function createSnake(canvas, scoreEl) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   renderer.outputColorSpace = THREE.SRGBColorSpace
 
-  const GRID = 16
+  const GRID = SNAKE_GRID
   let snake, dir, nextDir, food, score, alive, frame, lastStep, basePositions = [], stepMs = 140
 
   const grid = new THREE.GridHelper(GRID, GRID, 0xc47fff, 0x2a1f3a)
@@ -35,12 +36,13 @@ export function createSnake(canvas, scoreEl) {
   scene.add(glow)
 
   function reset() {
-    snake = [{ x: 8, y: 8 }, { x: 7, y: 8 }, { x: 6, y: 8 }]
-    dir = { x: 1, y: 0 }
-    nextDir = dir
-    score = 0
-    alive = true
-    stepMs = 140
+    const state = createSnakeState()
+    snake = state.snake
+    dir = state.direction
+    nextDir = state.nextDirection
+    score = state.score
+    alive = state.alive
+    stepMs = state.stepMs
     placeFood()
     scoreEl.textContent = `SCORE: ${score}`
     // Clear existing meshes
@@ -61,20 +63,17 @@ export function createSnake(canvas, scoreEl) {
 
   function step() {
     dir = nextDir
-    const head = snake[0]
-    const nh = { x: head.x + dir.x, y: head.y + dir.y }
-    if (nh.x < 0 || nh.x >= GRID || nh.y < 0 || nh.y >= GRID || snake.some(s => s.x === nh.x && s.y === nh.y)) {
+    const result = advanceSnake({ snake, direction: dir, food, grid: GRID })
+    snake = result.snake
+    if (!result.alive) {
       alive = false
       return
     }
-    snake.unshift(nh)
-    if (nh.x === food.x && nh.y === food.y) {
+    if (result.ateFood) {
       score += 10
       scoreEl.textContent = `SCORE: ${score}`
       placeFood()
       stepMs = Math.max(60, stepMs - 4)
-    } else {
-      snake.pop()
     }
   }
 
@@ -134,11 +133,7 @@ export function createSnake(canvas, scoreEl) {
   }
 
   function onKey(e) {
-    const k = e.key
-    if ((k === 'ArrowUp' || k === 'w') && dir.y === 0) nextDir = { x: 0, y: -1 }
-    else if ((k === 'ArrowDown' || k === 's') && dir.y === 0) nextDir = { x: 0, y: 1 }
-    else if ((k === 'ArrowLeft' || k === 'a') && dir.x === 0) nextDir = { x: -1, y: 0 }
-    else if ((k === 'ArrowRight' || k === 'd') && dir.x === 0) nextDir = { x: 1, y: 0 }
+    nextDir = directionForKey(e.key, dir)
   }
 
   return { start, stop }
