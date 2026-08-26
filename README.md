@@ -71,7 +71,7 @@ npx playwright install chromium
 npm run capture:preview
 ```
 
-The capture script writes frames to `.preview-frames/`; the GitHub Actions workflow encodes them into `dist/preview.gif` and `dist/preview.mp4` during deployment.
+The capture script writes frames to `.preview-frames/`; the encoder creates `dist/preview.gif` and `dist/preview.mp4`. GitHub Actions runs both automatically during deployment.
 
 ## Deployment
 

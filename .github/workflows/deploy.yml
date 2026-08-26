@@ -50,9 +50,7 @@ jobs:
         run: npm run capture:preview
 
       - name: Encode preview GIF and MP4
-        run: |
-          ffmpeg -y -framerate 12 -i .preview-frames/frame-%03d.png -vf 'fps=12,scale=960:-1:flags=lanczos' dist/preview.gif
-          ffmpeg -y -framerate 12 -i .preview-frames/frame-%03d.png -c:v libx264 -pix_fmt yuv420p -movflags +faststart dist/preview.mp4
+        run: bash scripts/encode-preview.sh
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
