@@ -8,10 +8,12 @@
     "build": "vite build",
     "test": "node --test",
     "preview": "vite preview",
+    "capture:preview": "node scripts/capture-preview.mjs",
     "deploy": "npm run build && gh-pages -d dist"
   },
   "devDependencies": {
     "gh-pages": "^6.1.1",
+    "playwright": "^1.62.1",
     "vite": "^6.4.3"
   },
   "dependencies": {

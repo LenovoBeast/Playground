@@ -1,3 +1,4 @@
 node_modules/
 dist/
+.preview-frames/
 .DS_Store

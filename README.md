@@ -8,6 +8,10 @@ An interactive Three.js dreamscape workspace with three playable mini-games.
 
 **Visit the live site:** [https://lenovobeast.github.io/Playground/](https://lenovobeast.github.io/Playground/)
 
+![Live workspace and Snake preview](https://lenovobeast.github.io/Playground/preview.gif)
+
+[Download the MP4 preview](https://lenovobeast.github.io/Playground/preview.mp4) or open the live site above to play. The preview is generated automatically from the production site on every deployment and shows the workspace followed by the Snake game.
+
 The site is deployed automatically to GitHub Pages whenever changes are pushed to `main`. Individual games are lazy-loaded, so each game downloads only when it is opened.
 
 ## Included Games
@@ -55,6 +59,15 @@ Create and preview a production build locally:
 npm run build
 npm run preview
 ```
+
+To capture local preview frames, install the Playwright browser once and run:
+
+```bash
+npx playwright install chromium
+npm run capture:preview
+```
+
+The capture script writes frames to `.preview-frames/`; the GitHub Actions workflow encodes them into `dist/preview.gif` and `dist/preview.mp4` during deployment.
 
 ## Deployment
 
