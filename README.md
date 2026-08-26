@@ -60,6 +60,8 @@ npm run preview
 
 Deployment is configured in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) using GitHub Actions and the official GitHub Pages artifact flow.
 
+> **Maintenance note:** The workflow currently pins Node.js 20. Node.js 20 is deprecated/EOL, so the workflow should be updated to the latest supported Node.js LTS during the next runtime maintenance pass. Keep the version explicitly pinned instead of using a floating `latest` tag.
+
 For the first deployment, open the repository settings:
 
 1. Go to **Settings > Pages**.

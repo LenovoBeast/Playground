@@ -24,6 +24,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
+          # TODO: Move to the latest supported Node.js LTS; Node.js 20 is deprecated/EOL.
           node-version: 20
 
       - name: Install dependencies
