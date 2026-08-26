@@ -2,7 +2,7 @@
 import * as THREE from 'three'
 import { advanceSnake, createSnakeState, directionForKey, SNAKE_GRID } from './gameLogic.js'
 
-export function createSnake(canvas, scoreEl) {
+export function createSnake(canvas, scoreEl, statusEl) {
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(0x0a080c)
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100)
@@ -14,6 +14,7 @@ export function createSnake(canvas, scoreEl) {
 
   const GRID = SNAKE_GRID
   let snake, dir, nextDir, food, score, alive, frame, lastStep, basePositions = [], stepMs = 140
+  let foodPulseUntil = 0
 
   const grid = new THREE.GridHelper(GRID, GRID, 0xc47fff, 0x2a1f3a)
   grid.position.y = -0.01
@@ -45,6 +46,7 @@ export function createSnake(canvas, scoreEl) {
     stepMs = state.stepMs
     placeFood()
     scoreEl.textContent = `SCORE: ${score}`
+    statusEl.textContent = 'Use arrows or WASD · collect the pink orb'
     // Clear existing meshes
     trail.forEach(t => scene.remove(t.mesh))
     trail.length = 0
@@ -67,11 +69,14 @@ export function createSnake(canvas, scoreEl) {
     snake = result.snake
     if (!result.alive) {
       alive = false
+      statusEl.textContent = 'GAME OVER · press Space to restart'
       return
     }
     if (result.ateFood) {
       score += 10
       scoreEl.textContent = `SCORE: ${score}`
+      statusEl.textContent = '+10 orb collected · keep going!'
+      foodPulseUntil = performance.now() + 500
       placeFood()
       stepMs = Math.max(60, stepMs - 4)
     }
@@ -99,6 +104,7 @@ export function createSnake(canvas, scoreEl) {
     foodMesh.position.set(food.x - GRID / 2 + 0.5, 0.3 + Math.sin(performance.now() * 0.005) * 0.1, food.y - GRID / 2 + 0.5)
     foodMesh.rotation.y += 0.03
     glow.position.copy(foodMesh.position)
+    foodMesh.scale.setScalar(performance.now() < foodPulseUntil ? 1.35 : 1)
     if (!alive) foodMesh.material.color.setHex(0xff3333)
     else foodMesh.material.color.setHex(0xff6bcf)
 
@@ -133,6 +139,12 @@ export function createSnake(canvas, scoreEl) {
   }
 
   function onKey(e) {
+    if (e.key === ' ' && !alive) {
+      e.preventDefault()
+      reset()
+      lastStep = performance.now()
+      return
+    }
     nextDir = directionForKey(e.key, dir)
   }
 

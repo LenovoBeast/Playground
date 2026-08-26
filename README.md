@@ -23,7 +23,8 @@ The site is deployed automatically to GitHub Pages whenever changes are pushed t
 - Click a game card or its 3D artifact to launch a game.
 - Use arrow keys or `WASD` for game controls.
 - Press `Escape` or click the close button to exit a game.
-- In Breakout, press `Space` after losing to restart.
+- Snake and Breakout show a game-over message; press `Space` to restart.
+- Snake flashes the food and confirms each successful collection in the status line.
 
 ## Local Development
 

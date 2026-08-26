@@ -23,15 +23,18 @@ requestAnimationFrame(worldTick)
 const gameLoaders = {
   snake: () => import('./games/snake.js').then(({ createSnake }) => createSnake(
     document.getElementById('snakeCanvas'),
-    document.getElementById('snakeScore')
+    document.getElementById('snakeScore'),
+    document.getElementById('snakeStatus')
   )),
   breakout: () => import('./games/breakout.js').then(({ createBreakout }) => createBreakout(
     document.getElementById('breakoutCanvas'),
-    document.getElementById('breakoutScore')
+    document.getElementById('breakoutScore'),
+    document.getElementById('breakoutStatus')
   )),
   racer: () => import('./games/racer.js').then(({ createRacer }) => createRacer(
     document.getElementById('racerCanvas'),
-    document.getElementById('racerScore')
+    document.getElementById('racerScore'),
+    document.getElementById('racerStatus')
   ))
 }
 const games = new Map()

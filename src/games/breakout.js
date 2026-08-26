@@ -2,7 +2,7 @@
 import * as THREE from 'three'
 import { createBreakoutState, hitsBrick, hitsPaddle, movePaddle, BREAKOUT_BOUNDS } from './gameLogic.js'
 
-export function createBreakout(canvas, scoreEl) {
+export function createBreakout(canvas, scoreEl, statusEl) {
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(0x0a080c)
   const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100)
@@ -31,7 +31,7 @@ export function createBreakout(canvas, scoreEl) {
 
   let bricks = []
   let ballVel = new THREE.Vector3()
-  let score = 0, frame, ro, alive = true, mouseX = 0
+  let score = 0, frame, ro, alive = true, mouseX = 0, mouseActive = false
   const bounds = BREAKOUT_BOUNDS
 
   function buildBricks() {
@@ -59,6 +59,7 @@ export function createBreakout(canvas, scoreEl) {
     ball.position.set(state.ball.x, state.ball.y, 0)
     ballVel.set(state.ballVelocity.x, state.ballVelocity.y, state.ballVelocity.z)
     alive = state.alive
+    statusEl.textContent = 'Move the paddle with mouse or arrows · clear the bricks'
     buildBricks()
   }
 
@@ -68,7 +69,10 @@ export function createBreakout(canvas, scoreEl) {
       if (ball.position.x < bounds.left + 0.2) { ball.position.x = bounds.left + 0.2; ballVel.x *= -1 }
       if (ball.position.x > bounds.right - 0.2) { ball.position.x = bounds.right - 0.2; ballVel.x *= -1 }
       if (ball.position.y > bounds.top + 0.2) { ball.position.y = bounds.top + 0.2; ballVel.y *= -1 }
-      if (ball.position.y < -H / 2 - 0.5) alive = false
+      if (ball.position.y < -H / 2 - 0.5) {
+        alive = false
+        statusEl.textContent = 'GAME OVER · press Space to restart'
+      }
       if (hitsPaddle(ball.position, paddle.position, ballVel)) {
         ballVel.y *= -1
         ballVel.x += (ball.position.x - paddle.position.x) * 1.5
@@ -81,11 +85,17 @@ export function createBreakout(canvas, scoreEl) {
         ballVel.y *= -1
         score += 10
         scoreEl.textContent = `SCORE: ${score}`
+        if (bricks.every(brick => !brick.alive)) {
+          alive = false
+          statusEl.textContent = 'YOU WIN · press Space to play again'
+        }
         break
       }
     }
-    // Track paddle with mouse
-    paddle.position.x = THREE.MathUtils.clamp(mouseX * (W / 2), bounds.left + 0.95, bounds.right - 0.95)
+    // Keep keyboard control from being overwritten until the pointer moves again.
+    if (mouseActive) {
+      paddle.position.x = THREE.MathUtils.clamp(mouseX * (W / 2), bounds.left + 0.95, bounds.right - 0.95)
+    }
     point.position.copy(ball.position)
     renderer.render(scene, camera)
     frame = requestAnimationFrame(loop)
@@ -94,12 +104,18 @@ export function createBreakout(canvas, scoreEl) {
   function onMove(e) {
     const rect = canvas.getBoundingClientRect()
     mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1
+    mouseActive = true
   }
   function onKey(e) {
     if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'ArrowRight' || e.key === 'd') {
+      mouseActive = false
       paddle.position.x = movePaddle(paddle.position.x, e.key, bounds)
+      e.preventDefault()
     }
-    if (e.key === ' ' && !alive) reset()
+    if (e.key === ' ' && !alive) {
+      e.preventDefault()
+      reset()
+    }
   }
 
   function resize() {

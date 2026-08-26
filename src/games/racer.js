@@ -2,7 +2,7 @@
 import * as THREE from 'three'
 import { createRacerState, resetRacerState } from './gameLogic.js'
 
-export function createRacer(canvas, scoreEl) {
+export function createRacer(canvas, scoreEl, statusEl) {
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(0x0a080c)
   const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 200)
@@ -58,10 +58,10 @@ export function createRacer(canvas, scoreEl) {
 
   let { t, speed, lap, prevPos, running } = createRacerState()
   let targetSpeed = 0, frame, ro
-  const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false }
+  const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, s: false }
 
   function update(dt) {
-    targetSpeed = keys.ArrowUp ? 0.3 : keys.ArrowDown ? -0.15 : 0
+    targetSpeed = keys.ArrowUp || keys.w ? 0.3 : keys.ArrowDown || keys.s ? -0.15 : 0
     speed += (targetSpeed - speed) * 0.05
     t = (t + speed * dt + 1) % 1
     const pos = curve.getPointAt(t)
@@ -98,6 +98,8 @@ export function createRacer(canvas, scoreEl) {
   }
   function start() {
     ({ t, speed, lap, prevPos, running } = resetRacerState())
+    Object.keys(keys).forEach(key => { keys[key] = false })
+    statusEl.textContent = 'Hold Up or W to drive · Down or S to reverse'
     ro = new ResizeObserver(resize); ro.observe(canvas)
     resize()
     window.addEventListener('keydown', onKey)
