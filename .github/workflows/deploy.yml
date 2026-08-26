@@ -19,13 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          # TODO: Move to the latest supported Node.js LTS; Node.js 20 is deprecated/EOL.
-          node-version: 20
+          node-version: 24
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -34,7 +34,11 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Install FFmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v3
+        run: |
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
 
       - name: Build
         run: npm run build
@@ -47,11 +51,8 @@ jobs:
 
       - name: Encode preview GIF and MP4
         run: |
-          ffmpeg -y -framerate 12 -i .preview-frames/frame-%03d.png \\
-            -vf "fps=12,scale=960:-1:flags=lanczos,split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse=dither=sierra2_4a" \\
-            dist/preview.gif
-          ffmpeg -y -framerate 12 -i .preview-frames/frame-%03d.png \\
-            -c:v libx264 -pix_fmt yuv420p -movflags +faststart dist/preview.mp4
+          ffmpeg -y -framerate 12 -i .preview-frames/frame-%03d.png -vf 'fps=12,scale=960:-1:flags=lanczos' dist/preview.gif
+          ffmpeg -y -framerate 12 -i .preview-frames/frame-%03d.png -c:v libx264 -pix_fmt yuv420p -movflags +faststart dist/preview.mp4
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
