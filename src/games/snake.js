@@ -1,6 +1,6 @@
 // Snake — rendered as 3D orbs on a holographic grid
 import * as THREE from 'three'
-import { advanceSnake, createSnakeState, directionForKey, SNAKE_GRID } from './gameLogic.js'
+import { advanceSnake, createSnakeState, directionForKey, spawnSnakeFood, SNAKE_GRID } from './gameLogic.js'
 
 export function createSnake(canvas, scoreEl, statusEl) {
   const scene = new THREE.Scene()
@@ -53,13 +53,10 @@ export function createSnake(canvas, scoreEl, statusEl) {
   }
 
   function placeFood() {
-    while (true) {
-      const x = Math.floor(Math.random() * GRID)
-      const y = Math.floor(Math.random() * GRID)
-      if (!snake.some(s => s.x === x && s.y === y)) {
-        food = { x, y }
-        break
-      }
+    food = spawnSnakeFood(snake, GRID)
+    if (!food) {
+      alive = false
+      statusEl.textContent = 'YOU WIN · every cell collected · press Space to restart'
     }
   }
 
@@ -101,12 +98,14 @@ export function createSnake(canvas, scoreEl, statusEl) {
         trail.push({ mesh: m })
       })
     }
-    foodMesh.position.set(food.x - GRID / 2 + 0.5, 0.3 + Math.sin(performance.now() * 0.005) * 0.1, food.y - GRID / 2 + 0.5)
-    foodMesh.rotation.y += 0.03
-    glow.position.copy(foodMesh.position)
-    foodMesh.scale.setScalar(performance.now() < foodPulseUntil ? 1.35 : 1)
-    if (!alive) foodMesh.material.color.setHex(0xff3333)
-    else foodMesh.material.color.setHex(0xff6bcf)
+    foodMesh.visible = Boolean(food)
+    if (food) {
+      foodMesh.position.set(food.x - GRID / 2 + 0.5, 0.3 + Math.sin(performance.now() * 0.005) * 0.1, food.y - GRID / 2 + 0.5)
+      foodMesh.rotation.y += 0.03
+      glow.position.copy(foodMesh.position)
+      foodMesh.scale.setScalar(performance.now() < foodPulseUntil ? 1.35 : 1)
+      foodMesh.material.color.setHex(alive ? 0xff6bcf : 0xff3333)
+    }
 
     renderer.render(scene, camera)
     frame = requestAnimationFrame(render)

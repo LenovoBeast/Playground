@@ -53,6 +53,8 @@
     .game-card:nth-child(1) { animation-delay: 0.1s; }
     .game-card:nth-child(2) { animation-delay: 0.2s; }
     .game-card:nth-child(3) { animation-delay: 0.3s; }
+    .game-card:nth-child(4) { animation-delay: 0.4s; }
+    .game-card:nth-child(5) { animation-delay: 0.5s; }
     @keyframes rise { to { opacity: 1; transform: translateY(0); } }
     .game-card:hover, .game-card:focus-visible {
       transform: translateY(-4px) scale(1.02);
@@ -118,6 +120,16 @@
         <div class="game-title">Micro Racer</div>
         <div class="game-desc">Toy car physics — drift the impossible desk loop</div>
       </article>
+      <article class="game-card" role="listitem" tabindex="0" data-game="match3" aria-label="Play Candy Cascade match three">
+        <span class="game-icon" aria-hidden="true">🍬</span>
+        <div class="game-title">Candy Cascade</div>
+        <div class="game-desc">Match three glowing candies before moves run out</div>
+      </article>
+      <article class="game-card" role="listitem" tabindex="0" data-game="launch" aria-label="Play Sky Sling aim and launch">
+        <span class="game-icon" aria-hidden="true">🚀</span>
+        <div class="game-title">Sky Sling</div>
+        <div class="game-desc">Aim the arc, launch the orb, topple the targets</div>
+      </article>
     </div>
     <div class="hint" aria-hidden="true">drag to orbit · scroll to zoom · click a card to play</div>
   </div>
@@ -144,6 +156,22 @@
     <canvas class="game-canvas" id="racerCanvas" aria-label="Racing game"></canvas>
     <button class="close-btn" aria-label="Close Racer game">×</button>
     <div class="score-board" id="racerScore">LAP: 0 / 3</div>
+  </div>
+  <div class="game-overlay" id="match3Overlay" role="dialog" aria-modal="true" aria-labelledby="match3Title">
+    <h2 id="match3Title">Candy Cascade</h2>
+    <div class="game-loading" aria-live="polite"></div>
+    <div class="game-status" id="match3Status" aria-live="polite"></div>
+    <canvas class="game-canvas" id="match3Canvas" aria-label="Match three candy game"></canvas>
+    <button class="close-btn" aria-label="Close Candy Cascade game">×</button>
+    <div class="score-board" id="match3Score">SCORE: 0 · MOVES: 30</div>
+  </div>
+  <div class="game-overlay" id="launchOverlay" role="dialog" aria-modal="true" aria-labelledby="launchTitle">
+    <h2 id="launchTitle">Sky Sling</h2>
+    <div class="game-loading" aria-live="polite"></div>
+    <div class="game-status" id="launchStatus" aria-live="polite"></div>
+    <canvas class="game-canvas" id="launchCanvas" aria-label="Aim and launch physics game"></canvas>
+    <button class="close-btn" aria-label="Close Sky Sling game">×</button>
+    <div class="score-board" id="launchScore">SCORE: 0 · SHOTS: 0</div>
   </div>
   <script type="module" src="/src/main.js"></script>
 </body>

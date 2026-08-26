@@ -35,6 +35,16 @@ const gameLoaders = {
     document.getElementById('racerCanvas'),
     document.getElementById('racerScore'),
     document.getElementById('racerStatus')
+  )),
+  match3: () => import('./games/match3.js').then(({ createMatch3 }) => createMatch3(
+    document.getElementById('match3Canvas'),
+    document.getElementById('match3Score'),
+    document.getElementById('match3Status')
+  )),
+  launch: () => import('./games/launch.js').then(({ createLaunch }) => createLaunch(
+    document.getElementById('launchCanvas'),
+    document.getElementById('launchScore'),
+    document.getElementById('launchStatus')
   ))
 }
 const games = new Map()

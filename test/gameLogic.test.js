@@ -11,7 +11,15 @@ import {
   hitsBrick,
   hitsPaddle,
   movePaddle,
-  resetRacerState
+  resetRacerState,
+  spawnSnakeFood,
+  createMatch3Board,
+  findMatch3Cells,
+  playMatch3Turn,
+  adjustLaunchAim,
+  createLaunchState,
+  launchProjectile,
+  stepLaunch
 } from '../src/games/gameLogic.js'
 
 test('game restart returns each game to its initial state', () => {
@@ -94,6 +102,56 @@ test('Snake advances, grows, and scores when it reaches food', () => {
     { x: 3, y: 4 },
     { x: 2, y: 4 }
   ])
+})
+
+test('Snake always respawns an orb on an unoccupied cell', () => {
+  const snake = []
+  for (let y = 0; y < 16; y++) {
+    for (let x = 0; x < 16; x++) {
+      if (!(x === 15 && y === 15)) snake.push({ x, y })
+    }
+  }
+  assert.deepEqual(spawnSnakeFood(snake, 16, () => 0), { x: 15, y: 15 })
+  assert.equal(spawnSnakeFood(Array.from({ length: 256 }, (_, index) => ({ x: index % 16, y: Math.floor(index / 16) }))), null)
+})
+
+test('match-three board starts clean and a matching swap scores', () => {
+  const board = createMatch3Board(8, () => 0.25)
+  assert.deepEqual(findMatch3Cells(board), [])
+
+  const turn = playMatch3Turn({
+    board: [
+      [2, 1, 3],
+      [4, 1, 5],
+      [1, 0, 2]
+    ],
+    score: 0,
+    moves: 30,
+    selected: null,
+    alive: true,
+    won: false
+  }, { row: 2, col: 1 }, { row: 2, col: 0 }, () => 0.5)
+  assert.equal(turn.score >= 30, true)
+  assert.equal(turn.moves, 29)
+  assert.equal(turn.selected, null)
+})
+
+test('launch game clamps aim, launches, and detects target collisions', () => {
+  const aimed = adjustLaunchAim(createLaunchState(), 10, -10)
+  assert.equal(aimed.angle, 1.25)
+  assert.equal(aimed.power, 0.35)
+  const launched = launchProjectile(createLaunchState())
+  assert.equal(launched.shots, 1)
+  assert.notEqual(launched.projectile, null)
+
+  const hit = stepLaunch({
+    ...createLaunchState(),
+    projectile: { x: 8.2, y: 4.55, vx: 0, vy: 0, radius: 0.28 },
+    targets: [{ x: 8.2, y: 4.55, radius: 0.42, alive: true }]
+  }, 0)
+  assert.equal(hit.score, 100)
+  assert.equal(hit.won, true)
+  assert.equal(hit.targets[0].alive, false)
 })
 
 test('Breakout collision behavior detects paddle and live brick hits', () => {

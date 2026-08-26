@@ -2,7 +2,7 @@
 
 [![Deploy to GitHub Pages](https://github.com/LenovoBeast/Playground/actions/workflows/deploy.yml/badge.svg)](https://github.com/LenovoBeast/Playground/actions/workflows/deploy.yml)
 
-An interactive Three.js dreamscape workspace with three playable mini-games.
+An interactive Three.js dreamscape workspace with five playable mini-games.
 
 ## Live Website
 
@@ -19,6 +19,8 @@ The site is deployed automatically to GitHub Pages whenever changes are pushed t
 - **Serpent Monitor** — classic Snake with keyboard controls, food, growth, and collision detection.
 - **Void Breakout** — paddle-and-ball Breakout with keyboard and mouse controls.
 - **Micro Racer** — a toy car racing around a 3D loop track.
+- **Candy Cascade** — an original match-three puzzle with combos and limited moves.
+- **Sky Sling** — an original aim-and-launch physics game with destructible targets.
 
 ## Controls
 
@@ -28,7 +30,9 @@ The site is deployed automatically to GitHub Pages whenever changes are pushed t
 - Use arrow keys or `WASD` for game controls.
 - Press `Escape` or click the close button to exit a game.
 - Snake and Breakout show a game-over message; press `Space` to restart.
-- Snake flashes the food and confirms each successful collection in the status line.
+- Snake flashes each new orb and confirms every successful collection in the status line.
+- Candy Cascade uses click/tap or arrow keys plus Enter to swap neighboring candies.
+- Sky Sling uses drag or arrow keys to aim, then Space/click to launch; press `R` to reset.
 
 ## Local Development
 
@@ -73,7 +77,7 @@ The capture script writes frames to `.preview-frames/`; the GitHub Actions workf
 
 Deployment is configured in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) using GitHub Actions and the official GitHub Pages artifact flow.
 
-> **Maintenance note:** The workflow currently pins Node.js 20. Node.js 20 is deprecated/EOL, so the workflow should be updated to the latest supported Node.js LTS during the next runtime maintenance pass. Keep the version explicitly pinned instead of using a floating `latest` tag.
+> **Maintenance note:** The deployment workflow now pins Node.js 24, the current supported LTS line, rather than using a floating `latest` tag.
 
 For the first deployment, open the repository settings:
 
