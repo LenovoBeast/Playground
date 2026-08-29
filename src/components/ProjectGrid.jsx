@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { ArrowUpRight, Github, Zap, Globe, Layers, Code2, MousePointer2, ExternalLink } from 'lucide-react';
 
 const projects = [
@@ -59,82 +60,235 @@ const projects = [
   }
 ];
 
-const ProjectCard = ({ project, index }) => {
-  return (
-    <div
-      className={`relative group overflow-hidden double-bezel p-8 transition-all duration-500 hover:border-white/20 hover:-translate-y-1 ${
-        project.size === 'large' ? 'md:col-span-2 md:row-span-2' : ''
-      } ${project.size === 'medium' ? 'md:col-span-1' : ''}`}
-      style={{
-        gridRow: project.size === 'large' ? 'span 2' : 'span 1',
-        gridColumn: project.size === 'large' ? 'span 2' : 'span 1'
-      }}
-    >
-      {/* Background Glow */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${project.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+const cardVariants = {
+  hidden: { opacity: 0, y: 50, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.7,
+      ease: [0.32, 0.72, 0, 1],
+    },
+  },
+};
 
-      <div className="relative h-full flex flex-col justify-between">
-        <div className="flex justify-between items-start">
-          <div className={`w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-            <div className={`text-purple-400`}>{project.icon}</div>
-          </div>
-          <div className="p-2 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors">
-            <ExternalLink size={20} className="text-gray-400 group-hover:text-white transition-colors" />
-          </div>
-        </div>
+const cardHoverVariants = {
+  y: -8,
+  scale: 1.01,
+  boxShadow: '0 30px 60px -15px rgba(168, 85, 247, 0.2)',
+  transition: { duration: 0.3, ease: [0.32, 0.72, 0, 1] },
+};
 
-        <div className="mt-12">
-          <p className="text-gray-500 font-mono text-xs mb-2 uppercase tracking-widest">{project.category}</p>
-          <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tight mb-4 group-hover:text-purple-400 transition-colors">
-            {project.title}
-          </h3>
-          <p className="text-gray-400 mb-6 line-clamp-3 leading-relaxed">{project.description}</p>
-          <div className="flex flex-wrap gap-2 mb-6">
-            {project.tags.map((tag) => (
-              <span key={tag} className="text-[10px] uppercase tracking-widest px-3 py-1 rounded-full border border-white/5 text-gray-400 hover:border-white/10 hover:text-gray-200 transition-colors">
-                {tag}
-              </span>
-            ))}
-          </div>
-          <div className="flex items-center gap-4 pt-4 border-t border-white/5">
-            <a href={project.link} className="flex items-center gap-2 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors">
-              Live Demo <ArrowUpRight size={16} />
-            </a>
-            <a href={project.github} className="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">
-              <Github size={16} /> Source
-            </a>
-          </div>
-        </div>
+const glowVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 0.1, transition: { duration: 0.4 } },
+};
+
+const iconVariants = {
+  initial: { scale: 1, rotate: 0 },
+  hover: { scale: 1.15, rotate: 6, transition: { duration: 0.3 } },
+};
+
+const tagVariants = {
+  initial: { scale: 1 },
+  hover: { scale: 1.05, borderColor: 'rgba(255,255,255,0.3)', transition: { duration: 0.2 } },
+};
+
+const linkVariants = {
+  hover: { x: 4, transition: { duration: 0.2 } },
+};
+
+const ProjectCard = ({ project, index }) => (
+  <motion.div
+    className={`relative overflow-hidden double-bezel p-8 ${
+      project.size === 'large' ? 'md:col-span-2 md:row-span-2' : ''
+    } ${project.size === 'medium' ? 'md:col-span-1' : ''}`}
+    style={{
+      gridRow: project.size === 'large' ? 'span 2' : 'span 1',
+      gridColumn: project.size === 'large' ? 'span 2' : 'span 1'
+    }}
+    variants={cardVariants}
+    initial="hidden"
+    whileInView="visible"
+    viewport={{ once: true, margin: '-100px' }}
+    whileHover={cardHoverVariants}
+    transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
+  >
+    {/* Background Glow */}
+    <motion.div
+      className={`absolute inset-0 bg-gradient-to-br ${project.color}`}
+      variants={glowVariants}
+      initial="hidden"
+      whileHover="visible"
+    />
+
+    <div className="relative h-full flex flex-col justify-between">
+      <div className="flex justify-between items-start">
+        <motion.div
+          className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center"
+          variants={iconVariants}
+          whileHover="hover"
+        >
+          <div className="text-purple-400">{project.icon}</div>
+        </motion.div>
+        <motion.div
+          className="p-2 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors"
+          whileHover={{ scale: 1.1 }}
+        >
+          <ExternalLink size={20} className="text-gray-400 hover:text-white transition-colors" />
+        </motion.div>
+      </div>
+
+      <div className="mt-12">
+        <motion.p
+          className="text-gray-500 font-mono text-xs mb-2 uppercase tracking-widest"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 + index * 0.05 }}
+        >
+          {project.category}
+        </motion.p>
+        <motion.h3
+          className="text-2xl md:text-3xl font-black uppercase italic tracking-tight mb-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 + index * 0.05 }}
+        >
+          {project.title}
+        </motion.h3>
+        <motion.p
+          className="text-gray-400 mb-6 line-clamp-3 leading-relaxed"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 + index * 0.05 }}
+        >
+          {project.description}
+        </motion.p>
+        <motion.div
+          className="flex flex-wrap gap-2 mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 + index * 0.05 }}
+        >
+          {project.tags.map((tag) => (
+            <motion.span
+              key={tag}
+              className="text-[10px] uppercase tracking-widest px-3 py-1 rounded-full border border-white/5 text-gray-400 hover:border-white/10 hover:text-gray-200 transition-colors"
+              variants={tagVariants}
+              whileHover="hover"
+            >
+              {tag}
+            </motion.span>
+          ))}
+        </motion.div>
+        <motion.div
+          className="flex items-center gap-4 pt-4 border-t border-white/5"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 + index * 0.05 }}
+        >
+          <motion.a
+            href={project.link}
+            className="flex items-center gap-2 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+            variants={linkVariants}
+            whileHover="hover"
+          >
+            Live Demo <ArrowUpRight size={16} />
+          </motion.a>
+          <motion.a
+            href={project.github}
+            className="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+            variants={linkVariants}
+            whileHover="hover"
+          >
+            <Github size={16} /> Source
+          </motion.a>
+        </motion.div>
       </div>
     </div>
-  );
+  </motion.div>
+);
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const headerVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: [0.32, 0.72, 0, 1] },
+  },
 };
 
 const ProjectGrid = () => {
   return (
     <section className="py-24 px-6 bg-obsidian relative">
       {/* Top accent line */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
+      <motion.div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: 1, ease: [0.32, 0.72, 0, 1], delay: 0.2 }}
+        style={{ transformOrigin: 'center' }}
+      />
 
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-16 gap-6">
+      <motion.div
+        className="max-w-7xl mx-auto relative z-10"
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-100px' }}
+      >
+        <motion.div
+          className="flex flex-col md:flex-row md:justify-between md:items-end mb-16 gap-6"
+          variants={headerVariants}
+        >
           <div>
-            <span className="text-purple-500 font-mono tracking-[0.2em] uppercase text-sm mb-4 block">Selected Works</span>
-            <p className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic">
+            <motion.span
+              className="text-purple-500 font-mono tracking-[0.2em] uppercase text-sm mb-4 block"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              Selected Works
+            </motion.span>
+            <motion.p
+              className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1], delay: 0.1 }}
+            >
               Digital <span className="gradient-text">Frontiers</span>
-            </p>
+            </motion.p>
           </div>
-          <a href="#" className="hidden md:flex items-center gap-2 text-gray-400 hover:text-white transition-colors font-medium">
-            View All Archive <ArrowUpRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
-          </a>
-        </div>
+          <motion.a
+            href="#"
+            className="hidden md:flex items-center gap-2 text-gray-400 hover:text-white transition-colors font-medium"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            whileHover={{ x: 4 }}
+          >
+            View All Archive <ArrowUpRight size={20} className="ml-2" />
+          </motion.a>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ gridAutoFlow: 'dense' }}>
           {projects.map((project, idx) => (
             <ProjectCard key={idx} project={project} index={idx} />
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 };
