@@ -31,4 +31,5 @@ dist-ssr
 # OS files
 Thumbs.db
 ehthumbs.db
-Desktop.ini
+Desktop.inipreview-frames/
+preview.webm
