@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(command -v bun)",
+      "Bash(command -v node)",
+      "Read(//home/cachy/.oh-my-zsh/themes/**)",
+      "Bash(npm install *)",
+      "Bash(npx tailwindcss *)",
+      "Bash(npm run *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}

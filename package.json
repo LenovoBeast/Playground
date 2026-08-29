@@ -1,23 +1,27 @@
 {
-  "name": "lenovobeast-profile",
-  "version": "1.0.0",
-  "homepage": "https://lenovobeast.github.io/Playground/",
+  "name": "esports-playground",
+  "private": true,
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test",
-    "preview": "vite preview",
-    "capture:preview": "node scripts/capture-preview.mjs",
-    "encode:preview": "bash scripts/encode-preview.sh",
-    "deploy": "npm run build && gh-pages -d dist"
-  },
-  "devDependencies": {
-    "gh-pages": "^6.1.1",
-    "playwright": "^1.62.1",
-    "vite": "^6.4.3"
+    "lint": "eslint . --ext",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "three": "^0.168.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.440.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.10",
+    "vite": "^5.3.1"
   }
 }
