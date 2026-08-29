@@ -1,0 +1,69 @@
+name: Live Preview (MP4 + Screenshots)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Start preview server
+        run: npx serve -s dist -l 4173 &
+        shell: bash
+
+      - name: Wait for server
+        run: sleep 3
+
+      - name: Capture video & screenshots
+        run: |
+          node scripts/capture-preview.js
+
+      - name: Upload video artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-video
+          path: preview.webm
+          retention-days: 7
+
+      - name: Upload screenshots artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-screenshots
+          path: preview-frames/*.png
+          retention-days: 7
+
+      - name: Comment PR with preview link
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## 🎮 Live Preview Generated\n\n**Video:** [Download preview.webm](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n\n**Screenshots:** Available in workflow artifacts\n\n*Auto-generated on every push to main*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
