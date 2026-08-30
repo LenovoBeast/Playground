@@ -91,3 +91,85 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.05);
   pointer-events: none;
 }
+
+/* GSAP ScrollTrigger helpers */
+.pin-spacer {
+  position: absolute !important;
+}
+
+/* Horizontal scroll container */
+.horizontal-scroll {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.horizontal-scroll > * {
+  scroll-snap-align: start;
+}
+
+/* Text reveal animation */
+.text-reveal {
+  overflow: hidden;
+}
+
+.text-reveal span {
+  display: inline-block;
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+/* Image scale reveal */
+.img-scale-reveal {
+  transform: scale(0.9);
+  opacity: 0;
+  transition: transform 1.2s cubic-bezier(0.32, 0.72, 0, 1), opacity 1.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.img-scale-reveal.revealed {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Card stack */
+.card-stack-item {
+  transform: translateY(80px);
+  opacity: 0;
+  transition: transform 0.8s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.8s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.card-stack-item.revealed {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee {
+  display: flex;
+  animation: marquee 30s linear infinite;
+}
+
+.marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 2px solid #a855f7;
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
