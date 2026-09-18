@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tweakable Design Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f9f9f9;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color, #667eea) 0%, var(--secondary-color, #764ba2) 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: background 0.3s ease;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .feature-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .feature-section h3 {
+            color: #555;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .feature-toggle {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .feature-toggle input[type="checkbox"] {
+            width: 1.2rem;
+            height: 1.2rem;
+        }
+
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-right: 0.5rem;
+            border: 1px solid #ddd;
+        }
+
+        .layout-options {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .layout-option {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .layout-option.active {
+            border-color: var(--primary-color, #667eea);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .layout-option:hover:not(.active) {
+            border-color: #ddd;
+            background: #f8f9fa;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-color, #667eea);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        .btn:hover {
+            background: var(--hover-color, #5a67d8);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .layout-options {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Layout variant classes */
+        .layout-compact .content {
+            padding: 1rem;
+        }
+
+        .layout-compact .header {
+            padding: 2rem 1.5rem;
+        }
+
+        .layout-compact .feature-section {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+        }
+
+        .layout-spacious .content {
+            padding: 3rem;
+        }
+
+        .layout-spacious .header {
+            padding: 4rem 2.5rem;
+        }
+
+        .layout-spacious .feature-section {
+            margin-bottom: 2.5rem;
+            padding: 2rem;
+        }
+
+        /* Tweaks panel */
+        .tweaks-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            border: 1px solid #eee;
+        }
+
+        .tweaks-panel.active {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .tweaks-panel h2 {
+            margin: 0;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-size: 1.25rem;
+            color: #333;
+        }
+
+        .tweaks-section {
+            padding: 1.5rem;
+        }
+
+        .tweaks-section h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: #555;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tweaks-section h3 .color-preview {
+            width: 20px;
+            height: 20px;
+        }
+
+        .color-input {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 0 10px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .text-input {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 0 10px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .layout-options-tweak {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .layout-option-tweak {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .layout-option-tweak.active {
+            border-color: var(--primary-color, #667eea);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .layout-option-tweak:hover:not(.active) {
+            border-color: #ddd;
+            background: #f8f9fa;
+        }
+
+        .feature-toggle-tweak {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0.75rem 0;
+        }
+
+        .feature-toggle-tweak input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .feature-toggle-tweak label {
+            font-size: 0.9rem;
+            color: #555;
+            cursor: pointer;
+        }
+
+        .close-tweaks {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: #999;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .close-tweaks:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .tweak-reset {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border-top: 1px solid #eee;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .tweak-reset:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 id="header-title">Creative Studio</h1>
+            <p id="header-subtitle">Innovative solutions for modern businesses</p>
+        </header>
+
+        <div class="content" id="main-content">
+            <section class="feature-section">
+                <h3><span class="color-preview" id="primary-color-preview" style="background: #667eea;"></span>Primary Color Theme</h3>
+                <p>Adjust the primary color scheme to match your brand identity</p>
+            </section>
+
+            <section class="feature-section">
+                <h3>Layout Variants</h3>
+                <div class="layout-options" id="layout-options">
+                    <div class="layout-option active" data-layout="default">Default</div>
+                    <div class="layout-option" data-layout="compact">Compact</div>
+                    <div class="layout-option" data-layout="spacious">Spacious</div>
+                </div>
+                <p>Choose how content is displayed and spaced</p>
+            </section>
+
+            <section class="feature-section">
+                <h3>Feature Flags</h3>
+                <div class="feature-toggle">
+                    <input type="checkbox" id="notifications-toggle" checked>
+                    <label for="notifications-toggle">Enable Notifications</label>
+                </div>
+                <div class="feature-toggle">
+                    <input type="checkbox" id="analytics-toggle">
+                    <label for="analytics-toggle">Analytics Tracking</label>
+                </div>
+                <div class="feature-toggle">
+                    <input type="checkbox" id="experimental-toggle">
+                    <label for="experimental-toggle">Experimental Features</label>
+                </div>
+            </section>
+
+            <section class="feature-section">
+                <h3>Call to Action</h3>
+                <p>Discover how our platform can transform your workflow and boost productivity.</p>
+                <button class="btn">Get Started Free</button>
+                <button class="btn btn-secondary">Learn More</button>
+            </section>
+        </div>
+    </div>
+
+    <!-- Tweaks Panel -->
+    <div class="tweaks-panel" id="tweaks-panel">
+        <button class="close-tweaks" id="close-tweaks">&times;</button>
+        <h2>Tweaks</h2>
+
+        <div class="tweaks-section">
+            <h3><span class="color-preview" id="tweak-primary-color-preview" style="background: #667eea;"></span>Primary Color</h3>
+            <input type="color" class="color-input" id="primary-color-picker" value="#667eea">
+        </div>
+
+        <div class="tweaks-section">
+            <h3><span class="color-preview" id="tweak-secondary-color-preview" style="background: #764ba2;"></span>Secondary Color</h3>
+            <input type="color" class="color-input" id="secondary-color-picker" value="#764ba2">
+        </div>
+
+        <div class="tweaks-section">
+            <h3>Header Text</h3>
+            <input type="text" class="text-input" id="header-title-input" value="Creative Studio">
+        </div>
+
+        <div class="tweaks-section">
+            <h3>Header Subtitle</h3>
+            <input type="text" class="text-input" id="header-subtitle-input" value="Innovative solutions for modern businesses">
+        </div>
+
+        <div class="tweaks-section">
+            <h3>Layout Variants</h3>
+            <div class="layout-options-tweak">
+                <div class="layout-option-tweak active" data-layout="default">Default</div>
+                <div class="layout-option-tweak" data-layout="compact">Compact</div>
+                <div class="layout-option-tweak" data-layout="spacious">Spacious</div>
+            </div>
+        </div>
+
+        <div class="tweaks-section">
+            <h3>Feature Flags</h3>
+            <div class="feature-toggle-tweak">
+                <input type="checkbox" id="tweak-notifications-toggle" checked>
+                <label for="tweak-notifications-toggle">Enable Notifications</label>
+            </div>
+            <div class="feature-toggle-tweak">
+                <input type="checkbox" id="tweak-analytics-toggle">
+                <label for="tweak-analytics-toggle">Analytics Tracking</label>
+            </div>
+            <div class="feature-toggle-tweak">
+                <input type="checkbox" id="tweak-experimental-toggle">
+                <label for="tweak-experimental-toggle">Experimental Features</label>
+            </div>
+        </div>
+
+        <a href="#" class="tweak-reset" id="reset-tweaks">Reset to Defaults</a>
+    </div>
+
+    <script>
+        // Tweakable Controls Implementation
+        (function() {
+            // State management
+            const state = {
+                primaryColor: '#667eea',
+                secondaryColor: '#764ba2',
+                headerTitle: 'Creative Studio',
+                headerSubtitle: 'Innovative solutions for modern businesses',
+                layout: 'default',
+                notifications: true,
+                analytics: false,
+                experimental: false
+            };
+
+            // DOM Elements
+            const tweaksPanel = document.getElementById('tweaks-panel');
+            const closeTweaksBtn = document.getElementById('close-tweaks');
+            const resetTweaksBtn = document.getElementById('reset-tweaks');
+
+            // Color pickers
+            const primaryColorPicker = document.getElementById('primary-color-picker');
+            const secondaryColorPicker = document.getElementById('secondary-color-picker');
+            const primaryColorPreview = document.getElementById('tweak-primary-color-preview');
+            const secondaryColorPreview = document.getElementById('tweak-secondary-color-preview');
+            const headerColorPreview = document.getElementById('primary-color-preview');
+
+            // Text inputs
+            const headerTitleInput = document.getElementById('header-title-input');
+            const headerSubtitleInput = document.getElementById('header-subtitle-input');
+            const headerTitleElement = document.getElementById('header-title');
+            const headerSubtitleElement = document.getElementById('header-subtitle');
+
+            // Layout options
+            const layoutOptions = document.querySelectorAll('.layout-option-tweak');
+            const mainContent = document.getElementById('main-content');
+            const layoutOptionsDisplay = document.querySelectorAll('#layout-options .layout-option');
+
+            // Feature toggles
+            const notificationsToggle = document.getElementById('tweak-notifications-toggle');
+            const analyticsToggle = document.getElementById('tweak-analytics-toggle');
+            const experimentalToggle = document.getElementById('tweak-experimental-toggle');
+
+            // Initialize state from DOM
+            function initState() {
+                state.primaryColor = primaryColorPicker.value;
+                state.secondaryColor = secondaryColorPicker.value;
+                state.headerTitle = headerTitleInput.value;
+                state.headerSubtitle = headerSubtitleInput.value;
+                state.layout = Array.from(layoutOptions).find(opt => opt.classList.contains('active'))?.dataset.layout || 'default';
+                state.notifications = notificationsToggle.checked;
+                state.analytics = analyticsToggle.checked;
+                state.experimental = experimentalToggle.checked;
+            }
+
+            // Apply state to DOM
+            function applyState() {
+                // Update CSS variables
+                document.documentElement.style.setProperty('--primary-color', state.primaryColor);
+                document.documentElement.style.setProperty('--secondary-color', state.secondaryColor);
+
+                // Calculate hover color (darker variant)
+                const hoverColor = shadeColor(state.primaryColor, -15);
+                document.documentElement.style.setProperty('--hover-color', hoverColor);
+
+                // Update color previews
+                primaryColorPreview.style.backgroundColor = state.primaryColor;
+                secondaryColorPreview.style.backgroundColor = state.secondaryColor;
+                headerColorPreview.style.backgroundColor = state.primaryColor;
+
+                // Update header text
+                headerTitleElement.textContent = state.headerTitle;
+                headerSubtitleElement.textContent = state.headerSubtitle;
+
+                // Update layout
+                mainContent.className = '';
+                if (state.layout !== 'default') {
+                    mainContent.classList.add(`layout-${state.layout}`);
+                }
+
+                // Update layout options display
+                layoutOptionsDisplay.forEach(opt => {
+                    opt.classList.toggle('active', opt.dataset.layout === state.layout);
+                });
+
+                layoutOptions.forEach(opt => {
+                    opt.classList.toggle('active', opt.dataset.layout === state.layout);
+                });
+
+                // Update feature flags (for demo purposes, we'll just log)
+                console.log('Feature flags:', {
+                    notifications: state.notifications,
+                    analytics: state.analytics,
+                    experimental: state.experimental
+                });
+            }
+
+            // Utility function to shade color
+            function shadeColor(color, percent) {
+                const num = parseInt(color.slice(1), 16),
+                      amt = Math.round(2.55 * percent),
+                      R = (num >> 16) + amt,
+                      G = (num >> 8 & 0x00FF) + amt,
+                      B = (num & 0x0000FF) + amt;
+                return "#" + (
+                    0x1000000 +
+                    (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                    (B < 255 ? B < 1 ? 0 : B : 255)
+                ).toString(16).slice(1);
+            }
+
+            // Event Listeners
+            primaryColorPicker.addEventListener('input', (e) => {
+                state.primaryColor = e.target.value;
+                applyState();
+            });
+
+            secondaryColorPicker.addEventListener('input', (e) => {
+                state.secondaryColor = e.target.value;
+                applyState();
+            });
+
+            headerTitleInput.addEventListener('input', (e) => {
+                state.headerTitle = e.target.value;
+                applyState();
+            });
+
+            headerSubtitleInput.addEventListener('input', (e) => {
+                state.headerSubtitle = e.target.value;
+                applyState();
+            });
+
+            layoutOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    layoutOptions.forEach(opt => opt.classList.remove('active'));
+                    option.classList.add('active');
+                    state.layout = option.dataset.layout;
+                    applyState();
+                });
+            });
+
+            notificationsToggle.addEventListener('change', (e) => {
+                state.notifications = e.target.checked;
+                applyState();
+            });
+
+            analyticsToggle.addEventListener('change', (e) => {
+                state.analytics = e.target.checked;
+                applyState();
+            });
+
+            experimentalToggle.addEventListener('change', (e) => {
+                state.experimental = e.target.checked;
+                applyState();
+            });
+
+            // Panel controls
+            closeTweaksBtn.addEventListener('click', () => {
+                tweaksPanel.classList.remove('active');
+                // In a real implementation, we would postMessage to parent frame here
+                console.log('Tweaks panel deactivated');
+            });
+
+            resetTweaksBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                resetToDefaults();
+            });
+
+            // Reset to defaults
+            function resetToDefaults() {
+                state.primaryColor = '#667eea';
+                state.secondaryColor = '#764ba2';
+                state.headerTitle = 'Creative Studio';
+                state.headerSubtitle = 'Innovative solutions for modern businesses';
+                state.layout = 'default';
+                state.notifications = true;
+                state.analytics = false;
+                state.experimental = false;
+
+                // Update UI controls
+                primaryColorPicker.value = state.primaryColor;
+                secondaryColorPicker.value = state.secondaryColor;
+                headerTitleInput.value = state.headerTitle;
+                headerSubtitleInput.value = state.headerSubtitle;
+
+                layoutOptions.forEach(opt => {
+                    opt.classList.toggle('active', opt.dataset.layout === state.layout);
+                });
+
+                notificationsToggle.checked = state.notifications;
+                analyticsToggle.checked = state.analytics;
+                experimentalToggle.checked = state.experimental;
+
+                applyState();
+            }
+
+            // Activation protocol - following opendesign:make-tweakable guidelines
+            function activateTweaks() {
+                // 1. Register message listener (simulated for standalone demo)
+                window.addEventListener('message', (event) => {
+                    if (event.data === 'activate') {
+                        activateTweaks();
+                    } else if (event.data === 'deactivate') {
+                        deactivateTweaks();
+                    }
+                });
+
+                // 2. Post availability message to parent frame
+                // In real implementation: window.parent.postMessage('tweaks-available', '*');
+                console.log('Tweaks availability announced to parent frame');
+
+                // Show panel
+                tweaksPanel.classList.add('active');
+
+                // Initialize state and apply
+                initState();
+                applyState();
+            }
+
+            function deactivateTweaks() {
+                tweaksPanel.classList.remove('active');
+                // In real implementation: window.parent.postMessage('tweaks-deactivated', '*');
+                console.log('Tweaks deactivation announced to parent frame');
+            }
+
+            // Auto-activate for demo (in real implementation, this would wait for parent activation)
+            activateTweaks();
+
+            // Expose for debugging
+            window.__tweakState = state;
+        })();
+    </script>
+</body>
+</html>
