@@ -1,0 +1,20 @@
+[
+  {
+    "title": "Beast-Invoice",
+    "description": "Fast, garage-staff-friendly invoice generator for High Performance Garage — single-file browser mockup with autofill, quick-pick parts & services, and live totals",
+    "url": "https://github.com/LenovoBeast/Beast-Invoice",
+    "language": "TypeScript"
+  },
+  {
+    "title": "Playground",
+    "description": "My personal playground repository for experiments and utilities.",
+    "url": "https://github.com/LenovoBeast/Playground",
+    "language": "JavaScript"
+  },
+  {
+    "title": "Lenovo-DevPort",
+    "description": "A development portfolio site showcasing my tools and projects.",
+    "url": "https://github.com/LenovoBeast/Lenovo-DevPort",
+    "language": "HTML"
+  }
+]

@@ -1,11 +1,61 @@
 <!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>My Projects Showcase</title>
-  <meta http-equiv="refresh" content="0; url=opendesign/mockups/github-portfolio/" />
-</head>
+<title>GitHub Projects Showcase</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="style.css" />
+
 <body>
-  <p>Redirecting to the showcase…</p>
+  <button id="theme-toggle" style="position:fixed;top:1rem;right:1rem;z-index:1000;">Toggle Theme</button>
+  <header class="hero">
+    <h1 class="headline">My Web Lab</h1>
+    <p class="subhead">A warm, playful, professional collection of projects & tools</p>
+    <!-- Animated illustration placeholder -->
+    <svg class="hero-illustration" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="90" fill="var(--accent)" />
+      <path d="M60 80 L100 140 L140 80" fill="none" stroke="var(--bg)" stroke-width="8" stroke-linecap="round" />
+      <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="12s" repeatCount="indefinite" />
+    </svg>
+  </header>
+
+  <main class="projects">
+    <!-- Project cards will be injected via JavaScript from projects.json -->
+    <script>
+      fetch('projects.json')
+        .then(r => r.json())
+        .then(projects => {
+          const container = document.querySelector('.projects');
+          projects.forEach((p, i) => {
+            const card = document.createElement('section');
+            card.className = 'card';
+            card.dataset.index = i;
+            card.style.setProperty('--index', i);
+            card.innerHTML = `
+              <h2 class="project-title">${p.title}</h2>
+              <p class="project-desc">${p.description}</p>
+              <a class="project-link" href="${p.url}" target="_blank">Visit →</a>
+            `;
+            container.appendChild(card);
+          });
+        })
+        .catch(err => console.error('Failed to load projects:', err));
+    </script>
+  </main>
+<script>
+// Theme toggle
+const htmlEl = document.documentElement;
+const stored = localStorage.getItem('theme');
+const setTheme = theme => {
+  htmlEl.dataset.theme = theme;
+  localStorage.setItem('theme', theme);
+};
+if (stored) {
+  setTheme(stored);
+} else {
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setTheme(prefersDark ? 'dark' : 'light');
+}
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const newTheme = htmlEl.dataset.theme === 'dark' ? 'light' : 'dark';
+  setTheme(newTheme);
+});
+</script>
 </body>
-</html>
