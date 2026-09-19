@@ -39,4 +39,23 @@
         .catch(err => console.error('Failed to load projects:', err));
     </script>
   </main>
+<script>
+// Theme toggle
+const htmlEl = document.documentElement;
+const stored = localStorage.getItem('theme');
+const setTheme = theme => {
+  htmlEl.dataset.theme = theme;
+  localStorage.setItem('theme', theme);
+};
+if (stored) {
+  setTheme(stored);
+} else {
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setTheme(prefersDark ? 'dark' : 'light');
+}
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const newTheme = htmlEl.dataset.theme === 'dark' ? 'light' : 'dark';
+  setTheme(newTheme);
+});
+</script>
 </body>
