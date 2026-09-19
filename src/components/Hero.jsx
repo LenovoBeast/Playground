@@ -199,9 +199,9 @@ const Hero = () => {
 
             {/* Stats strip with 3D cards */}
             <div className="flex flex-wrap gap-12 md:gap-16 pt-8 border-t border-white/5 animate-fade-up-delay-4">
-              <StatCard value="8+" label="Years Experience" icon="cpu" refIndex={0} />
-              <StatCard value="47" label="Projects Shipped" icon="zap" refIndex={1} />
-              <StatCard value="12k+" label="Lines of Code/Day" icon="code" refIndex={2} />
+              <StatCard value="8+" label="Years Experience" icon="cpu" cardRef={cardRefs.current[0]} />
+              <StatCard value="47" label="Projects Shipped" icon="zap" cardRef={cardRefs.current[1]} />
+              <StatCard value="12k+" label="Lines of Code/Day" icon="code" cardRef={cardRefs.current[2]} />
             </div>
           </div>
 
@@ -267,7 +267,7 @@ const StatItem = ({ value, label }) => (
   </div>
 );
 
-const StatCard = ({ value, label, icon, refIndex }) => {
+const StatCard = ({ value, label, icon, cardRef }) => {
   const iconMap = {
     cpu: <Cpu size={20} />,
     zap: <Zap size={20} />,
@@ -276,7 +276,7 @@ const StatCard = ({ value, label, icon, refIndex }) => {
   };
 
   return (
-    <div ref={(el) => { if (el) cardRefs.current[refIndex] = el; }} className="text-center">
+    <div ref={cardRef} className="text-center">
       <div className="flex items-center justify-center mb-3">
         <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
           {iconMap[icon]}
