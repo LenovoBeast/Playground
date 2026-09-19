@@ -35,7 +35,7 @@ const Hero = () => {
           y: 30,
           opacity: 0,
           duration: 0.8,
-          stagger:  stagger: 0.08,
+          stagger: 0.08,
         }, '-=0.4')
         .from(scrollIndicatorRef.current, {
           y: 20,
