@@ -16,17 +16,26 @@
   </header>
 
   <main class="projects">
-    <!-- Project cards will be injected via JSON placeholder -->
-    <section class="card" data-index="0">
-      <h2 class="project-title">Project One</h2>
-      <p class="project-desc">A brief description of the project’s purpose and tech stack.</p>
-      <a class="project-link" href="#" target="_blank">Visit Demo →</a>
-    </section>
-    <section class="card" data-index="1">
-      <h2 class="project-title">Project Two</h2>
-      <p class="project-desc">Another compelling tool that solves a niche problem.</p>
-      <a class="project-link" href="#" target="_blank">View Code →</a>
-    </section>
-    <!-- Add more cards as needed -->
+    <!-- Project cards will be injected via JavaScript from projects.json -->
+    <script>
+      fetch('projects.json')
+        .then(r => r.json())
+        .then(projects => {
+          const container = document.querySelector('.projects');
+          projects.forEach((p, i) => {
+            const card = document.createElement('section');
+            card.className = 'card';
+            card.dataset.index = i;
+            card.style.setProperty('--index', i);
+            card.innerHTML = `
+              <h2 class="project-title">${p.title}</h2>
+              <p class="project-desc">${p.description}</p>
+              <a class="project-link" href="${p.url}" target="_blank">Visit →</a>
+            `;
+            container.appendChild(card);
+          });
+        })
+        .catch(err => console.error('Failed to load projects:', err));
+    </script>
   </main>
 </body>
