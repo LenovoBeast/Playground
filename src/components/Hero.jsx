@@ -13,6 +13,7 @@ const Hero = () => {
   const ctaSecondaryRef = useRef(null);
   const scrollIndicatorRef = useRef(null);
   const orbRefs = useRef([null, null, null]);
+  const cardRefs = useRef([null, null, null, null]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -34,7 +35,7 @@ const Hero = () => {
           y: 30,
           opacity: 0,
           duration: 0.8,
-          stagger: 0.08,
+          stagger:  stagger: 0.08,
         }, '-=0.4')
         .from(scrollIndicatorRef.current, {
           y: 20,
@@ -42,14 +43,14 @@ const Hero = () => {
           duration: 0.6,
         }, '-=0.2');
 
-      // Floating orbs animation
+      // Floating orbs animation with 3D effect
       orbRefs.current.forEach((orb, i) => {
         if (orb) {
           gsap.to(orb, {
-            y: (i - 1) * 80,
-            x: (i - 1) * 40,
-            rotation: (i - 1) * 5,
-            duration: 15 + i * 3,
+            y: (i - 1) * 100,
+            x: (i - 1) * 60,
+            rotation: (i - 1) * 8,
+            duration: 20 + i * 4,
             ease: 'none',
             repeat: -1,
             yoyo: true,
@@ -57,7 +58,7 @@ const Hero = () => {
         }
       });
 
-      // Scroll parallax for orbs
+      // Scroll parallax for orbs with 3D effect
       ScrollTrigger.create({
         trigger: heroRef.current,
         start: 'top top',
@@ -68,8 +69,10 @@ const Hero = () => {
           orbRefs.current.forEach((orb, i) => {
             if (orb) {
               gsap.set(orb, {
-                scale: 1 + progress * 0.2,
-                opacity: 0.12 - progress * 0.08,
+                scale: 1 + progress * 0.3,
+                opacity: 0.15 - progress * 0.1,
+                rotateY: progress * 15,
+                rotateX: progress * 10,
               });
             }
           });
@@ -91,6 +94,20 @@ const Hero = () => {
         },
       });
 
+      // Card stagger animations
+      cardRefs.current.forEach((card, index) => {
+        if (card) {
+          gsap.from(card, {
+            opacity: 0,
+            y: 100,
+            scale: 0.8,
+            duration: 1,
+            ease: 'back.out(1.7)',
+            delay: index * 0.15,
+          });
+        }
+      });
+
     }, heroRef);
 
     return () => ctx.revert();
@@ -103,113 +120,140 @@ const Hero = () => {
       style={{ minHeight: '100dvh' }}
       aria-labelledby="hero-title"
     >
-      {/* Ambient background orbs */}
+      {/* Ambient background orbs with 3D effect */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div
           ref={orbRefs.current[0]}
-          className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-purple-600/10 to-transparent rounded-full blur-[200px]"
+          className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-gradient-to-br from-purple-600/8 to-transparent rounded-full blur-[300px]"
         />
         <div
           ref={orbRefs.current[1]}
-          className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-bl from-cyan-500/10 to-transparent rounded-full blur-[200px]"
+          className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-gradient-to-bl from-cyan-500/8 to-transparent rounded-full blur-[300px]"
         />
         <div
           ref={orbRefs.current[2]}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-gradient-to-r from-purple-600/5 to-cyan-500/5 rounded-full blur-[150px]"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-r from-purple-600/4 to-cyan-500/4 rounded-full blur-[200px]"
         />
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M60 0H0v60h60V0z' fill='none' stroke='white' stroke-width='0.5'%3E%3C/path%3E%3C/svg%3E")`,
-          backgroundSize: '60px 60px',
+        {/* Subtle 3D grid pattern */}
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100 0L0 100M0 0L100 100' fill='none' stroke='white' stroke-width='0.3'%3E%3C/path%3E%3C/svg%3E")`,
+          backgroundSize: '100px 100px',
         }} />
       </div>
 
       <div className="relative z-10 w-full max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+        <div className="grid lg:grid-cols-2 gap-20 lg:gap-28 items-center">
           {/* Left: Content */}
-          <div className="space-y-10">
+          <div className="space-y-12">
             {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-white/5">
-              <span className="relative flex h-2 w-2">
+            <div className="inline-flex items-center gap-3 px-5 py-2 rounded-xl glass border border-white/5 hover-lift">
+              <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500" />
               </span>
-              <span className="text-label">Available for freelance & consulting</span>
+              <span className="text-label">Available for elite projects & collaborations</span>
             </div>
 
-            {/* Headline - Editorial Split */}
+            {/* Headline - Editorial Split with 3D effect */}
             <h1
               id="hero-title"
               ref={(el) => { titleLinesRef.current = el?.children || []; }}
-              className="text-display-3 italic"
+              className="text-display-2 italic relative"
               style={{ maxWidth: '100%', wordBreak: 'break-word' }}
             >
               <span className="block animate-fade-up">Crafting</span>
-              <span className="block animated-gradient-text animate-fade-up-delay-1">Digital Frontiers</span>
+              <span className="block animated-gradient-text animate-fade-up-delay-1">Digital Experiences</span>
+              {/* 3D depth effect */}
+              <div className="absolute inset-0 pointer-events-none" style={{
+                background: `linear-gradient(45deg, transparent 30%, rgba(168, 85, 247, 0.03) 50%, transparent 70%)`,
+                transform: `rotate(-5deg) translate(2px, -2px)`,
+                pointerEvents: 'none',
+              }} />
             </h1>
 
             {/* Subtitle */}
             <p
               ref={subtitleRef}
-              className="text-body animate-fade-up-delay-2"
+              className="text-body-lg animate-fade-up-delay-2 max-w-[45ch]"
             >
-              Senior Game Dev & Web Engineer architecting high-performance gaming engines, immersive web experiences, and developer tooling that makes building complex things feel simple.
+              Senior Game Dev & Web Engineer architecting immersive digital experiences that push the boundaries of what's possible in the browser.
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-start justify-start gap-4 animate-fade-up-delay-3">
+            <div className="flex flex-col sm:flex-row items-start justify-start gap-6 animate-fade-up-delay-3">
               <button
                 ref={ctaPrimaryRef}
-                className="magnetic-btn active-press group flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-xl font-bold text-lg transition-all shadow-xl shadow-purple-600/30 min-w-[180px]"
+                className="magnetic-btn active-press group flex items-center justify-center gap-4 px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-2xl font-bold text-xl transition-all shadow-xl shadow-purple-600/30 min-w-[200px]"
               >
                 View Selected Work
-                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />
               </button>
               <button
                 ref={ctaSecondaryRef}
-                className="magnetic-btn active-press group flex items-center justify-center gap-3 px-8 py-4 glass hover:bg-white/5 rounded-xl font-bold text-lg transition-all min-w-[180px] border border-white/5"
+                className="magnetic-btn active-press group flex items-center justify-center gap-4 px-10 py-5 glass hover:bg-white/5 rounded-2xl font-bold text-xl transition-all min-w-[200px] border border-white/5"
               >
-                <Github size={20} />
+                <Github size={24} />
                 GitHub
               </button>
             </div>
 
-            {/* Stats strip */}
-            <div className="flex flex-wrap gap-10 md:gap-16 pt-6 border-t border-white/5 animate-fade-up-delay-4">
-              <StatItem value="8+" label="Years Experience" />
-              <StatItem value="47" label="Projects Shipped" />
-              <StatItem value="12k+" label="Lines of Code/Day" />
+            {/* Stats strip with 3D cards */}
+            <div className="flex flex-wrap gap-12 md:gap-16 pt-8 border-t border-white/5 animate-fade-up-delay-4">
+              <StatCard value="8+" label="Years Experience" icon="cpu" refIndex={0} />
+              <StatCard value="47" label="Projects Shipped" icon="zap" refIndex={1} />
+              <StatCard value="12k+" label="Lines of Code/Day" icon="code" refIndex={2} />
             </div>
           </div>
 
-          {/* Right: Visual / Interactive */}
+          {/* Right: Visual / Interactive with 3D elements */}
           <div className="relative">
-            <div className="relative aspect-square max-w-md mx-auto">
-              {/* Interactive terminal-style card */}
-              <div className="absolute inset-0 double-bezel spotlight">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-cyan-600/5" />
-                <TerminalWindow />
+            <div className="relative aspect-square max-w-lg mx-auto">
+              {/* Main 3D card */}
+              <div
+                ref={cardRefs.current[0]}
+                className="absolute inset-0 double-bezel-3d spotlight-3d hover-lift-3d"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-600/6 to-cyan-600/6" />
+                <TerminalWindow3D />
               </div>
-              {/* Floating accent badges */}
-              <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-purple-500/30 animate-fade-up-delay-3">
-                <span className="text-2xl font-black">8+</span>
+              {/* Floating accent badges with 3D effect */}
+              <div
+                ref={cardRefs.current[1]}
+                className="absolute -bottom-8 -right-8 w-40 h-40 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-3xl shadow-purple-500/30 hover-lift-3d animate-fade-up-delay-3"
+              >
+                <span className="text-3xl font-black">8+</span>
               </div>
-              <div className="absolute -top-6 -left-6 w-24 h-24 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-2xl shadow-cyan-500/30 animate-fade-up-delay-4">
-                <span className="text-xl font-black">47</span>
+              <div
+                ref={cardRefs.current[2]}
+                className="absolute -top-8 -left-8 w-28 h-28 rounded-3xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-3xl shadow-cyan-500/30 hover-lift-3d animate-fade-up-delay-4"
+              >
+                <span className="text-2xl font-black">47</span>
+              </div>
+              <div
+                ref={cardRefs.current[3]}
+                className="absolute bottom-20 right-20 w-36 h-36 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-2xl shadow-emerald-500/30 hover-lift-3d animate-fade-up-delay-5"
+              >
+                <span className="text-xl font-black">AI</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Scroll indicator */}
+        {/* Scroll indicator with 3D effect */}
         <div
           ref={scrollIndicatorRef}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 text-zinc-500 font-mono text-xs uppercase tracking-widest animate-bounce-subtle"
+          className="absolute bottom-14 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-zinc-500 font-mono text-xs uppercase tracking-widest animate-bounce-subtle"
         >
           <span>Scroll to explore</span>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 5v14M19 12l-7 7-7-7" />
-          </svg>
+          <div className="relative w-10 h-10">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M19 12l-7 7-7-7" />
+            </svg>
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: `radial-gradient(circle at 30% 30%, rgba(168, 85, 247, 0.2) 0%, transparent 70%)`,
+              transform: `rotate(45deg)`,
+            }} />
+          </div>
         </div>
       </div>
     </section>
@@ -223,8 +267,64 @@ const StatItem = ({ value, label }) => (
   </div>
 );
 
+const StatCard = ({ value, label, icon, refIndex }) => {
+  const iconMap = {
+    cpu: <Cpu size={20} />,
+    zap: <Zap size={20} />,
+    code: <Code2 size={20} />,
+    terminal: <Terminal size={20} />,
+  };
+
+  return (
+    <div ref={(el) => { if (el) cardRefs.current[refIndex] = el; }} className="text-center">
+      <div className="flex items-center justify-center mb-3">
+        <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
+          {iconMap[icon]}
+        </div>
+      </div>
+      <div className="text-2xl font-black tracking-tight">{value}</div>
+      <div className="text-xs uppercase tracking-widest text-zinc-500">{label}</div>
+    </div>
+  );
+};
+
 const TerminalWindow = () => (
   <div className="relative h-full w-full rounded-[calc(1.5rem-0.375rem)] bg-zinc-950/80 backdrop-blur-sm flex flex-col overflow-hidden border border-white/5">
+    {/* Terminal header */}
+    <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-zinc-900/50">
+      <div className="flex gap-1.5">
+        <div className="w-3 h-3 rounded-full bg-red-500/80" />
+        <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+        <div className="w-3 h-3 rounded-full bg-green-500/80" />
+      </div>
+      <div className="flex-1 text-center text-xs font-mono text-zinc-500">main.tsx</div>
+    </div>
+
+    {/* Terminal content */}
+    <div className="flex-1 p-6 font-mono text-sm text-zinc-300 leading-relaxed overflow-auto">
+      <div className="space-y-3">
+        <CodeLine prefix="> " content="npm create vite@latest my-game --template react-ts" />
+        <CodeLine prefix="✓ " content="Project scaffolded in 247ms" className="text-green-400" />
+        <CodeLine prefix="> " content="npm install three @react-three/fiber @react-three/drei" />
+        <CodeLine prefix="✓ " content="WebGPU renderer + physics pipeline ready" className="text-cyan-400" />
+        <CodeLine prefix="> " content="npm run dev" />
+        <CodeLine prefix="▲ " content="Local:   http://localhost:5173" className="text-purple-400" />
+        <CodeLine prefix="▲ " content="Network: http://192.168.1.47:5173" className="text-purple-400" />
+        <div className="h-4" />
+        <CodeLine prefix="// " content="Engine initialized — ready to build" className="text-zinc-500 italic" />
+      </div>
+    </div>
+  </div>
+);
+
+const TerminalWindow3D = () => (
+  <div className="relative h-full w-full rounded-[calc(1.5rem-0.375rem)] bg-zinc-950/70 backdrop-blur-sm flex flex-col overflow-hidden border border-white/4">
+    {/* 3D effect container */}
+    <div className="absolute inset-0" style={{
+      background: `linear-gradient(45deg, transparent 30%, rgba(168, 85, 247, 0.08) 50%, transparent 70%)`,
+      transform: `rotate(-3deg) scale(1.02)`,
+      pointerEvents: 'none',
+    }} />
     {/* Terminal header */}
     <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-zinc-900/50">
       <div className="flex gap-1.5">
