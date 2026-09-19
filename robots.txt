@@ -1,0 +1,17 @@
+# Robots.txt for Nexus. Portfolio
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://lenovobeast.github.io/Playground/sitemap.xml
+
+# Host
+Host: https://lenovobeast.github.io/Playground/
+
+# Crawl-delay (optional, for polite crawling)
+Crawl-delay: 10
+
+# Disallow private/admin paths (none in this SPA)
+# Disallow: /admin/
+# Disallow: /private/
+# Disallow: /api/

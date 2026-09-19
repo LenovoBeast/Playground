@@ -8,6 +8,7 @@
   <header class="hero">
     <h1 class="headline">My Web Lab</h1>
     <p class="subhead">A warm, playful, professional collection of projects & tools</p>
+    <!-- Animated illustration placeholder -->
     <svg class="hero-illustration" viewBox="0 0 200 200" aria-hidden="true">
       <circle cx="100" cy="100" r="90" fill="var(--accent)" />
       <path d="M60 80 L100 140 L140 80" fill="none" stroke="var(--bg)" stroke-width="8" stroke-linecap="round" />
@@ -16,6 +17,7 @@
   </header>
 
   <main class="projects">
+    <!-- Project cards will be injected via JavaScript from projects.json -->
     <script>
       fetch('projects.json')
         .then(r => r.json())
@@ -37,7 +39,6 @@
         .catch(err => console.error('Failed to load projects:', err));
     </script>
   </main>
-
 <script>
 // Theme toggle
 const htmlEl = document.documentElement;
