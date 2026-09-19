@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { AnimatePresence } from 'framer-motion';
-import { Cpu, Server, Gamepad2, Database, Zap, Layers, Globe, Terminal, Github, ArrowRight } from 'lucide-react';
+import { Cpu, Server, Gamepad2, Database, Zap, Layers, Globe, Terminal, Github, ArrowRight, Check } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -12,8 +12,8 @@ const categories = [
     label: 'Frontend',
     icon: <Cpu size={24} />,
     color: 'from-purple-500 to-pink-500',
-    bg: 'bg-gradient-to-br from-purple-500/10 to-pink-500/10',
-    border: 'border-purple-500/20',
+    bg: 'bg-gradient-to-br from-purple-500/5 to-pink-500/5',
+    border: 'border-purple-500/10',
     items: [
       { name: 'React 18', desc: 'Concurrent features, Suspense, Server Components' },
       { name: 'TypeScript', desc: 'Strict mode, advanced types, type-safe APIs' },
@@ -28,8 +28,8 @@ const categories = [
     label: 'Backend',
     icon: <Server size={24} />,
     color: 'from-cyan-500 to-blue-500',
-    bg: 'bg-gradient-to-br from-cyan-500/10 to-blue-500/10',
-    border: 'border-cyan-500/20',
+    bg: 'bg-gradient-to-br from-cyan-500/5 to-blue-500/5',
+    border: 'border-cyan-500/10',
     items: [
       { name: 'Node.js', desc: 'Native ES modules, worker threads, perf hooks' },
       { name: 'PostgreSQL', desc: 'Advanced queries, JSONB, partitioning' },
@@ -44,8 +44,8 @@ const categories = [
     label: 'Game Dev',
     icon: <Gamepad2 size={24} />,
     color: 'from-emerald-500 to-teal-500',
-    bg: 'bg-gradient-to-br from-emerald-500/10 to-teal-500/10',
-    border: 'border-emerald-500/20',
+    bg: 'bg-gradient-to-br from-emerald-500/5 to-teal-500/5',
+    border: 'border-emerald-500/10',
     items: [
       { name: 'React Three Fiber', desc: 'Declarative Three.js, React ecosystem' },
       { name: 'Phaser 3', desc: '2D games, WebGL/Canvas, multiplayer' },
@@ -60,8 +60,8 @@ const categories = [
     label: 'Infrastructure',
     icon: <Database size={24} />,
     color: 'from-orange-500 to-amber-500',
-    bg: 'bg-gradient-to-br from-orange-500/10 to-amber-500/10',
-    border: 'border-orange-500/20',
+    bg: 'bg-gradient-to-br from-orange-500/5 to-amber-500/5',
+    border: 'border-orange-500/10',
     items: [
       { name: 'GitHub Actions', desc: 'CI/CD, matrix builds, custom runners' },
       { name: 'Playwright', desc: 'E2E testing, visual regression, tracing' },
@@ -125,20 +125,18 @@ const Stack = () => {
     <section
       ref={sectionRef}
       id="stack"
-      className="py-24 md:py-32 lg:py-40 px-6 bg-obsidian relative"
+      className="section-gap px-6 bg-zinc-950/50 relative"
     >
       <div className="absolute inset-0" aria-hidden="true">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="section-container relative z-10">
         <div ref={headerRef} className="mb-16">
-          <span className="text-purple-500 font-mono tracking-[0.2em] uppercase text-sm mb-4 block">
-            Tech Stack
-          </span>
-          <h2 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter uppercase italic leading-[0.9]">
-            Engineered with <span className="gradient-text">Precision</span>
+          <span className="text-label mb-4 block">Tech Stack</span>
+          <h2 className="text-display-2 italic leading-[1.02]">
+            Engineered with <span className="animated-gradient-text">Precision</span>
           </h2>
         </div>
 
@@ -153,8 +151,8 @@ const Stack = () => {
               onClick={() => setActiveTab(cat.id)}
               className={`relative flex items-center gap-3 px-6 py-4 rounded-2xl transition-all duration-300 font-medium ${
                 activeTab === cat.id
-                  ? 'bg-gradient-to-r text-white shadow-xl'
-                  : 'glass hover:bg-white/10 text-gray-300'
+                  ? 'bg-gradient-to-r text-white shadow-xl text-white'
+                  : 'glass hover:bg-white/5 text-zinc-400'
               } ${cat.color.replace('from-', 'from-').replace('to-', ' to-')}`}
               style={{
                 boxShadow: activeTab === cat.id ? `0 20px 40px -10px ${cat.color.replace('from-', '').replace(' to-', ', ')}` : 'none'
@@ -186,24 +184,24 @@ const Stack = () => {
           >
             {categories.map((cat) => (
               cat.id === activeTab && (
-                <div className={`relative ${cat.bg} ${cat.border} border rounded-3xl p-8 md:p-12`}>
+                <div className={`relative ${cat.bg} ${cat.border} border rounded-3xl p-8 md:p-12 hover-lift`}>
                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent rounded-3xl pointer-events-none" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
                     {cat.items.map((item, i) => (
                       <div
                         key={item.name}
-                        className="group relative p-5 glass-strong rounded-2xl hover:border-white/20 transition-all duration-300 hover:scale-[1.02]"
+                        className="group relative p-5 glass-strong rounded-2xl hover:border-white/10 transition-all duration-300 hover-lift active-press"
                         style={{
                           transitionDelay: `${i * 30}ms`
                         }}
                       >
                         <div className="flex items-center gap-3 mb-3">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${cat.color} group-hover:scale-110 transition-transform duration-300`}>
-                            <Zap size={20} className="text-white" />
+                            <Check size={20} className="text-white" />
                           </div>
                           <h4 className="font-black text-lg">{item.name}</h4>
                         </div>
-                        <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
+                        <p className="text-zinc-400 text-sm leading-relaxed">{item.desc}</p>
                         <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                           <ArrowRight size={16} className={`text-white/50 ${cat.color}`} />
                         </div>
@@ -217,9 +215,7 @@ const Stack = () => {
         </AnimatePresence>
 
         <div className="mt-16 pt-16 border-t border-white/10">
-          <h3 className="text-purple-500 font-mono tracking-[0.2em] uppercase text-sm mb-8 text-center">
-            Open Source & Tooling
-          </h3>
+          <h3 className="text-label mb-8 text-center">Open Source & Tooling</h3>
           <div className="flex flex-wrap justify-center gap-4">
             {['Vite', 'React', 'Tailwind', 'TypeScript', 'GSAP', 'Framer Motion', 'Playwright', 'Vitest', 'ESLint', 'Prettier'].map((tool) => (
               <a
@@ -227,7 +223,7 @@ const Stack = () => {
                 href={`https://github.com/search?q=${tool}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 glass hover:bg-white/10 rounded-xl text-sm font-medium transition-colors group hover:scale-105"
+                className="px-4 py-2 glass hover:bg-white/5 rounded-xl text-sm font-medium transition-colors active-press group hover:scale-105"
               >
                 {tool}
               </a>
