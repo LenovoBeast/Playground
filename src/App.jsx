@@ -6,6 +6,8 @@ import About from './components/About';
 import Stack from './components/Stack';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import Games from './components/Games';
+import World from './components/World';
 import NotFound from './components/NotFound';
 import './index.css';
 
@@ -15,6 +17,9 @@ function App() {
       {/* Skip link for accessibility */}
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
+      {/* The Three.js world renders behind everything as a fixed backdrop. */ }
+      <World />
+
       <Routes>
         <Route path="/" element={
           <>
@@ -23,6 +28,7 @@ function App() {
               <ProjectGrid id="projects" />
               <About id="about" />
               <Stack id="stack" />
+              <Games id="games" />
               <Contact id="contact" />
             </main>
             <Footer />

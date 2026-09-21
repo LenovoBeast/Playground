@@ -1,98 +1,39 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowUpRight, Github, Zap, Globe, Layers, Code2, MousePointer2, ExternalLink, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, Github, Code2, Globe, Layers, ExternalLink, ChevronRight } from 'lucide-react';
+import { projects } from '../data/projects.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const projects = [
-  {
-    title: "Neon Protocol",
-    category: "Game Engine",
-    description: "High-performance 3D game engine built with React Three Fiber, featuring real-time lighting, physics simulation, and asset streaming.",
-    tags: ["React", "Three.js", "WebGL", "GLSL"],
-    size: "large",
-    color: "from-purple-500 to-cyan-500",
-    icon: <Zap size={28} />,
-    link: "#",
-    github: "#",
-    featured: true
-  },
-  {
-    title: "Cyber Shell",
-    category: "UI Kit",
-    description: "Premium component library with glassmorphism aesthetics, fluid animations, and accessibility-first design for modern web apps.",
-    tags: ["Framer Motion", "Tailwind", "TypeScript"],
-    size: "medium",
-    color: "from-cyan-500 to-blue-500",
-    icon: <Layers size={28} />,
-    link: "#",
-    github: "#",
-    featured: false
-  },
-  {
-    title: "Void Runner",
-    category: "Web Game",
-    description: "Real-time multiplayer arena shooter built with Phaser 3 and Socket.io. Features ranked matchmaking and custom maps.",
-    tags: ["Phaser", "Socket.io", "Node.js"],
-    size: "small",
-    color: "from-pink-500 to-rose-500",
-    icon: <MousePointer2 size={28} />,
-    link: "#",
-    github: "#",
-    featured: false
-  },
-  {
-    title: "Neural Nexus",
-    category: "SaaS Platform",
-    description: "AI-powered development platform with automated code review, intelligent suggestions, and team analytics dashboard.",
-    tags: ["Next.js", "AI", "PostgreSQL", "Redis"],
-    size: "small",
-    color: "from-emerald-500 to-teal-500",
-    icon: <Code2 size={28} />,
-    link: "#",
-    github: "#",
-    featured: false
-  },
-  {
-    title: "Aether OS",
-    category: "Dashboard",
-    description: "System monitoring dashboard built with Rust and WebAssembly. Real-time metrics visualization with sub-millisecond latency.",
-    tags: ["Rust", "Wasm", "Leptos", "Tauri"],
-    size: "small",
-    color: "from-orange-500 to-yellow-500",
-    icon: <Globe size={28} />,
-    link: "#",
-    github: "#",
-    featured: false
-  }
-];
+// The JSON catalogue stays minimal (title/description/url/language). The
+// component owns the presentation metadata, so the catalogue never needs to
+// know about DOM, icons, or colour palettes.
+const UI = {
+  'TypeScript': { color: 'from-purple-500 to-cyan-500', icon: <Code2 size={28} /> },
+  'JavaScript': { color: 'from-cyan-500 to-blue-500', icon: <Globe size={28} /> },
+  'HTML': { color: 'from-pink-500 to-rose-500', icon: <Layers size={28} /> },
+};
 
-const ProjectCard = ({ project, index, isFeatured }) => {
+const ProjectCard = ({ project, index }) => {
   const cardRef = useRef(null);
+  const ui = UI[project.language] ?? UI['JavaScript'];
 
   return (
     <div
       ref={cardRef}
-      className={`relative overflow-hidden double-bezel p-8 hover-lift card-glow spotlight ${
-        project.size === 'large' ? 'col-span-2 row-span-2 lg:col-span-2 lg:row-span-2' : ''
-      } ${project.size === 'medium' ? 'col-span-1 lg:col-span-1' : ''}`}
-      style={{
-        gridRow: project.size === 'large' ? 'span 2' : 'span 1',
-        gridColumn: project.size === 'large' ? 'span 2' : 'span 1'
-      }}
+      className="relative overflow-hidden double-bezel p-8 hover-lift card-glow spotlight"
       data-index={index}
     >
-      {/* Gradient overlay on hover */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${project.color} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-700`} />
+      <div className={`absolute inset-0 bg-gradient-to-br ${ui.color} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-700`} />
 
       <div className="relative h-full flex flex-col justify-between group">
         <div className="flex justify-between items-start">
           <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-            <div className="text-purple-400">{project.icon}</div>
+            <div className="text-purple-400">{ui.icon}</div>
           </div>
           <a
-            href={project.link}
+            href={project.url}
             className="p-2 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors group-hover:scale-110"
             aria-label={`View ${project.title} live demo`}
           >
@@ -101,7 +42,7 @@ const ProjectCard = ({ project, index, isFeatured }) => {
         </div>
 
         <div className="mt-12">
-          <p className="text-label mb-2">{project.category}</p>
+          <p className="text-label mb-2">{project.language}</p>
           <h3 className="text-display-1 italic mb-4">
             {project.title}
           </h3>
@@ -109,7 +50,7 @@ const ProjectCard = ({ project, index, isFeatured }) => {
             {project.description}
           </p>
           <div className="flex flex-wrap gap-2 mb-6">
-            {project.tags.map((tag) => (
+            {[project.language].map((tag) => (
               <span
                 key={tag}
                 className="text-[10px] uppercase tracking-widest px-3 py-1 rounded-full border border-white/5 text-zinc-500 hover:border-white/10 hover:text-zinc-300 transition-colors group-hover:scale-105"
@@ -120,13 +61,13 @@ const ProjectCard = ({ project, index, isFeatured }) => {
           </div>
           <div className="flex items-center gap-4 pt-4 border-t border-white/5">
             <a
-              href={project.link}
+              href={project.url}
               className="flex items-center gap-2 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors group hover:translate-x-1"
             >
               Live Demo <ArrowUpRight size={16} />
             </a>
             <a
-              href={project.github}
+              href={project.url}
               className="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-white transition-colors group hover:translate-x-1"
             >
               <Github size={16} /> Source
@@ -142,7 +83,6 @@ const ProjectGrid = () => {
   const gridRef = useRef(null);
   const headerRef = useRef(null);
   const linkRef = useRef(null);
-  const [visibleCards, setVisibleCards] = useState(new Set());
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -162,7 +102,7 @@ const ProjectGrid = () => {
       gsap.from(linkRef.current, {
         x: 40,
         opacity: 0,
-        duration: 1,
+        duration: 0.8,
         ease: 'expo.out',
         scrollTrigger: {
           trigger: headerRef.current,
@@ -177,14 +117,13 @@ const ProjectGrid = () => {
         opacity: 0,
         scale: 0.97,
         duration: 0.8,
-        ease: 'expo.out',
-        stagger: 0.06,
+        ease: 'back.out(1.4)',
+        stagger: 0.08,
         scrollTrigger: {
           trigger: gridRef.current,
           start: 'top 85%',
         }
       });
-
     }, gridRef);
 
     return () => ctx.revert();
@@ -202,15 +141,15 @@ const ProjectGrid = () => {
               Digital <span className="animated-gradient-text">Frontiers</span>
             </p>
           </div>
-          <a ref={linkRef} href="#" className="hidden md:flex items-center gap-2 text-zinc-500 hover:text-white transition-colors font-medium active-press">
+          <a ref={linkRef} href="#contact" className="hidden md:flex items-center gap-2 text-zinc-500 hover:text-white transition-colors font-medium active-press">
             View All Archive <ChevronRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
           </a>
         </div>
 
         {/* Gapless Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" style={{ gridAutoFlow: 'dense' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project, idx) => (
-            <ProjectCard key={idx} project={project} index={idx} isFeatured={project.featured} />
+            <ProjectCard key={project.url} project={project} index={idx} />
           ))}
         </div>
       </div>

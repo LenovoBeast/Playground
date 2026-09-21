@@ -288,35 +288,6 @@ const StatCard = ({ value, label, icon, cardRef }) => {
   );
 };
 
-const TerminalWindow = () => (
-  <div className="relative h-full w-full rounded-[calc(1.5rem-0.375rem)] bg-zinc-950/80 backdrop-blur-sm flex flex-col overflow-hidden border border-white/5">
-    {/* Terminal header */}
-    <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-zinc-900/50">
-      <div className="flex gap-1.5">
-        <div className="w-3 h-3 rounded-full bg-red-500/80" />
-        <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-        <div className="w-3 h-3 rounded-full bg-green-500/80" />
-      </div>
-      <div className="flex-1 text-center text-xs font-mono text-zinc-500">main.tsx</div>
-    </div>
-
-    {/* Terminal content */}
-    <div className="flex-1 p-6 font-mono text-sm text-zinc-300 leading-relaxed overflow-auto">
-      <div className="space-y-3">
-        <CodeLine prefix="> " content="npm create vite@latest my-game --template react-ts" />
-        <CodeLine prefix="✓ " content="Project scaffolded in 247ms" className="text-green-400" />
-        <CodeLine prefix="> " content="npm install three @react-three/fiber @react-three/drei" />
-        <CodeLine prefix="✓ " content="WebGPU renderer + physics pipeline ready" className="text-cyan-400" />
-        <CodeLine prefix="> " content="npm run dev" />
-        <CodeLine prefix="▲ " content="Local:   http://localhost:5173" className="text-purple-400" />
-        <CodeLine prefix="▲ " content="Network: http://192.168.1.47:5173" className="text-purple-400" />
-        <div className="h-4" />
-        <CodeLine prefix="// " content="Engine initialized — ready to build" className="text-zinc-500 italic" />
-      </div>
-    </div>
-  </div>
-);
-
 const TerminalWindow3D = () => (
   <div className="relative h-full w-full rounded-[calc(1.5rem-0.375rem)] bg-zinc-950/70 backdrop-blur-sm flex flex-col overflow-hidden border border-white/4">
     {/* 3D effect container */}
