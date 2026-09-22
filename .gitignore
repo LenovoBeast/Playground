@@ -34,3 +34,6 @@ ehthumbs.db
 Desktop.inipreview-frames/
 preview.webm
 preview-frames/
+
+# Nested game-studio scaffold repo (separate project)
+my-game/
