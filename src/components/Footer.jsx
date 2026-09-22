@@ -24,22 +24,22 @@ const Footer = () => {
 
           {/* Social Links */}
           <div className="flex items-center gap-4">
-            <a href="https://github.com/LenovoBeast" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/5 transition-colors active-press" aria-label="GitHub">
+            <a href="https://github.com/LenovoBeast" target="_blank" rel="noopener noreferrer" className="social-icon w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/5 transition-colors active-press" aria-label="GitHub">
               <Github size={20} className="text-zinc-400 hover:text-white transition-colors" />
             </a>
-            <a href="https://twitter.com/LenovoBeast" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/5 transition-colors active-press" aria-label="Twitter">
+            <a href="https://twitter.com/LenovoBeast" target="_blank" rel="noopener noreferrer" className="social-icon w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/5 transition-colors active-press" aria-label="Twitter">
               <Twitter size={20} className="text-zinc-400 hover:text-cyan-400 transition-colors" />
             </a>
-            <a href="https://linkedin.com/in/lenovobeast" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/5 transition-colors active-press" aria-label="LinkedIn">
+            <a href="https://linkedin.com/in/lenovobeast" target="_blank" rel="noopener noreferrer" className="social-icon w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/5 transition-colors active-press" aria-label="LinkedIn">
               <Linkedin size={20} className="text-zinc-400 hover:text-blue-400 transition-colors" />
             </a>
-            <a href="mailto:lenovobeast@example.com" className="w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/5 transition-colors active-press" aria-label="Email">
+            <a href="mailto:lenovobeast@example.com" className="social-icon w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/5 transition-colors active-press" aria-label="Email">
               <Mail size={20} className="text-zinc-400 hover:text-purple-400 transition-colors" />
             </a>
           </div>
 
           {/* Back to top */}
-          <a href="#main-content" className="w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/5 transition-colors active-press group" aria-label="Back to top">
+          <a href="#main-content" className="footer-icon w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/5 transition-colors active-press group" aria-label="Back to top">
             <ArrowUpRight size={20} className="text-zinc-400 group-hover:text-white group-hover:translate-x-1 group-hover:translate-y-[-1px] transition-all" />
           </a>
         </div>

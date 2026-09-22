@@ -144,6 +144,20 @@ export function buildWorld(scene) {
   group.add(track)
   clickObjects.push(track)
 
+  // Match-3 gem grid — the surreal floating candy
+  const match3 = buildMatch3()
+  match3.position.set(-1.5, 0.2, -2.2)
+  match3.userData.game = 'match3'
+  group.add(match3)
+  clickObjects.push(match3)
+
+  // Rocket on a launch pad — the "impossible" countdown
+  const launch = buildLaunch()
+  launch.position.set(2.2, 0.5, -2.0)
+  launch.userData.game = 'launch'
+  group.add(launch)
+  clickObjects.push(launch)
+
   // Floating books, candles, glasses — props
   group.add(...buildProps())
 
@@ -255,6 +269,71 @@ function buildTrack() {
   car.add(body)
   car.position.set(-2, 0, 0)
   group.add(car)
+  return group
+}
+
+function buildMatch3() {
+  const group = new THREE.Group()
+  // A 4x4 grid of glowing gems — surreal floating candy in space
+  const palette = [0xff6bcf, 0xc47fff, 0x4fdfff, 0xff6bcf]
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 4; col++) {
+      const gem = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.18, 1),
+        new THREE.MeshStandardMaterial({
+          color: palette[(row + col) % palette.length],
+          emissive: palette[(row + col) % palette.length],
+          emissiveIntensity: 0.5,
+          roughness: 0.15,
+          metalness: 0.2
+        })
+      )
+      gem.position.set(-0.5 + col * 0.34, 0.4 - row * 0.34, 0)
+      group.add(gem)
+    }
+  }
+  return group
+}
+
+function buildLaunch() {
+  const group = new THREE.Group()
+  // Rocket on a launch pad — the "impossible" countdown
+  const pad = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.2, 1.4, 0.2, 32),
+    new THREE.MeshStandardMaterial({ color: 0x2a1f3a, roughness: 0.8, metalness: 0.3 })
+  )
+  pad.position.y = -1.1
+  group.add(pad)
+  // Flame under the pad
+  const flame = new THREE.Mesh(
+    new THREE.ConeGeometry(0.5, 1.2, 16),
+    new THREE.MeshBasicMaterial({ color: 0xff6bcf, transparent: true, opacity: 0.7 })
+  )
+  flame.position.y = -1.8
+  group.add(flame)
+  // Rocket body
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.25, 0.35, 1.6, 24),
+    new THREE.MeshStandardMaterial({ color: 0xe8e4ec, roughness: 0.3, metalness: 0.4 })
+  )
+  body.position.y = 0.2
+  group.add(body)
+  // Nose cone
+  const nose = new THREE.Mesh(
+    new THREE.ConeGeometry(0.35, 0.5, 24),
+    new THREE.MeshStandardMaterial({ color: 0xc47fff, emissive: 0xc47fff, emissiveIntensity: 0.4 })
+  )
+  nose.position.y = 1.1
+  group.add(nose)
+  // Fins
+  for (let i = 0; i < 3; i++) {
+    const fin = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, 0.4, 0.3),
+      new THREE.MeshStandardMaterial({ color: 0x4fdfff, emissive: 0x4fdfff, emissiveIntensity: 0.3 })
+    )
+    fin.position.set(Math.cos(i * 2.094) * 0.3, -0.4, Math.sin(i * 2.094) * 0.3)
+    group.add(fin)
+  }
   return group
 }
 

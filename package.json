@@ -6,12 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint . --ext",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test test",
+    "test:watch": "node --test --watch test"
   },
   "dependencies": {
-    "@gsap/react": "^2.1.2",
-    "@phosphor-icons/react": "^2.1.10",
     "framer-motion": "^11.0.0",
     "gsap": "^3.15.0",
     "lucide-react": "^0.440.0",

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight, Github, ExternalLink, Cpu, Zap, Code2, Terminal } from 'lucide-react';
@@ -14,8 +14,22 @@ const Hero = () => {
   const scrollIndicatorRef = useRef(null);
   const orbRefs = useRef([null, null, null]);
   const cardRefs = useRef([null, null, null, null]);
+  // Honor prefers-reduced-motion: skip all choreography when the user
+  // has requested less motion (accessibility, vestibular disorders).
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(media.matches);
+    const onChange = (e) => setReducedMotion(e.matches);
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    // No animations at all when motion is reduced — content is still
+    // visible, just without entrance choreography or parallax drift.
+    if (reducedMotion) return;
     const ctx = gsap.context(() => {
       // Initial entrance animation
       const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
