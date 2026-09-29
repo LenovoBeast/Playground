@@ -1,160 +1,180 @@
-import React, { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowUpRight, Github, Code2, Globe, Layers, ExternalLink, ChevronRight } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowUpRight, GithubLogo, Code, Globe, Stack, ArrowSquareOut, FunnelSimple } from '@phosphor-icons/react';
 import { projects } from '../data/projects.js';
+import { useTilt } from '../hooks/useTilt.js';
 
-gsap.registerPlugin(ScrollTrigger);
-
-// The JSON catalogue stays minimal (title/description/url/language). The
-// component owns the presentation metadata, so the catalogue never needs to
-// know about DOM, icons, or colour palettes.
 const UI = {
-  'TypeScript': { color: 'from-purple-500 to-cyan-500', icon: <Code2 size={28} /> },
-  'JavaScript': { color: 'from-cyan-500 to-blue-500', icon: <Globe size={28} /> },
-  'HTML': { color: 'from-pink-500 to-rose-500', icon: <Layers size={28} /> },
+  TypeScript: { color: 'from-blue-500 to-indigo-500', icon: <Code size={26} weight="bold" />, tint: 'rgba(59,130,246,0.16)' },
+  JavaScript: { color: 'from-cyan-500 to-blue-500', icon: <Globe size={26} weight="bold" />, tint: 'rgba(34,211,238,0.16)' },
+  HTML: { color: 'from-emerald-500 to-teal-500', icon: <Stack size={26} weight="bold" />, tint: 'rgba(52,211,153,0.16)' },
 };
 
 const ProjectCard = ({ project, index }) => {
-  const cardRef = useRef(null);
-  const ui = UI[project.language] ?? UI['JavaScript'];
+  const ui = UI[project.language] ?? UI.JavaScript;
+  const tilt = useTilt({ max: 7, scale: 1.02, lift: 18 });
 
   return (
     <div
-      ref={cardRef}
-      className="relative overflow-hidden double-bezel p-8 hover-lift card-glow spotlight"
-      data-index={index}
+      className="tilt-scene group h-full"
+      onPointerMove={tilt.onPointerMove}
+      onPointerLeave={tilt.onPointerLeave}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${ui.color} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-700`} />
+      <div ref={tilt.ref} className="tilt-body h-full">
+        <article className="panel corner-frame relative flex h-full flex-col justify-between overflow-hidden p-7 md:p-8">
+          {/* Card-wide glow */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+            style={{ background: `radial-gradient(120% 90% at 12% 0%, ${ui.tint} 0%, transparent 62%)` }}
+          />
+          <div className="tilt-sheen" />
 
-      <div className="relative h-full flex flex-col justify-between group">
-        <div className="flex justify-between items-start">
-          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-            <div className="text-purple-400">{ui.icon}</div>
+          {/* Thumbnail image - unique per card */}
+          <div className="relative -mx-8 -mt-8 mb-6 h-40 md:h-48 rounded-[1rem] overflow-hidden">
+            <img
+              src={project.thumbnail}
+              alt=""
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           </div>
-          <a
-            href={project.url}
-            className="p-2 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors group-hover:scale-110"
-            aria-label={`View ${project.title} live demo`}
-          >
-            <ExternalLink size={20} className="text-zinc-400 hover:text-white transition-colors" />
-          </a>
-        </div>
 
-        <div className="mt-12">
-          <p className="text-label mb-2">{project.language}</p>
-          <h3 className="text-display-1 italic mb-4">
-            {project.title}
-          </h3>
-          <p className="text-body-sm mb-6 line-clamp-3">
-            {project.description}
-          </p>
-          <div className="flex flex-wrap gap-2 mb-6">
-            {[project.language].map((tag) => (
-              <span
-                key={tag}
-                className="text-[10px] uppercase tracking-widest px-3 py-1 rounded-full border border-white/5 text-zinc-500 hover:border-white/10 hover:text-zinc-300 transition-colors group-hover:scale-105"
-              >
-                {tag}
+          <div className="relative flex items-start justify-between" style={{ transform: 'translateZ(30px)' }}>
+            <span
+              className="grid h-14 w-14 place-items-center rounded-2xl border border-white/8 bg-white/[0.04] text-blue-300 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"
+              style={{ transform: 'translateZ(30px)' }}
+            >
+              {ui.icon}
+            </span>
+            <a
+              href={project.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="grid h-10 w-10 place-items-center rounded-full border border-white/8 bg-white/[0.04] text-zinc-400 transition-all duration-300 hover:bg-white/[0.1] hover:text-white group-hover:scale-110"
+              aria-label={`Open ${project.title} repository`}
+              style={{ transform: 'translateZ(40px)' }}
+            >
+              <ExternalLink size={18} weight="bold" />
+            </a>
+          </div>
+
+          <div className="relative mt-6" style={{ transform: 'translateZ(22px)' }}>
+            <div className="mb-3 flex items-center gap-3">
+              <span className="font-mono text-[10px] tracking-[0.24em] text-zinc-600">
+                {String(index + 1).padStart(2, '0')}
               </span>
-            ))}
+              <span className="text-label">{project.language}</span>
+            </div>
+
+            <h3 className="mb-4 text-display-1 italic leading-[1.02]">{project.title}</h3>
+            <p className="mb-6 line-clamp-3 text-body-sm">{project.description}</p>
+
+            <div className="mb-6 flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/8 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500 transition-colors group-hover:border-white/15 group-hover:text-zinc-300">
+                {project.language}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-5 border-t border-white/8 pt-5">
+              <a
+                href={project.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group/link flex items-center gap-2 text-sm font-semibold text-cyan-400 transition-colors hover:text-cyan-300"
+              >
+                Live Demo
+                <ArrowUpRight size={16} weight="bold" className="transition-transform group-hover/link:translate-x-1 group-hover/link:-translate-y-1" />
+              </a>
+              <a
+                href={project.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group/link flex items-center gap-2 text-sm font-semibold text-zinc-500 transition-colors hover:text-white"
+              >
+                <Github size={16} weight="bold" /> Source
+              </a>
+            </div>
           </div>
-          <div className="flex items-center gap-4 pt-4 border-t border-white/5">
-            <a
-              href={project.url}
-              className="flex items-center gap-2 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors group hover:translate-x-1"
-            >
-              Live Demo <ArrowUpRight size={16} />
-            </a>
-            <a
-              href={project.url}
-              className="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-white transition-colors group hover:translate-x-1"
-            >
-              <Github size={16} /> Source
-            </a>
-          </div>
-        </div>
+        </article>
       </div>
     </div>
   );
 };
 
-const ProjectGrid = () => {
-  const gridRef = useRef(null);
-  const headerRef = useRef(null);
-  const linkRef = useRef(null);
+export default function ProjectGrid() {
+  const [filter, setFilter] = useState('All');
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Header animation
-      gsap.from(headerRef.current?.children?.[0]?.children || [], {
-        y: 40,
-        opacity: 0,
-        duration: 1,
-        ease: 'expo.out',
-        stagger: 0.1,
-        scrollTrigger: {
-          trigger: headerRef.current,
-          start: 'top 85%',
-        }
-      });
+  const languages = useMemo(
+    () => ['All', ...Array.from(new Set(projects.map((p) => p.language)))],
+    []
+  );
 
-      gsap.from(linkRef.current, {
-        x: 40,
-        opacity: 0,
-        duration: 0.8,
-        ease: 'expo.out',
-        scrollTrigger: {
-          trigger: headerRef.current,
-          start: 'top 85%',
-        }
-      });
-
-      // Card stagger reveal with ScrollTrigger
-      const cards = gridRef.current?.querySelectorAll('[data-index]') || [];
-      gsap.from(cards, {
-        y: 60,
-        opacity: 0,
-        scale: 0.97,
-        duration: 0.8,
-        ease: 'back.out(1.4)',
-        stagger: 0.08,
-        scrollTrigger: {
-          trigger: gridRef.current,
-          start: 'top 85%',
-        }
-      });
-    }, gridRef);
-
-    return () => ctx.revert();
-  }, []);
+  const visible = useMemo(
+    () => (filter === 'All' ? projects : projects.filter((p) => p.language === filter)),
+    [filter]
+  );
 
   return (
-    <section ref={gridRef} id="projects" className="section-gap px-6 bg-zinc-950/50 relative">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+    <section id="projects" className="section-gap relative px-6">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="aurora aurora-b right-[-6%] top-[16%] h-[400px] w-[400px] bg-blue-500/12" />
+      </div>
+      <div className="hairline absolute inset-x-0 top-0" />
 
       <div className="section-container relative z-10">
-        <div ref={headerRef} className="flex flex-col md:flex-row md:justify-between md:items-end mb-16 gap-6">
+        <div className="mb-12 flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <div>
-            <span className="text-label mb-4 block">Selected Works</span>
-            <p className="text-display-2 italic">
-              Digital <span className="animated-gradient-text">Frontiers</span>
-            </p>
+            <h2 className="text-display-2 italic">
+              Selected <span className="gradient-text">Work</span>
+            </h2>
           </div>
-          <a ref={linkRef} href="#contact" className="hidden md:flex items-center gap-2 text-zinc-500 hover:text-white transition-colors font-medium active-press">
-            View All Archive <ChevronRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
-          </a>
+
+          {/* Faceted filter */}
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter projects by language">
+            <span className="mr-1 hidden items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-600 sm:flex">
+              <Filter size={13} weight="bold" /> filter
+            </span>
+            {languages.map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setFilter(lang)}
+                aria-pressed={filter === lang}
+                className={`rounded-full border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.16em] transition-all duration-300 active-press ${
+                  filter === lang
+                    ? 'border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
+                    : 'border-white/8 bg-white/[0.03] text-zinc-400 hover:border-white/15 hover:text-white'
+                }`}
+              >
+                {lang}
+                {lang === 'All' && (
+                  <span className="ml-2 text-zinc-500">{projects.length}</span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Gapless Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project, idx) => (
-            <ProjectCard key={project.url} project={project} index={idx} />
-          ))}
-        </div>
+        {/* Bento Grid - gapless, dense */}
+        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 grid-flow-dense">
+          <AnimatePresence mode="popLayout">
+            {visible.map((project, idx) => (
+              <motion.div
+                key={project.id}
+                layout
+                initial={{ opacity: 0, y: 34, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -12, scale: 0.96 }}
+                transition={{ duration: 0.55, delay: idx * 0.07, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <ProjectCard project={project} index={projects.findIndex(p => p.id === project.id)} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       </div>
     </section>
   );
-};
-
-export default ProjectGrid;
+}

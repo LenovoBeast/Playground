@@ -3,17 +3,25 @@ import * as THREE from 'three'
 // Export clickable meshes so main.js can raycast them
 export const clickObjects = []
 
-export function setupScene(canvas) {
+// `getSize` lets the scene live in either a full-window backdrop or a bounded
+// container (the Games playroom). It must return the pixel size to render at.
+const defaultSize = () => ({ width: window.innerWidth, height: window.innerHeight })
+
+export function setupScene(canvas, getSize = defaultSize) {
+  const { width, height } = getSize()
+
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(0x0a080c)
   scene.fog = new THREE.FogExp2(0x0a080c, 0.025)
 
-  const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200)
+  const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 200)
   camera.position.set(0, 4, 12)
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.setSize(window.innerWidth, window.innerHeight)
+  renderer.setSize(width, height, false)
+  renderer.domElement.style.width = '100%'
+  renderer.domElement.style.height = '100%'
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.0
@@ -21,7 +29,7 @@ export function setupScene(canvas) {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
   // Orbit controls — custom minimal impl (no extra dep)
-  const controls = createOrbitControls(camera, canvas)
+  const controls = createOrbitControls(camera, canvas, getSize)
 
   // Lighting — dreamy: violet key + cyan rim + ambient
   const ambient = new THREE.AmbientLight(0x6b4d8a, 0.4)
@@ -61,19 +69,26 @@ export function setupScene(canvas) {
   return { scene, camera, renderer, controls, update: () => {}, dispose }
 }
 
-function createOrbitControls(camera, dom) {
+function createOrbitControls(camera, dom, getSize = defaultSize) {
   const target = new THREE.Vector3(0, 1, 0)
   const minDist = 6, maxDist = 24
   let radius = camera.position.length(), theta = Math.atan2(camera.position.x, camera.position.z), phi = Math.acos(camera.position.y / radius)
-  let dragging = false, lastX = 0, lastY = 0
+  let dragging = false, lastX = 0, lastY = 0, autoSpin = true
   const update = () => {
+    if (autoSpin && !dragging) theta += 0.0012
     camera.position.x = target.x + radius * Math.sin(phi) * Math.sin(theta)
     camera.position.y = target.y + radius * Math.cos(phi)
     camera.position.z = target.z + radius * Math.sin(phi) * Math.cos(theta)
     camera.lookAt(target)
   }
-  dom.addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; lastY = e.clientY; dom.setPointerCapture(e.pointerId) })
-  dom.addEventListener('pointerup', e => { dragging = false; dom.releasePointerCapture(e.pointerId) })
+  // Mouse/pen only: touch drags must stay available for scrolling the page.
+  dom.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch') return
+    dragging = true; lastX = e.clientX; lastY = e.clientY
+    dom.setPointerCapture?.(e.pointerId)
+  })
+  dom.addEventListener('pointerup', e => { dragging = false; dom.releasePointerCapture?.(e.pointerId) })
+  dom.addEventListener('pointercancel', e => { dragging = false; dom.releasePointerCapture?.(e.pointerId) })
   dom.addEventListener('pointermove', e => {
     if (!dragging) return
     const dx = e.clientX - lastX, dy = e.clientY - lastY
@@ -81,12 +96,19 @@ function createOrbitControls(camera, dom) {
     theta -= dx * 0.005
     phi = Math.max(0.2, Math.min(Math.PI - 0.2, phi - dy * 0.005))
   })
-  dom.addEventListener('wheel', e => {
-    e.preventDefault()
-    radius = Math.max(minDist, Math.min(maxDist, radius + e.deltaY * 0.01))
-  }, { passive: false })
+  // Wheel is intentionally NOT captured — hijacking it would break page scroll.
   update()
-  return { update, target: { set: (x, y, z) => target.set(x, y, z) } }
+  const size = () => getSize()
+  return {
+    update,
+    resize() {
+      const { width, height } = size()
+      camera.aspect = width / height
+      camera.updateProjectionMatrix()
+    },
+    setAutoSpin(v) { autoSpin = v },
+    target: { set: (x, y, z) => target.set(x, y, z) },
+  }
 }
 
 export function buildWorld(scene) {

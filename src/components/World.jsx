@@ -1,67 +1,158 @@
-import { useEffect, useRef } from 'react'
-import { setupScene, buildWorld, clickObjects } from '../world.js'
-import { wireGames } from '../games/wireGames.js'
+import { useEffect, useRef, useState } from 'react';
+import { createBackdrop } from '../three/backdrop.js';
+import { SECTIONS } from '../data/nav.js';
+import { useReducedMotion } from '../hooks/useReducedMotion.js';
+import { scrollToSection } from '../hooks/useActiveSection.js';
 
-// World.jsx — the Three.js backdrop that renders inside the React app.
-//
-// Previously the world lived in `src/main.js`, which index.html never loaded,
-// so the entire 3D scene (floating desk, particles, game artifacts) and all
-// five mini-games were dead code. This component mounts the world on the
-// canvas and wires the lazy game loader, pausing the world while a game
-// overlay is open.
+export default function World({ activeId = '' }) {
+  const canvasRef = useRef(null);
+  const labelRefs = useRef({});
+  const engineRef = useRef(null);
+  const [interactive, setInteractive] = useState(true);
+  const [hovered, setHovered] = useState(null);
+  const [ready, setReady] = useState(false);
+  const reducedMotion = useReducedMotion();
 
-export default function World() {
-  const canvasRef = useRef(null)
-  const worldRef = useRef(null)
-  const runningRef = useRef(true)
+  const nodes = useMemo(
+    () => SECTIONS.map((s) => ({ id: s.id, color: s.color })),
+    []
+  );
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    const { scene, camera, renderer, controls, update, dispose } = setupScene(canvas)
-    const world = buildWorld(scene)
-    worldRef.current = { scene, camera, renderer, controls, update, world, dispose }
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const pause = () => { runningRef.current = false }
-    const resume = () => {
-      runningRef.current = true
-      requestAnimationFrame(tick)
-    }
-    const { dispose: disposeGames } = wireGames({ renderer, camera, pause, resume, clickObjects })
+    const engine = createBackdrop(canvas, {
+      nodes,
+      reducedMotion,
+      onHover: setHovered,
+      onSelect: (id) => scrollToSection(id),
+    });
+    engineRef.current = engine;
+    engine.resize();
+    setReady(engine.ok);
 
-    let raf = 0
-    const tick = (t) => {
-      if (!runningRef.current) return
-      const time = t * 0.001
-      world.tick(time)
-      controls.update()
-      update()
-      renderer.render(scene, camera)
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
+    let raf = 0;
+    let last = performance.now();
+    let running = true;
 
-    const onResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight
-      camera.updateProjectionMatrix()
-      renderer.setSize(window.innerWidth, window.innerHeight)
+    const frame = (now) => {
+      if (!running) return;
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      const doc = document.documentElement;
+      const max = Math.max(doc.scrollHeight - window.innerHeight, 1);
+      engine.setScroll(window.scrollY / max);
+      engine.update(dt);
+      if (engine.ok) paintLabels();
+      raf = requestAnimationFrame(frame);
+    };
+
+    const paintLabels = () => {
+      const projected = engine.project();
+      for (const p of projected) {
+        const el = labelRefs.current[p.id];
+        if (!el) continue;
+        const shown = p.visible && interactive;
+        el.style.transform = `translate3d(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px, 0) translate(-50%, -50%) scale(${p.scale.toFixed(3)})`;
+        el.style.opacity = shown ? (p.hovered || p.active ? '1' : '0.72') : '0';
+        el.style.pointerEvents = shown ? 'auto' : 'none';
+        el.dataset.hovered = p.hovered ? 'true' : 'false';
+        el.dataset.active = p.active ? 'true' : 'false';
+      }
+    };
+
+    raf = requestAnimationFrame(frame);
+
+    const onResize = () => engine.resize();
+    const onVisibility = () => {
+      if (document.hidden) {
+        running = false;
+        cancelAnimationFrame(raf);
+      } else if (!running) {
+        running = true;
+        last = performance.now();
+        raf = requestAnimationFrame(frame);
+      }
+    };
+
+    window.addEventListener('resize', onResize);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    // Pointer input only while hero fills viewport
+    const hero = document.getElementById('hero');
+    let io;
+    if (hero && typeof IntersectionObserver !== 'undefined') {
+      io = new IntersectionObserver(
+        (entries) => {
+          const ratio = entries[0]?.intersectionRatio ?? 0;
+          const on = ratio > 0.45;
+          setInteractive(on);
+          engine.setInteractive(on);
+        },
+        { threshold: [0, 0.25, 0.5, 0.75, 1] },
+      );
+      io.observe(hero);
+    } else {
+      engine.setInteractive(false);
+      setInteractive(false);
     }
-    window.addEventListener('resize', onResize)
 
     return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('resize', onResize)
-      disposeGames()
-      dispose()
-    }
-  }, [])
+      running = false;
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', onVisibility);
+      io?.disconnect();
+      engine.dispose();
+      engineRef.current = null;
+    };
+  }, [nodes, reducedMotion]);
+
+  useEffect(() => {
+    engineRef.current?.setActive(activeId);
+  }, [activeId]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      id="canvas"
-      className="fixed inset-0 w-full h-full"
-      style={{ background: '#0a080c' }}
-      aria-hidden="true"
-    />
-  )
+    <>
+      <canvas
+        ref={canvasRef}
+        id="canvas"
+        className="nexus-canvas is-interactive"
+        aria-hidden="true"
+      />
+
+      {/* Projected labels — accessible mirror of 3D nodes */}
+      <div className="pointer-events-none fixed inset-0 z-20">
+        {SECTIONS.map((section) => (
+          <button
+            key={section.id}
+            type="button"
+            ref={(el) => {
+              labelRefs.current[section.id] = el;
+            }}
+            className="nexus-label group flex items-center gap-2 rounded-full px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.22em] text-white/70 transition-colors hover:text-white"
+            style={{ opacity: 0, color: `#${section.color.toString(16).padStart(6, '0')}` }}
+            onClick={() => scrollToSection(section.id)}
+            tabIndex={interactive && ready ? 0 : -1}
+          >
+            <span
+              className="nexus-label-dot"
+              style={{ background: `#${section.color.toString(16).padStart(6, '0')}` }}
+            />
+            <span className="hidden md:inline whitespace-nowrap">
+              {section.index} · {section.label}
+            </span>
+            <span
+              className={`hidden lg:inline whitespace-nowrap text-[10px] normal-case tracking-normal transition-opacity duration-300 ${
+                hovered === section.id ? 'opacity-90' : 'opacity-0'
+              }`}
+            >
+              {section.blurb}
+            </span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
 }

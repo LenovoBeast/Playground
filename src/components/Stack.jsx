@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { AnimatePresence } from 'framer-motion';
-import { Cpu, Server, Gamepad2, Database, Zap, Layers, Globe, Terminal, Github, ArrowRight, Check } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Cpu, DesktopTower, GameController, Database, Check, ArrowRight } from '@phosphor-icons/react';
+import { useReducedMotion } from '../hooks/useReducedMotion.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -10,10 +9,9 @@ const categories = [
   {
     id: 'frontend',
     label: 'Frontend',
-    icon: <Cpu size={24} />,
-    color: 'from-purple-500 to-pink-500',
-    bg: 'bg-gradient-to-br from-purple-500/5 to-pink-500/5',
-    border: 'border-purple-500/10',
+    icon: <Cpu size={22} weight="bold" />,
+    color: 'from-blue-500 to-indigo-500',
+    glow: 'rgba(59,130,246,0.35)',
     items: [
       { name: 'React 18', desc: 'Concurrent features, Suspense, Server Components' },
       { name: 'TypeScript', desc: 'Strict mode, advanced types, type-safe APIs' },
@@ -26,10 +24,9 @@ const categories = [
   {
     id: 'backend',
     label: 'Backend',
-    icon: <Server size={24} />,
+    icon: <DesktopTower size={22} weight="bold" />,
     color: 'from-cyan-500 to-blue-500',
-    bg: 'bg-gradient-to-br from-cyan-500/5 to-blue-500/5',
-    border: 'border-cyan-500/10',
+    glow: 'rgba(34,211,238,0.35)',
     items: [
       { name: 'Node.js', desc: 'Native ES modules, worker threads, perf hooks' },
       { name: 'PostgreSQL', desc: 'Advanced queries, JSONB, partitioning' },
@@ -42,10 +39,9 @@ const categories = [
   {
     id: 'gamedev',
     label: 'Game Dev',
-    icon: <Gamepad2 size={24} />,
+    icon: <GameController size={22} weight="bold" />,
     color: 'from-emerald-500 to-teal-500',
-    bg: 'bg-gradient-to-br from-emerald-500/5 to-teal-500/5',
-    border: 'border-emerald-500/10',
+    glow: 'rgba(52,211,153,0.35)',
     items: [
       { name: 'React Three Fiber', desc: 'Declarative Three.js, React ecosystem' },
       { name: 'Phaser 3', desc: '2D games, WebGL/Canvas, multiplayer' },
@@ -58,10 +54,9 @@ const categories = [
   {
     id: 'infra',
     label: 'Infrastructure',
-    icon: <Database size={24} />,
-    color: 'from-orange-500 to-amber-500',
-    bg: 'bg-gradient-to-br from-orange-500/5 to-amber-500/5',
-    border: 'border-orange-500/10',
+    icon: <Database size={22} weight="bold" />,
+    color: 'from-amber-500 to-orange-500',
+    glow: 'rgba(251,146,60,0.35)',
     items: [
       { name: 'GitHub Actions', desc: 'CI/CD, matrix builds, custom runners' },
       { name: 'Playwright', desc: 'E2E testing, visual regression, tracing' },
@@ -73,157 +68,144 @@ const categories = [
   },
 ];
 
-const Stack = () => {
+const RADIUS = 175;
+
+export default function Stack() {
   const [activeTab, setActiveTab] = useState('frontend');
+  const [selected, setSelected] = useState(0);
   const sectionRef = useRef(null);
   const headerRef = useRef(null);
   const tabsRef = useRef(null);
-  const contentRef = useRef(null);
+  const reducedMotion = useReducedMotion();
+
+  const category = categories.find((c) => c.id === activeTab) ?? categories[0];
 
   useEffect(() => {
+    if (reducedMotion) return;
     const ctx = gsap.context(() => {
       gsap.from(headerRef.current?.children || [], {
-        y: 40,
-        opacity: 0,
-        duration: 1,
-        ease: 'expo.out',
-        stagger: 0.1,
-        scrollTrigger: {
-          trigger: headerRef.current,
-          start: 'top 85%',
-        }
+        y: 40, opacity: 0, duration: 1, ease: 'expo.out', stagger: 0.1,
+        scrollTrigger: { trigger: headerRef.current, start: 'top 85%' },
       });
-
       gsap.from(tabsRef.current?.children || [], {
-        y: 30,
-        opacity: 0,
-        duration: 0.8,
-        ease: 'expo.out',
-        stagger: 0.06,
-        scrollTrigger: {
-          trigger: tabsRef.current,
-          start: 'top 85%',
-        }
-      });
-
-      gsap.from(contentRef.current?.children || [], {
-        y: 40,
-        opacity: 0,
-        duration: 1,
-        ease: 'expo.out',
-        scrollTrigger: {
-          trigger: contentRef.current,
-          start: 'top 85%',
-        }
+        y: 28, opacity: 0, duration: 0.8, ease: 'expo.out', stagger: 0.06,
+        scrollTrigger: { trigger: tabsRef.current, start: 'top 88%' },
       });
     }, sectionRef);
-
     return () => ctx.revert();
-  }, []);
+  }, [reducedMotion]);
 
   return (
-    <section
-      ref={sectionRef}
-      id="stack"
-      className="section-gap px-6 bg-zinc-950/50 relative"
-    >
-      <div className="absolute inset-0" aria-hidden="true">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+    <section ref={sectionRef} id="stack" className="section-gap relative px-6">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="aurora aurora-c left-1/2 top-[12%] h-[460px] w-[460px] -translate-x-1/2 bg-blue-600/12" />
       </div>
+      <div className="hairline absolute inset-x-0 top-0" />
 
       <div className="section-container relative z-10">
-        <div ref={headerRef} className="mb-16">
-          <span className="text-label mb-4 block">Tech Stack</span>
+        <div ref={headerRef} className="mb-14">
           <h2 className="text-display-2 italic leading-[1.02]">
-            Engineered with <span className="animated-gradient-text">Precision</span>
+            Engineered with <span className="gradient-text">Precision</span>
           </h2>
         </div>
 
-        <div ref={tabsRef} className="flex flex-wrap gap-3 mb-12" role="tablist" aria-label="Tech categories">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              role="tab"
-              aria-selected={activeTab === cat.id}
-              aria-controls={`panel-${cat.id}`}
-              id={`tab-${cat.id}`}
-              onClick={() => setActiveTab(cat.id)}
-              className={`relative flex items-center gap-3 px-6 py-4 rounded-2xl transition-all duration-300 font-medium ${
-                activeTab === cat.id
-                  ? 'bg-gradient-to-r text-white shadow-xl text-white'
-                  : 'glass hover:bg-white/5 text-zinc-400'
-              } ${cat.color.replace('from-', 'from-').replace('to-', ' to-')}`}
-              style={{
-                boxShadow: activeTab === cat.id ? `0 20px 40px -10px ${cat.color.replace('from-', '').replace(' to-', ', ')}` : 'none'
-              }}
-            >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${activeTab === cat.id ? 'bg-white/20' : 'bg-white/5'}`}>
-                {cat.icon}
-              </div>
-              {cat.label}
-              {activeTab === cat.id && (
-                <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-white" />
-              )}
-            </button>
-          ))}
+        <div ref={tabsRef} className="mb-12 flex flex-wrap gap-3" role="tablist" aria-label="Tech categories">
+          {categories.map((cat) => {
+            const isActive = activeTab === cat.id;
+            return (
+              <button
+                key={cat.id}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`panel-${cat.id}`}
+                id={`tab-${cat.id}`}
+                onClick={() => { setActiveTab(cat.id); setSelected(0); }}
+                className={`relative flex items-center gap-3 rounded-2xl px-5 py-4 text-sm font-semibold transition-all duration-300 active-press ${
+                  isActive ? 'text-white' : 'text-zinc-400 hover:text-white'
+                }`}
+                style={isActive ? { boxShadow: `0 22px 48px -18px ${cat.glow}` } : undefined}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="stack-tab-bg"
+                    className={`absolute inset-0 -z-10 rounded-2xl bg-gradient-to-r ${cat.color}`}
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                  />
+                )}
+                {!isActive && (
+                  <span className="absolute inset-0 -z-10 rounded-2xl border border-white/8 bg-white/[0.03]" />
+                )}
+                <span className={`grid h-10 w-10 place-items-center rounded-xl ${isActive ? 'bg-white/20' : 'bg-white/5'}`}>
+                  {cat.icon}
+                </span>
+                {cat.label}
+              </button>
+            );
+          })}
         </div>
 
-        <AnimatePresence mode="wait">
-          <div
-            ref={contentRef}
-            key={activeTab}
-            className="relative"
-            role="tabpanel"
-            id={`panel-${activeTab}`}
-            aria-labelledby={`tab-${activeTab}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-          >
-            {categories.map((cat) => (
-              cat.id === activeTab && (
-                <div className={`relative ${cat.bg} ${cat.border} border rounded-3xl p-8 md:p-12 hover-lift`}>
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent rounded-3xl pointer-events-none" />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
-                    {cat.items.map((item, i) => (
-                      <div
-                        key={item.name}
-                        className="group relative p-5 glass-strong rounded-2xl hover:border-white/10 transition-all duration-300 hover-lift active-press"
-                        style={{
-                          transitionDelay: `${i * 30}ms`
-                        }}
-                      >
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${cat.color} group-hover:scale-110 transition-transform duration-300`}>
-                            <Check size={20} className="text-white" />
-                          </div>
-                          <h4 className="font-black text-lg">{item.name}</h4>
-                        </div>
-                        <p className="text-zinc-400 text-sm leading-relaxed">{item.desc}</p>
-                        <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <ArrowRight size={16} className={`text-white/50 ${cat.color}`} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
-            ))}
-          </div>
-        </AnimatePresence>
+        <div
+          role="tabpanel"
+          id={`panel-${activeTab}`}
+          aria-labelledby={`tab-${activeTab}`}
+          className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12"
+        >
+          {/* Interactive 3D orbit */}
+          <OrbitRing
+            key={category.id}
+            items={category.items}
+            glow={category.glow}
+            selected={selected}
+            onSelect={setSelected}
+            reducedMotion={reducedMotion}
+          />
 
-        <div className="mt-16 pt-16 border-t border-white/10">
-          <h3 className="text-label mb-8 text-center">Open Source & Tooling</h3>
-          <div className="flex flex-wrap justify-center gap-4">
+          {/* Detail grid */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+            >
+              {category.items.map((item, i) => (
+                <button
+                  type="button"
+                  key={item.name}
+                  onClick={() => setSelected(i)}
+                  className={`panel group relative p-5 text-left transition-all duration-300 hover:-translate-y-1 ${
+                    selected === i ? 'border-white/20' : ''
+                  }`}
+                  style={{ transitionDelay: `${i * 25}ms` }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${category.color} transition-transform duration-300 group-hover:scale-110`}>
+                      <Check size={16} weight="bold" className="text-white" />
+                    </span>
+                    <h4 className="text-base font-bold tracking-tight">{item.name}</h4>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-zinc-400">{item.desc}</p>
+                  <span className={`absolute bottom-4 right-4 transition-opacity duration-300 ${selected === i ? 'opacity-100' : 'opacity-0'}`}>
+                    <ArrowRight size={15} weight="bold" className="text-white/60" />
+                  </span>
+                </button>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <div className="mt-20 border-t border-white/8 pt-14">
+          <h3 className="mb-8 text-center text-label">Open Source & Tooling</h3>
+          <div className="flex flex-wrap justify-center gap-3">
             {['Vite', 'React', 'Tailwind', 'TypeScript', 'GSAP', 'Framer Motion', 'Playwright', 'Vitest', 'ESLint', 'Prettier'].map((tool) => (
               <a
                 key={tool}
                 href={`https://github.com/search?q=${tool}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 glass hover:bg-white/5 rounded-xl text-sm font-medium transition-colors active-press group hover:scale-105"
+                className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-2 text-sm font-medium text-zinc-400 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:text-white active-press"
               >
                 {tool}
               </a>
@@ -233,6 +215,133 @@ const Stack = () => {
       </div>
     </section>
   );
-};
+}
 
-export default Stack;
+function OrbitRing({ items, glow, selected, onSelect, reducedMotion }) {
+  const ringRef = useRef(null);
+  const tokenRefs = useRef([]);
+  const spin = useRef(0);
+  const velocity = useRef(0.18);
+  const dragging = useRef(false);
+  const lastX = useRef(0);
+  const [hovered, setHovered] = useState(null);
+
+  useEffect(() => {
+    tokenRefs.current = tokenRefs.current.slice(0, items.length);
+    let raf = 0;
+    let last = performance.now();
+
+    const render = (now) => {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      if (!dragging.current) {
+        velocity.current += (0.18 - velocity.current) * Math.min(1, dt * 1.6);
+      }
+      spin.current += velocity.current * (reducedMotion ? 0 : dt * 60);
+      if (ringRef.current) {
+        ringRef.current.style.transform = `rotateX(-12deg) rotateY(${spin.current.toFixed(2)}deg)`;
+      }
+      tokenRefs.current.forEach((el, i) => {
+        if (!el) return;
+        const angle = (i / items.length) * 360;
+        el.style.transform = `rotateY(${angle}deg) translateZ(${RADIUS}px) rotateY(${(-angle - spin.current).toFixed(2)}deg)`;
+      });
+      raf = requestAnimationFrame(render);
+    };
+
+    raf = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(raf);
+  }, [items.length, reducedMotion]);
+
+  const onPointerDown = (e) => {
+    if (e.pointerType === 'touch') return;
+    dragging.current = true;
+    lastX.current = e.clientX;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onPointerMove = (e) => {
+    if (!dragging.current) return;
+    const dx = e.clientX - lastX.current;
+    lastX.current = e.clientX;
+    velocity.current = dx * 0.35;
+    spin.current += dx * 0.35;
+  };
+  const stop = (e) => {
+    dragging.current = false;
+    e?.currentTarget?.releasePointerCapture?.(e.pointerId);
+  };
+
+  const focusIndex = hovered ?? selected;
+  const focus = items[focusIndex] ?? items[0];
+
+  return (
+    <div className="relative">
+      <div
+        className="panel relative flex h-[380px] cursor-grab items-center justify-center overflow-hidden active:cursor-grabbing sm:h-[440px]"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={stop}
+        onPointerCancel={stop}
+        onPointerLeave={(e) => { stop(e); setHovered(null); }}
+        style={{ perspective: '1000px' }}
+      >
+        {/* Core readout */}
+        <div className="pointer-events-none absolute inset-0 grid place-items-center">
+          <div
+            className="absolute h-40 w-40 rounded-full blur-3xl"
+            style={{ background: glow, opacity: 0.35 }}
+          />
+          <div className="relative z-10 max-w-[16rem] px-6 text-center">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={focus?.name}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25 }}
+              >
+                <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+                  {String(focusIndex + 1).padStart(2, '0')} / {String(items.length).padStart(2, '0')}
+                </p>
+                <h4 className="mt-2 text-2xl font-black tracking-tight">{focus?.name}</h4>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{focus?.desc}</p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Orbiting tokens */}
+        <div
+          ref={ringRef}
+          className="pointer-events-none relative h-full w-full"
+          style={{ transformStyle: 'preserve-3d' }}
+        >
+          {items.map((item, i) => (
+            <button
+              type="button"
+              key={item.name}
+              ref={(el) => { tokenRefs.current[i] = el; }}
+              onClick={() => onSelect(i)}
+              onPointerEnter={() => setHovered(i)}
+              onPointerLeave={() => setHovered(null)}
+              className="pointer-events-auto absolute left-1/2 top-1/2 -ml-[86px] -mt-[21px] w-[172px] rounded-full border px-4 py-2.5 text-center text-xs font-semibold backdrop-blur-md transition-colors duration-300"
+              style={{
+                transformStyle: 'preserve-3d',
+                borderColor: focusIndex === i ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.12)',
+                background: focusIndex === i ? 'rgba(255,255,255,0.14)' : 'rgba(9,9,14,0.55)',
+                color: focusIndex === i ? '#fff' : 'rgba(228,228,231,0.75)',
+                boxShadow: focusIndex === i ? `0 0 26px -4px ${glow}` : 'none',
+              }}
+            >
+              {item.name}
+            </button>
+          ))}
+        </div>
+
+        <span className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-600">
+          drag to rotate
+        </span>
+      </div>
+    </div>
+  );
+}

@@ -1,347 +1,233 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowRight, Github, ExternalLink, Cpu, Zap, Code2, Terminal } from 'lucide-react';
+import { ArrowRight, GithubLogo, Cpu, Lightning, Code, Terminal } from '@phosphor-icons/react';
+import { useReducedMotion } from '../hooks/useReducedMotion.js';
+import { useTilt } from '../hooks/useTilt.js';
+import { scrollToSection } from '../hooks/useActiveSection.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const Hero = () => {
+export default function Hero() {
   const heroRef = useRef(null);
-  const titleLinesRef = useRef([]);
+  const line1Ref = useRef(null);
+  const line2Ref = useRef(null);
   const subtitleRef = useRef(null);
-  const ctaPrimaryRef = useRef(null);
-  const ctaSecondaryRef = useRef(null);
-  const scrollIndicatorRef = useRef(null);
-  const orbRefs = useRef([null, null, null]);
-  const cardRefs = useRef([null, null, null, null]);
-  // Honor prefers-reduced-motion: skip all choreography when the user
-  // has requested less motion (accessibility, vestibular disorders).
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const ctaRef = useRef(null);
+  const visualRef = useRef(null);
+  const badgeRefs = useRef([]);
+  const reducedMotion = useReducedMotion();
+  const tilt = useTilt({ max: 9, scale: 1.02, lift: 24 });
 
   useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(media.matches);
-    const onChange = (e) => setReducedMotion(e.matches);
-    media.addEventListener('change', onChange);
-    return () => media.removeEventListener('change', onChange);
-  }, []);
-
-  useEffect(() => {
-    // No animations at all when motion is reduced — content is still
-    // visible, just without entrance choreography or parallax drift.
     if (reducedMotion) return;
     const ctx = gsap.context(() => {
-      // Initial entrance animation
       const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
 
-      tl.from(titleLinesRef.current, {
-        y: 80,
-        opacity: 0,
-        duration: 1.2,
-        stagger: 0.08,
-      })
-        .from(subtitleRef.current, {
-          y: 30,
-          opacity: 0,
-          duration: 0.8,
-        }, '-=0.6')
-        .from([ctaPrimaryRef.current, ctaSecondaryRef.current], {
-          y: 30,
-          opacity: 0,
-          duration: 0.8,
-          stagger: 0.08,
-        }, '-=0.4')
-        .from(scrollIndicatorRef.current, {
-          y: 20,
-          opacity: 0,
-          duration: 0.6,
-        }, '-=0.2');
+      tl.from(line1Ref.current, { y: 60, opacity: 0, duration: 1.1 })
+        .from(line2Ref.current, { y: 60, opacity: 0, duration: 1.1 }, '-=0.8')
+        .from(subtitleRef.current, { y: 30, opacity: 0, duration: 0.9 }, '-=0.6')
+        .from(ctaRef.current?.children || [], { y: 28, opacity: 0, duration: 0.8, stagger: 0.09 }, '-=0.5')
+        .from(visualRef.current, { y: 80, opacity: 0, rotateY: -12, duration: 1.3 }, '-=1.1')
+        .from(badgeRefs.current, { y: 40, opacity: 0, scale: 0.9, stagger: 0.08, duration: 0.7 }, '-=0.8');
 
-      // Floating orbs animation with 3D effect
-      orbRefs.current.forEach((orb, i) => {
-        if (orb) {
-          gsap.to(orb, {
-            y: (i - 1) * 100,
-            x: (i - 1) * 60,
-            rotation: (i - 1) * 8,
-            duration: 20 + i * 4,
-            ease: 'none',
-            repeat: -1,
-            yoyo: true,
-          });
-        }
-      });
-
-      // Scroll parallax for orbs with 3D effect
-      ScrollTrigger.create({
-        trigger: heroRef.current,
-        start: 'top top',
-        end: 'bottom top',
-        scrub: 1,
-        onUpdate: (self) => {
-          const progress = self.progress;
-          orbRefs.current.forEach((orb, i) => {
-            if (orb) {
-              gsap.set(orb, {
-                scale: 1 + progress * 0.3,
-                opacity: 0.15 - progress * 0.1,
-                rotateY: progress * 15,
-                rotateX: progress * 10,
-              });
-            }
-          });
+      // Scrubbing text reveals on scroll
+      gsap.to([line1Ref.current, line2Ref.current], {
+        yPercent: -18,
+        opacity: 0.15,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 1,
         },
       });
 
-      // Scroll indicator fade out
-      ScrollTrigger.create({
-        trigger: heroRef.current,
-        start: 'top top',
-        end: '+=200',
-        scrub: true,
-        onUpdate: (self) => {
-          if (scrollIndicatorRef.current) {
-            gsap.set(scrollIndicatorRef.current, {
-              opacity: 1 - self.progress * 2,
-            });
-          }
+      // Visual card drift
+      gsap.to(visualRef.current, {
+        yPercent: -12,
+        rotateY: 6,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 1,
         },
       });
-
-      // Card stagger animations
-      cardRefs.current.forEach((card, index) => {
-        if (card) {
-          gsap.from(card, {
-            opacity: 0,
-            y: 100,
-            scale: 0.8,
-            duration: 1,
-            ease: 'back.out(1.7)',
-            delay: index * 0.15,
-          });
-        }
-      });
-
     }, heroRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [reducedMotion]);
+
+  const iconMap = {
+    cpu: <Cpu size={18} weight="bold" />,
+    zap: <Lightning size={18} weight="bold" />,
+    code: <Code size={18} weight="bold" />,
+    terminal: <Terminal size={18} weight="bold" />,
+  };
+
+  const StatCard = ({ value, label, icon }) => (
+    <div className="group flex items-start gap-3">
+      <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/8 bg-white/[0.04] text-blue-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110">
+        {iconMap[icon]}
+      </span>
+      <span className="flex flex-col">
+        <span className="text-2xl font-black leading-none tracking-tight md:text-3xl tabular-nums">{value}</span>
+        <span className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">{label}</span>
+      </span>
+    </div>
+  );
+
+  const TerminalWindow3D = () => (
+    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[1.125rem] border border-white/5 bg-zinc-950/75 backdrop-blur-sm">
+      {/* Scanning light sweep */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="scan-line h-16 w-full bg-gradient-to-b from-transparent via-blue-500/8 to-transparent" />
+      </div>
+
+      {/* Terminal header */}
+      <div className="flex items-center gap-2 border-b border-white/5 bg-zinc-900/50 px-4 py-3">
+        <div className="flex gap-1.5">
+          <div className="h-3 w-3 rounded-full bg-red-500/80" />
+          <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
+          <div className="h-3 w-3 rounded-full bg-green-500/80" />
+        </div>
+        <div className="flex-1 text-center font-mono text-xs text-zinc-500">main.tsx</div>
+        <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-400/80 sm:inline">live</span>
+      </div>
+
+      {/* Terminal content */}
+      <div className="no-scrollbar flex-1 overflow-auto p-5 font-mono text-[13px] leading-relaxed text-zinc-300 md:p-6">
+        <div className="space-y-2.5">
+          <CodeLine prefix="> " content="npm create vite@latest my-game --template react-ts" />
+          <CodeLine prefix="✓ " content="Project scaffolded in 247ms" className="text-green-400" />
+          <CodeLine prefix="> " content="npm install three @react-three/fiber @react-three/drei" />
+          <CodeLine prefix="✓ " content="WebGPU renderer + physics pipeline ready" className="text-cyan-400" />
+          <CodeLine prefix="> " content="npm run dev" />
+          <CodeLine prefix="▲ " content="Local:   http://localhost:5173" className="text-blue-400" />
+          <CodeLine prefix="▲ " content="Network: http://192.168.1.47:5173" className="text-blue-400" />
+          <div className="h-4" />
+          <CodeLine prefix="// " content="Engine initialized — ready to build" className="italic text-zinc-500" />
+          <CodeLine prefix="▌" content="" className="text-blue-400" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const CodeLine = ({ prefix, content, className = '' }) => (
+    <div className={`flex gap-2 ${className}`}>
+      <span className="whitespace-nowrap text-zinc-500">{prefix}</span>
+      <span className="break-all">{content}</span>
+    </div>
+  );
 
   return (
     <section
       ref={heroRef}
-      className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden noise-overlay section-container"
-      style={{ minHeight: '100dvh' }}
+      id="hero"
+      className="relative flex min-h-screen items-center px-6 pb-24 pt-32 md:pb-28"
+      style={{ minHeight: '100svh' }}
       aria-labelledby="hero-title"
     >
-      {/* Ambient background orbs with 3D effect */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div
-          ref={orbRefs.current[0]}
-          className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-gradient-to-br from-purple-600/8 to-transparent rounded-full blur-[300px]"
-        />
-        <div
-          ref={orbRefs.current[1]}
-          className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-gradient-to-bl from-cyan-500/8 to-transparent rounded-full blur-[300px]"
-        />
-        <div
-          ref={orbRefs.current[2]}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-r from-purple-600/4 to-cyan-500/4 rounded-full blur-[200px]"
-        />
-        {/* Subtle 3D grid pattern */}
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100 0L0 100M0 0L100 100' fill='none' stroke='white' stroke-width='0.3'%3E%3C/path%3E%3C/svg%3E")`,
-          backgroundSize: '100px 100px',
-        }} />
-      </div>
+      {/* Content sits above the 3D layer */}
+      <div className="pointer-events-none relative z-10 mx-auto w-full max-w-[1400px]">
+        <div className="grid items-center gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
+          {/* Copy - left aligned, offset */}
+          <div className="space-y-10 lg:pt-8">
+            {/* NO EYEBROW in hero */}
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-20 lg:gap-28 items-center">
-          {/* Left: Content */}
-          <div className="space-y-12">
-            {/* Eyebrow */}
-            <div className="inline-flex items-center gap-3 px-5 py-2 rounded-xl glass border border-white/5 hover-lift">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500" />
+            <h1 id="hero-title" className="pointer-events-auto select-text space-y-4">
+              <span ref={line1Ref} className="block text-display-2 italic leading-[0.95] text-balance">
+                Crafting
               </span>
-              <span className="text-label">Available for elite projects & collaborations</span>
-            </div>
-
-            {/* Headline - Editorial Split with 3D effect */}
-            <h1
-              id="hero-title"
-              ref={(el) => { titleLinesRef.current = el?.children || []; }}
-              className="text-display-2 italic relative"
-              style={{ maxWidth: '100%', wordBreak: 'break-word' }}
-            >
-              <span className="block animate-fade-up">Crafting</span>
-              <span className="block animated-gradient-text animate-fade-up-delay-1">Digital Experiences</span>
-              {/* 3D depth effect */}
-              <div className="absolute inset-0 pointer-events-none" style={{
-                background: `linear-gradient(45deg, transparent 30%, rgba(168, 85, 247, 0.03) 50%, transparent 70%)`,
-                transform: `rotate(-5deg) translate(2px, -2px)`,
-                pointerEvents: 'none',
-              }} />
+              <span ref={line2Ref} className="gradient-text block text-display-2 italic leading-[0.95] text-balance">
+                Digital Frontiers
+              </span>
             </h1>
 
-            {/* Subtitle */}
-            <p
-              ref={subtitleRef}
-              className="text-body-lg animate-fade-up-delay-2 max-w-[45ch]"
-            >
-              Senior Game Dev & Web Engineer architecting immersive digital experiences that push the boundaries of what's possible in the browser.
+            <p ref={subtitleRef} className="pointer-events-auto text-body-lg max-w-[48ch]">
+              Senior Game Dev & Web Engineer architecting immersive digital experiences that push browser boundaries.
             </p>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-start justify-start gap-6 animate-fade-up-delay-3">
+            <div ref={ctaRef} className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <button
-                ref={ctaPrimaryRef}
-                className="magnetic-btn active-press group flex items-center justify-center gap-4 px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-2xl font-bold text-xl transition-all shadow-xl shadow-purple-600/30 min-w-[200px]"
+                type="button"
+                onClick={() => scrollToSection('projects')}
+                className="magnetic-btn btn-sweep active-press group pointer-events-auto flex items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500"
               >
-                View Selected Work
-                <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />
+                View Work
+                <ArrowRight size={22} weight="bold" className="transition-transform group-hover:translate-x-1.5" />
               </button>
-              <button
-                ref={ctaSecondaryRef}
-                className="magnetic-btn active-press group flex items-center justify-center gap-4 px-10 py-5 glass hover:bg-white/5 rounded-2xl font-bold text-xl transition-all min-w-[200px] border border-white/5"
+              <a
+                href="https://github.com/LenovoBeast"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="magnetic-btn active-press group pointer-events-auto flex items-center justify-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-8 py-4 text-lg font-bold backdrop-blur-xl transition-colors hover:bg-white/[0.07]"
               >
-                <Github size={24} />
+                <Github size={22} weight="bold" />
                 GitHub
-              </button>
+              </a>
             </div>
 
-            {/* Stats strip with 3D cards */}
-            <div className="flex flex-wrap gap-12 md:gap-16 pt-8 border-t border-white/5 animate-fade-up-delay-4">
-              <StatCard value="8+" label="Years Experience" icon="cpu" cardRef={cardRefs.current[0]} />
-              <StatCard value="47" label="Projects Shipped" icon="zap" cardRef={cardRefs.current[1]} />
-              <StatCard value="12k+" label="Lines of Code/Day" icon="code" cardRef={cardRefs.current[2]} />
+            <div className="flex flex-wrap gap-10 border-t border-white/8 pt-8 md:gap-14">
+              <StatCard value="8+" label="Years Experience" icon="cpu" />
+              <StatCard value="47" label="Projects Shipped" icon="zap" />
+              <StatCard value="12k+" label="Lines of Code/Day" icon="code" />
             </div>
           </div>
 
-          {/* Right: Visual / Interactive with 3D elements */}
+          {/* Visual - right, floating orbital */}
           <div className="relative">
-            <div className="relative aspect-square max-w-lg mx-auto">
-              {/* Main 3D card */}
+            <div
+              ref={visualRef}
+              className="tilt-scene pointer-events-auto relative mx-auto aspect-square w-full max-w-md"
+              onPointerMove={tilt.onPointerMove}
+              onPointerLeave={tilt.onPointerLeave}
+            >
+              {/* Ambient bloom behind the card */}
               <div
-                ref={cardRefs.current[0]}
-                className="absolute inset-0 double-bezel-3d spotlight-3d hover-lift-3d"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-600/6 to-cyan-600/6" />
-                <TerminalWindow3D />
-              </div>
-              {/* Floating accent badges with 3D effect */}
-              <div
-                ref={cardRefs.current[1]}
-                className="absolute -bottom-8 -right-8 w-40 h-40 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-3xl shadow-purple-500/30 hover-lift-3d animate-fade-up-delay-3"
-              >
-                <span className="text-3xl font-black">8+</span>
-              </div>
-              <div
-                ref={cardRefs.current[2]}
-                className="absolute -top-8 -left-8 w-28 h-28 rounded-3xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-3xl shadow-cyan-500/30 hover-lift-3d animate-fade-up-delay-4"
-              >
-                <span className="text-2xl font-black">47</span>
-              </div>
-              <div
-                ref={cardRefs.current[3]}
-                className="absolute bottom-20 right-20 w-36 h-36 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-2xl shadow-emerald-500/30 hover-lift-3d animate-fade-up-delay-5"
-              >
-                <span className="text-xl font-black">AI</span>
+                aria-hidden="true"
+                className="absolute -inset-10 -z-10 rounded-full opacity-70 blur-3xl"
+                style={{
+                  background: 'conic-gradient(from 120deg, rgba(59,130,246,0.35), rgba(37,99,233,0.25), rgba(168,85,247,0.3), rgba(59,130,246,0.35))',
+                }}
+              />
+
+              <div ref={tilt.ref} className="tilt-body relative h-full w-full rounded-[1.5rem]">
+                <div className="panel corner-frame h-full w-full p-1.5">
+                  <TerminalWindow3D />
+                </div>
+                <div className="tilt-sheen rounded-[1.5rem]" />
+
+                {/* Floating depth badges - orbital elements */}
+                <div
+                  ref={(el) => { badgeRefs.current[0] = el; }}
+                  className="tilt-layer absolute -bottom-6 -right-4 grid h-24 w-24 place-items-center rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-2xl shadow-blue-500/30 md:h-28 md:w-28"
+                  style={{ transform: 'translateZ(60px)' }}
+                >
+                  <span className="text-2xl font-black md:text-3xl">8+</span>
+                </div>
+                <div
+                  ref={(el) => { badgeRefs.current[1] = el; }}
+                  className="tilt-layer absolute -left-4 -top-6 grid h-20 w-20 place-items-center rounded-3xl bg-gradient-to-br from-cyan-500 to-blue-500 shadow-2xl shadow-cyan-500/30 md:h-24 md:w-24"
+                  style={{ transform: 'translateZ(80px)' }}
+                >
+                  <span className="text-xl font-black md:text-2xl">47</span>
+                </div>
+                <div
+                  ref={(el) => { badgeRefs.current[2] = el; }}
+                  className="tilt-layer absolute -right-2 top-1/2 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-xl shadow-emerald-500/30"
+                  style={{ transform: 'translateZ(45px)' }}
+                >
+                  <span className="text-sm font-black tracking-widest">AI</span>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Scroll indicator with 3D effect */}
-        <div
-          ref={scrollIndicatorRef}
-          className="absolute bottom-14 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-zinc-500 font-mono text-xs uppercase tracking-widest animate-bounce-subtle"
-        >
-          <span>Scroll to explore</span>
-          <div className="relative w-10 h-10">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M19 12l-7 7-7-7" />
-            </svg>
-            <div className="absolute inset-0 pointer-events-none" style={{
-              background: `radial-gradient(circle at 30% 30%, rgba(168, 85, 247, 0.2) 0%, transparent 70%)`,
-              transform: `rotate(45deg)`,
-            }} />
           </div>
         </div>
       </div>
     </section>
   );
-};
-
-const StatItem = ({ value, label }) => (
-  <div className="text-center">
-    <div className="text-3xl md:text-4xl font-black tracking-tight">{value}</div>
-    <div className="text-xs uppercase tracking-widest text-zinc-500 mt-1">{label}</div>
-  </div>
-);
-
-const StatCard = ({ value, label, icon, cardRef }) => {
-  const iconMap = {
-    cpu: <Cpu size={20} />,
-    zap: <Zap size={20} />,
-    code: <Code2 size={20} />,
-    terminal: <Terminal size={20} />,
-  };
-
-  return (
-    <div ref={cardRef} className="text-center">
-      <div className="flex items-center justify-center mb-3">
-        <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
-          {iconMap[icon]}
-        </div>
-      </div>
-      <div className="text-2xl font-black tracking-tight">{value}</div>
-      <div className="text-xs uppercase tracking-widest text-zinc-500">{label}</div>
-    </div>
-  );
-};
-
-const TerminalWindow3D = () => (
-  <div className="relative h-full w-full rounded-[calc(1.5rem-0.375rem)] bg-zinc-950/70 backdrop-blur-sm flex flex-col overflow-hidden border border-white/4">
-    {/* 3D effect container */}
-    <div className="absolute inset-0" style={{
-      background: `linear-gradient(45deg, transparent 30%, rgba(168, 85, 247, 0.08) 50%, transparent 70%)`,
-      transform: `rotate(-3deg) scale(1.02)`,
-      pointerEvents: 'none',
-    }} />
-    {/* Terminal header */}
-    <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-zinc-900/50">
-      <div className="flex gap-1.5">
-        <div className="w-3 h-3 rounded-full bg-red-500/80" />
-        <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-        <div className="w-3 h-3 rounded-full bg-green-500/80" />
-      </div>
-      <div className="flex-1 text-center text-xs font-mono text-zinc-500">main.tsx</div>
-    </div>
-
-    {/* Terminal content */}
-    <div className="flex-1 p-6 font-mono text-sm text-zinc-300 leading-relaxed overflow-auto">
-      <div className="space-y-3">
-        <CodeLine prefix="> " content="npm create vite@latest my-game --template react-ts" />
-        <CodeLine prefix="✓ " content="Project scaffolded in 247ms" className="text-green-400" />
-        <CodeLine prefix="> " content="npm install three @react-three/fiber @react-three/drei" />
-        <CodeLine prefix="✓ " content="WebGPU renderer + physics pipeline ready" className="text-cyan-400" />
-        <CodeLine prefix="> " content="npm run dev" />
-        <CodeLine prefix="▲ " content="Local:   http://localhost:5173" className="text-purple-400" />
-        <CodeLine prefix="▲ " content="Network: http://192.168.1.47:5173" className="text-purple-400" />
-        <div className="h-4" />
-        <CodeLine prefix="// " content="Engine initialized — ready to build" className="text-zinc-500 italic" />
-      </div>
-    </div>
-  </div>
-);
-
-const CodeLine = ({ prefix, content, className = '' }) => (
-  <div className={`flex gap-2 ${className}`}>
-    <span className="text-zinc-500 whitespace-nowrap">{prefix}</span>
-    <span>{content}</span>
-  </div>
-);
-
-export default Hero;
+}

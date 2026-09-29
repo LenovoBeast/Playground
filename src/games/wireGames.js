@@ -91,12 +91,23 @@ export function wireGames({ renderer, camera, pause, resume, clickObjects }) {
   const raycaster = new THREE.Raycaster()
   const pointer = new THREE.Vector2()
   renderer.domElement.addEventListener('pointerdown', e => {
-    pointer.x = (e.clientX / window.innerWidth) * 2 - 1
-    pointer.y = -(e.clientY / window.innerHeight) * 2 + 1
+    // NDC must be derived from the canvas rect, not the window: the playroom
+    // canvas is a bounded element inside the Games section.
+    const rect = renderer.domElement.getBoundingClientRect()
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
     raycaster.setFromCamera(pointer, camera)
     const hits = raycaster.intersectObjects(clickObjects, true)
-    if (hits.length && hits[0].object.userData.game) {
-      document.querySelector(`[data-game="${hits[0].object.userData.game}"]`).click()
+    // `userData.game` lives on the artifact *group*, while the raycast reports
+    // the individual child mesh — walk up the parents to resolve it.
+    let game = null
+    let obj = hits.length ? hits[0].object : null
+    while (obj && !game) {
+      game = obj.userData?.game ?? null
+      obj = obj.parent
+    }
+    if (game) {
+      document.querySelector(`[data-game="${game}"]`)?.click()
     }
   })
 

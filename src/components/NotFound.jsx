@@ -1,126 +1,99 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Home, RotateCcw, Search, Sparkles } from 'lucide-react';
+import { House, ArrowULeftDown, Compass, Sparkle, MagnifyingGlass } from '@phosphor-icons/react';
 
-const NotFound = () => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
-    },
-  };
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.09, delayChildren: 0.15 } },
+};
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.7, ease: [0.32, 0.72, 0, 1] },
-    },
-  };
+const itemVariants = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.32, 0.72, 0, 1] } },
+};
 
+export default function NotFound() {
   return (
-    <section className="min-h-screen flex items-center justify-center px-6 bg-obsidian relative overflow-hidden noise-overlay">
-      {/* Background atmosphere */}
-      <div className="absolute inset-0 bg-gradient-to-b from-purple-600/5 via-transparent to-pink-600/5" />
-      <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/10 blur-[150px] rounded-full pointer-events-none"
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 1.5, ease: [0.32, 0.72, 0, 1] }}
-        style={{ animation: 'float 20s ease-in-out infinite' }}
-      />
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <div className="aurora aurora-a left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 bg-blue-600/20" />
+        <div className="grid-veil absolute inset-0 opacity-40" />
+      </div>
 
-      <div className="relative z-10 text-center max-w-md mx-auto">
-        <motion.div
-          className="mb-8"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
+      <div className="relative z-10 mx-auto max-w-lg text-center">
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="mb-10">
           <motion.div
-            className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-white/5 border border-white/10 mb-6"
+            className="relative mx-auto mb-6 grid h-28 w-28 place-items-center"
             variants={itemVariants}
-            whileHover={{ scale: 1.05, rotate: 3 }}
+            whileHover={{ scale: 1.05, rotate: 4 }}
           >
+            <span className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-600/40 to-indigo-500/30 blur-xl" />
+            <span className="absolute inset-0 rounded-3xl border border-white/10 bg-white/[0.04]" />
+            <span className="animate-spin-slower absolute -inset-3 rounded-[2rem] border border-dashed border-white/12" />
             <motion.span
-              className="text-4xl font-black text-purple-500"
+              className="relative text-4xl font-black text-blue-300"
               animate={{ rotate: [0, -5, 5, -5, 0] }}
-              transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
+              transition={{ duration: 1, repeat: Infinity, repeatDelay: 2.4 }}
             >
               404
             </motion.span>
           </motion.div>
 
           <motion.h1
-            className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic mb-4"
+            className="mb-4 text-4xl font-black uppercase italic tracking-tighter md:text-6xl"
             variants={itemVariants}
           >
             Page Not Found
           </motion.h1>
 
-          <motion.p
-            className="text-gray-400 text-lg mb-10 leading-relaxed"
-            variants={itemVariants}
-          >
-            The digital frontier you're looking for doesn't exist.
-            Maybe it was lost in the void, or never deployed.
+          <motion.p className="text-lg leading-relaxed text-zinc-400" variants={itemVariants}>
+            The digital frontier you&apos;re looking for doesn&apos;t exist. Maybe it was lost in the
+            void, or never deployed.
           </motion.p>
         </motion.div>
 
         <motion.div
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          className="flex flex-col items-center justify-center gap-4 sm:flex-row"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          <motion.button
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-xl font-bold text-white transition-all shadow-xl shadow-purple-600/25 group active:scale-95"
-            whileHover={{ scale: 1.02, y: -2, boxShadow: '0 20px 40px -10px rgba(168, 85, 247, 0.4)' }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => window.location.href = '/'}
+          <Link
+            to="/"
+            className="magnetic-btn btn-sweep active-press relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 font-bold text-white shadow-xl shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500 sm:w-auto"
           >
-            <Home size={20} />
+            <House size={18} weight="bold" />
             Back to Nexus
-          </motion.button>
-          <motion.button
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 glass hover:bg-white/10 rounded-xl font-bold transition-all active:scale-95"
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
+          </Link>
+          <button
+            type="button"
             onClick={() => window.history.back()}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/8 bg-white/[0.03] px-8 py-4 font-bold backdrop-blur-xl transition-all hover:bg-white/[0.07] active-press sm:w-auto"
           >
-            <RotateCcw size={20} />
+            <ArrowULeftDown size={18} weight="bold" />
             Go Back
-          </motion.button>
+          </button>
         </motion.div>
 
         <motion.div
-          className="mt-16 flex items-center justify-center gap-8 opacity-50"
+          className="mt-16 flex items-center justify-center gap-8 opacity-60"
           variants={itemVariants}
-          transition={{ delay: 0.5 }}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.4 }}
         >
-          <a href="/" className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors">
-            <Search size={18} /> Explore
-          </a>
-          <a href="#projects" className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors">
-            <Sparkles size={18} /> Projects
-          </a>
-          <a href="#contact" className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors">
-            <Home size={18} /> Contact
-          </a>
+          <Link to="/" className="flex items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-white">
+            <Compass size={16} weight="bold" /> Explore
+          </Link>
+          <Link to="/#projects" className="flex items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-white">
+            <Sparkle size={16} weight="bold" /> Projects
+          </Link>
+          <Link to="/#contact" className="flex items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-white">
+            <MagnifyingGlass size={16} weight="bold" /> Contact
+          </Link>
         </motion.div>
-
-        <style jsx>{`
-          @keyframes float {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.03) translateY(-15px); }
-          }
-        `}</style>
       </div>
     </section>
   );
-};
-
-export default NotFound;
+}

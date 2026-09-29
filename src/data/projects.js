@@ -1,13 +1,35 @@
-// Single source of truth for the portfolio's project catalogue.
-//
-// `projects.json` is the canonical file (readable by tooling, non-JS
-// consumers, and the contract enforced by `test/portfolioData.test.js`).
-// This module re-exports it so the rendered UI can never drift from the JSON.
-//
-// Keep the two in sync: editing the JSON is the only way to change what the
-// site shows. Do not hand-edit the array here.
+// Project data - canonical source
+export const projects = [
+  {
+    id: 1,
+    title: "Beast-Invoice",
+    description: "Fast, garage-staff-friendly invoice generator for High Performance Garage - single-file browser mockup with autofill, quick-pick parts & services, and live totals",
+    url: "https://github.com/LenovoBeast/Beast-Invoice",
+    language: "TypeScript",
+    thumbnail: "https://picsum.photos/seed/beast-invoice-dashboard/800/600",
+    accent: "from-blue-500 to-indigo-500",
+    tint: "rgba(59,130,246,0.18)"
+  },
+  {
+    id: 2,
+    title: "Playground",
+    description: "Personal playground repository for experiments and utilities - React, Three.js, GSAP, WebGPU prototypes",
+    url: "https://github.com/LenovoBeast/Playground",
+    language: "JavaScript",
+    thumbnail: "https://picsum.photos/seed/playground-3d-engine/800/600",
+    accent: "from-cyan-500 to-blue-500",
+    tint: "rgba(34,211,238,0.18)"
+  },
+  {
+    id: 3,
+    title: "Lenovo-DevPort",
+    description: "Development portfolio site showcasing tools and projects - HTML, CSS, vanilla JS with dark tech aesthetic",
+    url: "https://github.com/LenovoBeast/Lenovo-DevPort",
+    language: "HTML",
+    thumbnail: "https://picsum.photos/seed/portfolio-dark-tech/800/600",
+    accent: "from-emerald-500 to-teal-500",
+    tint: "rgba(52,211,153,0.18)"
+  },
+];
 
-import projects from '../../projects.json' with { type: 'json' }
-
-export { projects }
-export default projects
+export default projects;
