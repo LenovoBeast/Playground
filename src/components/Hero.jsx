@@ -132,7 +132,7 @@ export default function Hero() {
       aria-labelledby="hero-title"
     >
       {/* Content sits above the 3D layer */}
-      <div className="pointer-events-none relative z-10 mx-auto w-full max-w-[1400px]">
+      <div className="relative z-10 mx-auto w-full max-w-[1400px]">
         <div className="grid items-center gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
           {/* Copy - left aligned, offset */}
           <div className="space-y-10 lg:pt-8">

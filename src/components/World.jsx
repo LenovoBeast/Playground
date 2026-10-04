@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { createBackdrop } from '../three/backdrop.js';
 import { SECTIONS } from '../data/nav.js';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';

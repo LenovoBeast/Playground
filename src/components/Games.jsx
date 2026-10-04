@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Play, SquareLogo, CompassTool, X, CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { Play, SquareLogo, CompassTool, X, CaretLeft, CaretRight, Planet, ArrowRight, Spinner } from '@phosphor-icons/react';
 import { setupScene, buildWorld, clickObjects } from '../world.js';
-import { wireGames } from '../games/wireGames.js';
+import { wireGames, createGameLoaders } from '../games/wireGames.js';
 import { useTilt } from '../hooks/useTilt.js';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
 
@@ -17,12 +17,80 @@ const GAMES = [
   { name: 'launch', title: 'Launch', desc: 'Aim and fire at the target. Click-drag to set angle and power.', accent: 'from-amber-500 to-orange-500', tint: 'rgba(251,146,60,0.18)' },
 ];
 
-function GameOverlay({ name, title, desc, accent, onClose }) {
+function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
+  const overlayRef = useRef(null);
+  const prevFocus = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Toggle the CSS class that shows/hides the overlay. The `game-overlay`
+  // base class keeps it `display: none`; `.active` flips it on.
+  useEffect(() => {
+    const el = overlayRef.current;
+    if (!el) return;
+    el.classList.toggle('active', open);
+  }, [open]);
+
+  useEffect(() => {
+    return () => {
+      prevFocus.current?.focus?.();
+    };
+  }, []);
+
+  // Auto-focus the play button when the overlay opens
+  useEffect(() => {
+    if (!open) return;
+    const el = overlayRef.current;
+    if (!el) return;
+    const observer = new MutationObserver(() => {
+      if (el.classList.contains('active')) {
+        const btn = el.querySelector('.play-btn');
+        btn?.focus();
+      }
+    });
+    observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, [open]);
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Escape') { onClose(); return; }
+    if (e.key !== 'Tab') return;
+    const el = overlayRef.current;
+    if (!el) return;
+    const focusable = Array.from(el.querySelectorAll(
+      'button, [href], [tabindex="0"]'
+    )).filter(el => !el.hasAttribute('disabled'));
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }, [onClose]);
+
+  const handlePlay = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await onPlay();
+    } catch (err) {
+      setError(err?.message || 'Failed to load game');
+      setLoading(false);
+    }
+  };
+
   return (
     <div
+      ref={overlayRef}
       id={`${name}Overlay`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${title} game overlay`}
       className="game-overlay fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-md"
-      aria-hidden="true"
+      onKeyDown={handleKeyDown}
+      onMouseDown={() => { prevFocus.current = document.activeElement; }}
     >
       <div className="panel relative mx-4 w-full max-w-2xl p-6 md:p-8">
         <button
@@ -35,11 +103,12 @@ function GameOverlay({ name, title, desc, accent, onClose }) {
         <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${accent}`} />
         <h2 className="mb-2 text-display-2 italic">{title}</h2>
         <p className="mb-6 text-body-sm text-zinc-400">{desc}</p>
-        <div className="game-loading mb-3 font-mono text-sm text-cyan-400" />
+
         <canvas
           id={`${name}Canvas`}
           className="aspect-video w-full rounded-2xl border border-white/8 bg-black/60"
         />
+
         <div className="mt-4 flex items-center justify-between font-mono text-sm">
           <span className="text-zinc-500">Score</span>
           <span id={`${name}Score`} className="tabular-nums text-white" />
@@ -48,6 +117,41 @@ function GameOverlay({ name, title, desc, accent, onClose }) {
           <span className="text-zinc-500">Status</span>
           <span id={`${name}Status`} className="text-zinc-400" />
         </div>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={handlePlay}
+            disabled={loading}
+            className="play-btn magnetic-btn btn-sweep active-press relative flex flex-1 items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? (
+              <>
+                <Spinner size={20} weight="bold" className="animate-spin" />
+                Loading…
+              </>
+            ) : (
+              <>
+                Play
+                <ArrowRight size={20} weight="bold" className="transition-transform group-hover:translate-x-1.5" />
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] px-6 py-4 text-lg font-bold text-zinc-300 transition-colors hover:bg-white/[0.07] hover:text-white"
+          >
+            Close
+          </button>
+        </div>
+
+        {error && (
+          <p className="mt-3 text-sm text-rose-400" role="alert">
+            {error}
+          </p>
+        )}
+
         <p className="mt-6 text-xs text-zinc-600">
           Press <kbd className="rounded bg-white/5 px-1.5 py-0.5">Esc</kbd> to exit.
         </p>
@@ -288,6 +392,27 @@ function Playroom() {
 
 export default function Games() {
   const [openGame, setOpenGame] = useState(null);
+  const [activeEngine, setActiveEngine] = useState(null);
+  // Lazy loaders live on the component instance so a closed game's engine
+  // stays cached and restarts instantly when reopened.
+  const loaders = useRef(createGameLoaders());
+
+  const open = (game) => {
+    setOpenGame(game);
+    setActiveEngine(null);
+  };
+
+  const play = async (name) => {
+    const engine = await loaders.current.loadGame(name);
+    setActiveEngine(engine);
+    engine.start();
+  };
+
+  const close = () => {
+    activeEngine?.stop?.();
+    setActiveEngine(null);
+    setOpenGame(null);
+  };
 
   return (
     <section id="games" className="section-gap relative px-6">
@@ -326,7 +451,9 @@ export default function Games() {
         <GameOverlay
           key={game.name}
           {...game}
-          onClose={() => setOpenGame(null)}
+          open={openGame?.name === game.name}
+          onPlay={() => play(game.name)}
+          onClose={close}
         />
       ))}
     </section>

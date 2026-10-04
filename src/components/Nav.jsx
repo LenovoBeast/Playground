@@ -13,11 +13,12 @@ export default function Nav({ active }) {
 
   useEffect(() => {
     let raf = 0;
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const measure = () => {
       const y = window.scrollY;
       const max = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
-      if (progressRef.current) {
-        progressRef.current.style.width = `${Math.min(y / max, 1) * 100}%`;
+      if (progressRef.current && !prefersReduced) {
+        progressRef.current.style.transform = `scaleX(${Math.min(y / max, 1)})`;
       }
       setScrolled(y > 24);
       const delta = y - lastY.current;
@@ -108,7 +109,7 @@ export default function Nav({ active }) {
               href="https://github.com/LenovoBeast"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden h-10 w-10 items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-white active-press sm:flex"
+              className="hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-white active-press sm:flex"
               aria-label="GitHub profile"
             >
               <Github size={17} weight="bold" />
@@ -126,7 +127,7 @@ export default function Nav({ active }) {
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-300 transition-colors hover:bg-white/[0.07] lg:hidden"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-300 transition-colors hover:bg-white/[0.07] lg:hidden"
               aria-expanded={open}
               aria-controls="mobile-drawer"
               aria-label={open ? 'Close menu' : 'Open menu'}

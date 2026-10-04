@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, GithubLogo, Code, Globe, Stack, ArrowSquareOut, FunnelSimple } from '@phosphor-icons/react';
+import { ArrowUpRight, GithubLogo, Code, Globe, Stack, ArrowSquareOut } from '@phosphor-icons/react';
 import { projects } from '../data/projects.js';
 import { useTilt } from '../hooks/useTilt.js';
 
@@ -56,7 +56,7 @@ const ProjectCard = ({ project, index }) => {
               aria-label={`Open ${project.title} repository`}
               style={{ transform: 'translateZ(40px)' }}
             >
-              <ExternalLink size={18} weight="bold" />
+              <ArrowSquareOut size={18} weight="bold" />
             </a>
           </div>
 

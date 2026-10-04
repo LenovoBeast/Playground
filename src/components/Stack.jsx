@@ -3,8 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Cpu, DesktopTower, GameController, Database, Check, ArrowRight } from '@phosphor-icons/react';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
 
-gsap.registerPlugin(ScrollTrigger);
-
 const categories = [
   {
     id: 'frontend',
@@ -254,7 +252,6 @@ function OrbitRing({ items, glow, selected, onSelect, reducedMotion }) {
   }, [items.length, reducedMotion]);
 
   const onPointerDown = (e) => {
-    if (e.pointerType === 'touch') return;
     dragging.current = true;
     lastX.current = e.clientX;
     e.currentTarget.setPointerCapture?.(e.pointerId);
