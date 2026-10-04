@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Play, SquareLogo, CompassTool, X, CaretLeft, CaretRight, Planet, ArrowRight, Spinner } from '@phosphor-icons/react';
+import { Play, SquareLogo, CompassTool, X, CaretRight, Planet, ArrowRight, Spinner } from '@phosphor-icons/react';
 import { setupScene, buildWorld, clickObjects } from '../world.js';
 import { wireGames, createGameLoaders } from '../games/wireGames.js';
 import { useTilt } from '../hooks/useTilt.js';
@@ -375,7 +375,7 @@ function Playroom() {
         {/* Frame furniture */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/6" />
         <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
-          <Orbit size={13} weight="bold" className="text-blue-400" />
+          <Planet size={13} weight="bold" className="text-blue-400" />
           playroom · drag to orbit
         </div>
         <div className="pointer-events-none absolute bottom-4 left-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500">

@@ -112,7 +112,7 @@ export default function Nav({ active }) {
               className="hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-white active-press sm:flex"
               aria-label="GitHub profile"
             >
-              <Github size={17} weight="bold" />
+              <GithubLogo size={17} weight="bold" />
             </a>
 
             <button

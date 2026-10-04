@@ -93,7 +93,7 @@ const ProjectCard = ({ project, index }) => {
                 rel="noopener noreferrer"
                 className="group/link flex items-center gap-2 text-sm font-semibold text-zinc-500 transition-colors hover:text-white"
               >
-                <Github size={16} weight="bold" /> Source
+                <GithubLogo size={16} weight="bold" /> Source
               </a>
             </div>
           </div>

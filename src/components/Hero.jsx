@@ -166,7 +166,7 @@ export default function Hero() {
                 rel="noopener noreferrer"
                 className="magnetic-btn active-press group pointer-events-auto flex items-center justify-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-8 py-4 text-lg font-bold backdrop-blur-xl transition-colors hover:bg-white/[0.07]"
               >
-                <Github size={22} weight="bold" />
+                <GithubLogo size={22} weight="bold" />
                 GitHub
               </a>
             </div>

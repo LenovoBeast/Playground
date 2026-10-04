@@ -7,7 +7,7 @@ import { SOCIALS } from '../data/nav.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const SOCIAL_ICONS = { github: Github, twitter: Twitter, linkedin: Linkedin, mail: Mail };
+const SOCIAL_ICONS = { github: GithubLogo, twitter: TwitterLogo, linkedin: LinkedinLogo, mail: Mailbox };
 
 const timeline = [
   { year: "2024", title: "Senior Game Dev & Web Engineer", company: "Freelance / Open Source", desc: "Architecting high-performance engines, immersive web experiences, and developer tooling." },

@@ -124,7 +124,7 @@ export default function Footer() {
               className="social-icon grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-white active-press"
               aria-label="GitHub"
             >
-              <Github size={17} weight="bold" />
+              <GithubLogo size={17} weight="bold" />
             </a>
             <a
               href="https://twitter.com/LenovoBeast"
