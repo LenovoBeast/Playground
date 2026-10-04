@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Play, SquareLogo, CompassTool, X, CaretRight, Planet, ArrowRight, Spinner } from '@phosphor-icons/react';
+import { Play, SquareLogo, CompassTool, X, CaretRight, Planet, ArrowRight, Spinner, Terminal } from '@phosphor-icons/react';
 import { setupScene, buildWorld, clickObjects } from '../world.js';
 import { wireGames, createGameLoaders } from '../games/wireGames.js';
 import { useTilt } from '../hooks/useTilt.js';
@@ -174,6 +174,8 @@ function GameCard({ game, index, isHero }) {
           <article
             className="panel corner-frame group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden p-7 md:p-8"
             data-game={game.name}
+            onClick={() => open(game)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(game); } }}
             tabIndex={0}
             role="button"
             aria-label={`Open ${game.title}`}
@@ -215,6 +217,8 @@ function GameCard({ game, index, isHero }) {
         <article
           className="panel corner-frame group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden p-7"
           data-game={game.name}
+          onClick={() => open(game)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(game); } }}
           tabIndex={0}
           role="button"
           aria-label={`Open ${game.title}`}

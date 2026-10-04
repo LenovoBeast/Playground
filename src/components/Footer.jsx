@@ -133,7 +133,7 @@ export default function Footer() {
               className="social-icon grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-cyan-400 active-press"
               aria-label="Twitter"
             >
-              <Twitter size={17} weight="bold" />
+              <TwitterLogo size={17} weight="bold" />
             </a>
             <a
               href="https://linkedin.com/in/lenovobeast"

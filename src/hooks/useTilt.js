@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 // Pointer-driven 3D tilt. Returns a ref for the tilting surface plus the
 // handlers to spread onto its container. The surface needs
@@ -6,6 +6,14 @@ import { useCallback, useRef } from 'react'
 export function useTilt({ max = 10, scale = 1.015, lift = 0 } = {}) {
   const ref = useRef(null)
   const frame = useRef(0)
+
+  // Tilt is a pointer-driven 3D transform; without this the browser
+  // hijacks the first touch as a scroll on the tilting surface.
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.touchAction = 'none'
+  }, [])
 
   const reset = useCallback(() => {
     cancelAnimationFrame(frame.current)

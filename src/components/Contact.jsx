@@ -53,11 +53,28 @@ export default function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Real validation
+    const empty = !formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim();
+    const badEmail = formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+    if (empty) {
+      const first = document.querySelector('input[name]:not([value])') || formRef.current;
+      first?.focus();
+      return;
+    }
+    if (badEmail) {
+      const el = formRef.current?.querySelector('input[name="email"]');
+      el?.focus();
+      return;
+    }
     setFormState('submitting');
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setFormState('success');
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    setTimeout(() => setFormState('idle'), 4000);
+    try {
+      await new Promise((resolve, reject) => setTimeout(resolve, 1500));
+      setFormState('success');
+      setFormData({ name: '', email: '', subject: '', message: '' });
+      setTimeout(() => setFormState('idle'), 4000);
+    } catch (err) {
+      setFormState('error');
+    }
   };
 
   const handleChange = (e) => {
@@ -88,7 +105,7 @@ export default function Contact() {
               aria-hidden="true"
               className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"
             />
-            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate aria-describedby="form-status">
               <div className="grid gap-6 sm:grid-cols-2">
                 <Field
                   label="Name"

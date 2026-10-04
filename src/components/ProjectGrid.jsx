@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, GithubLogo, Code, Globe, Stack, ArrowSquareOut } from '@phosphor-icons/react';
+import { ArrowUpRight, GithubLogo, Code, Globe, Stack, ArrowSquareOut, Funnel } from '@phosphor-icons/react';
 import { projects } from '../data/projects.js';
 import { useTilt } from '../hooks/useTilt.js';
 
@@ -34,7 +34,9 @@ const ProjectCard = ({ project, index }) => {
           <div className="relative -mx-8 -mt-8 mb-6 h-40 md:h-48 rounded-[1rem] overflow-hidden">
             <img
               src={project.thumbnail}
-              alt=""
+              alt={project.thumbnailAlt}
+              width="800"
+              height="600"
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               loading="lazy"
             />
@@ -134,7 +136,7 @@ export default function ProjectGrid() {
           {/* Faceted filter */}
           <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter projects by language">
             <span className="mr-1 hidden items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-600 sm:flex">
-              <Filter size={13} weight="bold" /> filter
+              <Funnel size={13} weight="bold" /> filter
             </span>
             {languages.map((lang) => (
               <button

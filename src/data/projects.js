@@ -7,6 +7,7 @@ export const projects = [
     url: "https://github.com/LenovoBeast/Beast-Invoice",
     language: "TypeScript",
     thumbnail: "https://picsum.photos/seed/beast-invoice-dashboard/800/600",
+    thumbnailAlt: "Beast-Invoice dashboard showing autofill parts and live totals",
     accent: "from-blue-500 to-indigo-500",
     tint: "rgba(59,130,246,0.18)"
   },
@@ -17,6 +18,7 @@ export const projects = [
     url: "https://github.com/LenovoBeast/Playground",
     language: "JavaScript",
     thumbnail: "https://picsum.photos/seed/playground-3d-engine/800/600",
+    thumbnailAlt: "Interactive 3D constellation workspace with floating game artifacts",
     accent: "from-cyan-500 to-blue-500",
     tint: "rgba(34,211,238,0.18)"
   },
@@ -27,6 +29,7 @@ export const projects = [
     url: "https://github.com/LenovoBeast/Lenovo-DevPort",
     language: "HTML",
     thumbnail: "https://picsum.photos/seed/portfolio-dark-tech/800/600",
+    thumbnailAlt: "Dark-tech portfolio terminal view with neon UI elements",
     accent: "from-emerald-500 to-teal-500",
     tint: "rgba(52,211,153,0.18)"
   },

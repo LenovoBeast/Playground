@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Cpu, DesktopTower, GameController, Database, Check, ArrowRight } from '@phosphor-icons/react';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
+
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 const categories = [
   {
@@ -254,14 +257,19 @@ function OrbitRing({ items, glow, selected, onSelect, reducedMotion }) {
   const onPointerDown = (e) => {
     dragging.current = true;
     lastX.current = e.clientX;
+    lastY.current = e.clientY;
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const onPointerMove = (e) => {
     if (!dragging.current) return;
     const dx = e.clientX - lastX.current;
+    const dy = e.clientY - lastY.current;
     lastX.current = e.clientX;
+    lastY.current = e.clientY;
     velocity.current = dx * 0.35;
     spin.current += dx * 0.35;
+    // Vertical drag orbits the ring in 3D so touch and mouse both work
+    spin.current = clamp(spin.current + dy * 0.2, -180, 180);
   };
   const stop = (e) => {
     dragging.current = false;
@@ -280,7 +288,7 @@ function OrbitRing({ items, glow, selected, onSelect, reducedMotion }) {
         onPointerUp={stop}
         onPointerCancel={stop}
         onPointerLeave={(e) => { stop(e); setHovered(null); }}
-        style={{ perspective: '1000px' }}
+        style={{ perspective: '1000px', touchAction: 'none' }}
       >
         {/* Core readout */}
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
