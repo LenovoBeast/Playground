@@ -160,7 +160,7 @@ export default function ProjectGrid() {
         </div>
 
         {/* Bento Grid - gapless, dense */}
-        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 grid-flow-dense">
+        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 grid-flow-dense">
           <AnimatePresence mode="popLayout">
             {visible.map((project, idx) => (
               <motion.div

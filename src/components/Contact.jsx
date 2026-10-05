@@ -94,7 +94,7 @@ export default function Contact() {
             Let's Build <span className="gradient-text">Something</span>
           </h2>
           <p className="text-body mx-auto">
-            Open to freelance, consulting, and interesting collaborations. Drop a line — I read everything.
+            Open to freelance, consulting, and interesting collaborations. Drop a line. I read everything.
           </p>
         </div>
 
