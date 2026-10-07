@@ -14,11 +14,16 @@ const ProjectCard = ({ project, index }) => {
   const ui = UI[project.language] ?? UI.JavaScript;
   const tilt = useTilt({ max: 7, scale: 1.02, lift: 18 });
 
+  // Blur-up placeholder using the thumbnail seed
+  const placeholderSrc = `https://picsum.photos/seed/${project.thumbnail.split('/seed/')[1].split('/')[0]}/40/30`;
+
   return (
     <div
       className="tilt-scene group h-full"
       onPointerMove={tilt.onPointerMove}
       onPointerLeave={tilt.onPointerLeave}
+      data-tracking="project-card"
+      data-project={project.title}
     >
       <div ref={tilt.ref} className="tilt-body h-full">
         <article className="panel corner-frame relative flex h-full flex-col justify-between overflow-hidden p-7 md:p-8">
@@ -30,15 +35,17 @@ const ProjectCard = ({ project, index }) => {
           />
           <div className="tilt-sheen" />
 
-          {/* Thumbnail image - unique per card */}
-          <div className="relative -mx-8 -mt-8 mb-6 h-40 md:h-48 rounded-[1rem] overflow-hidden">
+          {/* Thumbnail with blur-up placeholder */}
+          <div className="relative -mx-8 -mt-8 mb-6 h-40 md:h-48 rounded-[1rem] overflow-hidden bg-zinc-900">
             <img
               src={project.thumbnail}
               alt={project.thumbnailAlt}
               width="800"
               height="600"
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              style={{ background: 'url("' + placeholderSrc + '") center/cover no-repeat' }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           </div>
@@ -160,7 +167,7 @@ export default function ProjectGrid() {
         </div>
 
         {/* Bento Grid - gapless, dense */}
-        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 grid-flow-dense">
+        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 grid-flow-dense">
           <AnimatePresence mode="popLayout">
             {visible.map((project, idx) => (
               <motion.div

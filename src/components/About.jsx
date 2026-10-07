@@ -39,23 +39,19 @@ export default function About() {
         y: 44, opacity: 0, duration: 1, ease: 'expo.out', stagger: 0.09,
         scrollTrigger: { trigger: textRef.current, start: 'top 82%' },
       });
-
       gsap.from(visualRef.current, {
         x: 60, opacity: 0, rotateY: -10, duration: 1.3, ease: 'expo.out',
         scrollTrigger: { trigger: visualRef.current, start: 'top 82%' },
       });
-
       gsap.from(statsRef.current?.children || [], {
         y: 34, opacity: 0, duration: 0.8, ease: 'expo.out', stagger: 0.07,
         scrollTrigger: { trigger: statsRef.current, start: 'top 88%' },
       });
-
       gsap.from(timelineRef.current?.children || [], {
         x: 46, opacity: 0, duration: 0.85, ease: 'expo.out', stagger: 0.1,
         scrollTrigger: { trigger: timelineRef.current, start: 'top 85%' },
       });
     }, sectionRef);
-
     return () => ctx.revert();
   }, [reducedMotion]);
 
@@ -64,23 +60,21 @@ export default function About() {
       ref={sectionRef}
       id="about"
       className="section-gap relative overflow-hidden px-6"
+      data-tracking="about-section"
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="aurora aurora-a left-[-10%] top-[8%] h-[420px] w-[420px] bg-blue-600/20" />
         <div className="aurora aurora-b right-[-8%] top-[42%] h-[380px] w-[380px] bg-cyan-500/15" />
       </div>
       <div className="hairline absolute inset-x-0 top-0" />
-
       <div className="section-container relative z-10">
         <div className="grid items-start gap-16 lg:grid-cols-2 lg:gap-24">
-          {/* Bio */}
           <div ref={textRef} className="space-y-10">
             <span className="block text-label">About Me</span>
             <h2 className="text-display-2 italic leading-[1.02]">
               Crafting <br />
               <span className="gradient-text">Digital Frontiers</span>
             </h2>
-
             <div className="space-y-6 text-base leading-relaxed text-zinc-400 md:text-lg">
               <p>
                 I'm a senior developer with 8+ years pushing browser boundaries. My focus:
@@ -97,7 +91,6 @@ export default function About() {
                 software, and AI-augmented development workflows.
               </p>
             </div>
-
             <div className="flex flex-wrap gap-3 border-t border-white/8 pt-8">
               {SOCIALS.map(({ icon, label, href }) => {
                 const Icon = SOCIAL_ICONS[icon] ?? Mail;
@@ -108,6 +101,7 @@ export default function About() {
                     target={href.startsWith('mailto:') ? undefined : '_blank'}
                     rel={href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
                     className="group flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-zinc-300 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.07] hover:text-white active-press"
+                    aria-label={label + ' profile'}
                   >
                     <Icon size={16} weight="bold" />
                     {label}
@@ -117,8 +111,6 @@ export default function About() {
               })}
             </div>
           </div>
-
-          {/* Visual */}
           <div className="space-y-8">
             <div ref={visualRef} className="relative">
               <div className="panel corner-frame relative aspect-square overflow-hidden p-2">
@@ -140,7 +132,6 @@ export default function About() {
                   </span>
                 </div>
               </div>
-
               <div className="absolute -bottom-6 -right-5 grid h-24 w-24 place-items-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-2xl shadow-blue-500/30 md:h-28 md:w-28">
                 <span className="text-2xl font-black md:text-3xl">8+</span>
               </div>
@@ -148,7 +139,6 @@ export default function About() {
                 <span className="text-xl font-black md:text-2xl">47</span>
               </div>
             </div>
-
             <div ref={statsRef} className="grid grid-cols-2 gap-4 border-t border-white/8 pt-8">
               {stats.map((stat) => (
                 <div key={stat.label} className="panel group p-5 transition-colors hover:border-white/15">
@@ -163,14 +153,11 @@ export default function About() {
             </div>
           </div>
         </div>
-
-        {/* Timeline */}
         <div className="mt-24">
           <div className="mb-10 flex items-center gap-4">
             <span className="text-label">Timeline</span>
             <span className="hairline flex-1" />
           </div>
-
           <div className="relative">
             <div className="spine absolute bottom-0 left-8 top-0 w-px opacity-60" />
             <div ref={timelineRef} className="space-y-10">
@@ -223,7 +210,7 @@ function Counter({ value, active }) {
     return () => cancelAnimationFrame(raf);
   }, [active, target]);
 
-  if (!match) return <span>{raw}</span>;
+  if (!match) return <span>{value}</span>;
   return (
     <span className="tabular-nums">
       {n}

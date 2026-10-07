@@ -142,7 +142,7 @@ export default function Footer() {
               className="social-icon grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-blue-400 active-press"
               aria-label="LinkedIn"
             >
-              <Linkedin size={17} weight="bold" />
+              <LinkedinLogo size={17} weight="bold" />
             </a>
             <a
               href="mailto:lenovobeast@example.com"

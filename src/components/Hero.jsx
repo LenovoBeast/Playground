@@ -31,7 +31,6 @@ export default function Hero() {
         .from(visualRef.current, { y: 80, opacity: 0, rotateY: -12, duration: 1.3 }, '-=1.1')
         .from(badgeRefs.current, { y: 40, opacity: 0, scale: 0.9, stagger: 0.08, duration: 0.7 }, '-=0.8');
 
-      // Scrubbing text reveals on scroll
       gsap.to([line1Ref.current, line2Ref.current], {
         yPercent: -18,
         opacity: 0.15,
@@ -44,7 +43,6 @@ export default function Hero() {
         },
       });
 
-      // Visual card drift
       gsap.to(visualRef.current, {
         yPercent: -12,
         rotateY: 6,
@@ -59,6 +57,23 @@ export default function Hero() {
     }, heroRef);
 
     return () => ctx.revert();
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    const ctas = ctaRef.current?.querySelectorAll('button, a') ?? [];
+    ctas.forEach(el => {
+      el.addEventListener('pointermove', (e) => {
+        const rect = el.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        el.style.setProperty('--mx', x + 'px');
+        el.style.setProperty('--my', y + 'px');
+      });
+    });
+    return () => {
+      ctas.forEach(el => el.removeEventListener('pointermove', () => {}));
+    };
   }, [reducedMotion]);
 
   const iconMap = {
@@ -82,12 +97,9 @@ export default function Hero() {
 
   const TerminalWindow3D = () => (
     <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[1.125rem] border border-white/5 bg-zinc-950/75 backdrop-blur-sm">
-      {/* Scanning light sweep */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="scan-line h-16 w-full bg-gradient-to-b from-transparent via-blue-500/8 to-transparent" />
       </div>
-
-      {/* Terminal header */}
       <div className="flex items-center gap-2 border-b border-white/5 bg-zinc-900/50 px-4 py-3">
         <div className="flex gap-1.5">
           <div className="h-3 w-3 rounded-full bg-red-500/80" />
@@ -97,8 +109,6 @@ export default function Hero() {
         <div className="flex-1 text-center font-mono text-xs text-zinc-500">main.tsx</div>
         <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-400/80 sm:inline">live</span>
       </div>
-
-      {/* Terminal content */}
       <div className="no-scrollbar flex-1 overflow-auto p-5 font-mono text-[13px] leading-relaxed text-zinc-300 md:p-6">
         <div className="space-y-2.5">
           <CodeLine prefix="> " content="npm create vite@latest my-game --template react-ts" />
@@ -131,13 +141,9 @@ export default function Hero() {
       style={{ minHeight: '100svh' }}
       aria-labelledby="hero-title"
     >
-      {/* Content sits above the 3D layer */}
       <div className="relative z-10 mx-auto w-full max-w-[1400px]">
         <div className="grid items-center gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
-          {/* Copy - left aligned, offset */}
           <div className="space-y-10 lg:pt-8">
-            {/* NO EYEBROW in hero */}
-
             <h1 id="hero-title" className="pointer-events-auto select-text space-y-4">
               <span ref={line1Ref} className="block text-display-2 italic leading-[0.95] text-balance">
                 Crafting
@@ -146,16 +152,15 @@ export default function Hero() {
                 Digital Frontiers
               </span>
             </h1>
-
             <p ref={subtitleRef} className="pointer-events-auto text-body-lg max-w-[48ch]">
               Senior Game Dev & Web Engineer architecting immersive digital experiences that push browser boundaries.
             </p>
-
             <div ref={ctaRef} className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <button
                 type="button"
                 onClick={() => scrollToSection('projects')}
                 className="magnetic-btn btn-sweep active-press group pointer-events-auto flex items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500"
+                aria-label="View projects"
               >
                 View Work
                 <ArrowRight size={22} weight="bold" className="transition-transform group-hover:translate-x-1.5" />
@@ -165,20 +170,18 @@ export default function Hero() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="magnetic-btn active-press group pointer-events-auto flex items-center justify-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-8 py-4 text-lg font-bold backdrop-blur-xl transition-colors hover:bg-white/[0.07]"
+                aria-label="View GitHub profile"
               >
                 <GithubLogo size={22} weight="bold" />
                 GitHub
               </a>
             </div>
-
             <div className="flex flex-wrap gap-10 border-t border-white/8 pt-8 md:gap-14">
               <StatCard value="8+" label="Years Experience" icon="cpu" />
               <StatCard value="47" label="Projects Shipped" icon="zap" />
               <StatCard value="12k+" label="Lines of Code/Day" icon="code" />
             </div>
           </div>
-
-          {/* Visual - right, floating orbital */}
           <div className="relative">
             <div
               ref={visualRef}
@@ -186,7 +189,6 @@ export default function Hero() {
               onPointerMove={tilt.onPointerMove}
               onPointerLeave={tilt.onPointerLeave}
             >
-              {/* Ambient bloom behind the card */}
               <div
                 aria-hidden="true"
                 className="absolute -inset-10 -z-10 rounded-full opacity-70 blur-3xl"
@@ -194,14 +196,11 @@ export default function Hero() {
                   background: 'conic-gradient(from 120deg, rgba(59,130,246,0.35), rgba(37,99,233,0.25), rgba(168,85,247,0.3), rgba(59,130,246,0.35))',
                 }}
               />
-
               <div ref={tilt.ref} className="tilt-body relative h-full w-full rounded-[1.5rem]">
                 <div className="panel corner-frame h-full w-full p-1.5">
                   <TerminalWindow3D />
                 </div>
                 <div className="tilt-sheen rounded-[1.5rem]" />
-
-                {/* Floating depth badges - orbital elements */}
                 <div
                   ref={(el) => { badgeRefs.current[0] = el; }}
                   className="tilt-layer absolute -bottom-6 -right-4 grid h-24 w-24 place-items-center rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-2xl shadow-blue-500/30 md:h-28 md:w-28"
