@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { PaperPlane, Mailbox, GithubLogo, TwitterLogo, LinkedinLogo, MapPin, Clock, CheckCircle, Spinner, Warning, Cpu, Sparkle } from '@phosphor-icons/react';
+import { PaperPlane, Mailbox, GithubLogo, TwitterLogo, LinkedinLogo, MapPin, Clock, CheckCircle, Spinner, Warning, Cpu } from '@phosphor-icons/react';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -19,7 +19,6 @@ const availability = [
   { icon: Clock, label: 'Response Time', value: '< 24 hours' },
   { icon: MapPin, label: 'Timezone', value: 'UTC+0 (Flexible)' },
   { icon: Cpu, label: 'Current Focus', value: 'WebGPU, Rust/Wasm, AI Tooling' },
-  { icon: GithubLogo, label: 'Open Source', value: 'Always accepting PRs' },
 ];
 
 export default function Contact() {
@@ -32,7 +31,7 @@ export default function Contact() {
   const asideRef = useRef(null);
   const reducedMotion = useReducedMotion();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (reducedMotion) return;
     const ctx = gsap.context(() => {
       gsap.from(headerRef.current?.children || [], {
@@ -53,7 +52,6 @@ export default function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Real validation
     const empty = !formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim();
     const badEmail = formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
     if (empty) {
@@ -68,7 +66,7 @@ export default function Contact() {
     }
     setFormState('submitting');
     try {
-      await new Promise((resolve, reject) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       setFormState('success');
       setFormData({ name: '', email: '', subject: '', message: '' });
       setTimeout(() => setFormState('idle'), 4000);
@@ -82,12 +80,11 @@ export default function Contact() {
   };
 
   return (
-    <section ref={sectionRef} id="contact" className="section-gap relative px-6">
+    <section ref={sectionRef} id="contact" className="section-gap relative px-6" data-tracking="contact-section">
       <div className="pointer-events-none absolute inset-0">
         <div className="aurora aurora-a left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-blue-600/25 to-cyan-500/20" />
       </div>
       <div className="hairline absolute inset-x-0 top-0" />
-
       <div className="section-container relative z-10">
         <div ref={headerRef} className="mx-auto mb-16 max-w-2xl text-center">
           <h2 className="mb-6 text-display-2 italic leading-[1.02]">
@@ -97,14 +94,9 @@ export default function Contact() {
             Open to freelance, consulting, and interesting collaborations. Drop a line. I read everything.
           </p>
         </div>
-
         <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
-          {/* Form */}
           <div ref={formRef} className="panel corner-frame relative p-7 md:p-9">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"
-            />
+            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
             <form onSubmit={handleSubmit} className="space-y-6" noValidate aria-describedby="form-status">
               <div className="grid gap-6 sm:grid-cols-2">
                 <Field
@@ -118,6 +110,7 @@ export default function Contact() {
                   placeholder="Your name"
                   required
                   disabled={formState !== 'idle'}
+                  autoComplete="name"
                 />
                 <Field
                   label="Email"
@@ -131,9 +124,9 @@ export default function Contact() {
                   placeholder="your@email.com"
                   required
                   disabled={formState !== 'idle'}
+                  autoComplete="email"
                 />
               </div>
-
               <Field
                 label="Subject"
                 name="subject"
@@ -146,13 +139,8 @@ export default function Contact() {
                 required
                 disabled={formState !== 'idle'}
               />
-
               <div>
-                <span
-                  className={`block font-mono text-[10px] uppercase tracking-[0.2em] transition-colors duration-300 ${
-                    focused === 'message' || formData.message ? 'text-blue-400' : 'text-zinc-500'
-                  }`}
-                >
+                <span className={"block font-mono text-[10px] uppercase tracking-[0.2em] transition-colors duration-300 " + (focused === 'message' || formData.message ? 'text-blue-400' : 'text-zinc-500')}>
                   Message <span className="text-blue-400">*</span>
                 </span>
                 <textarea
@@ -167,12 +155,15 @@ export default function Contact() {
                   disabled={formState !== 'idle'}
                   className="mt-3 w-full resize-none rounded-xl border border-white/8 bg-white/[0.035] px-5 py-4 font-mono text-sm text-zinc-200 backdrop-blur-xl transition-all duration-300 placeholder:text-zinc-600 focus:border-blue-500/60 focus:outline-none focus:ring-1 focus:ring-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
                 />
+                <p className="mt-1.5 font-mono text-[10px] text-zinc-600">
+                  I'll respond within 24 hours
+                </p>
               </div>
-
               <button
                 type="submit"
                 disabled={formState !== 'idle'}
                 className="magnetic-btn btn-sweep active-press relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label="Send message"
               >
                 {formState === 'submitting' && (
                   <>
@@ -200,9 +191,8 @@ export default function Contact() {
                 )}
               </button>
             </form>
-
             {formState === 'success' && (
-              <div className="mt-5 flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-400 animate-fade-up">
+              <div className="mt-5 flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-400 animate-fade-up" role="status">
                 <CheckCircle size={22} weight="bold" />
                 <div>
                   <p className="font-medium">Message sent!</p>
@@ -210,9 +200,8 @@ export default function Contact() {
                 </div>
               </div>
             )}
-
             {formState === 'error' && (
-              <div className="mt-5 flex items-center gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-400 animate-fade-up">
+              <div className="mt-5 flex items-center gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-400 animate-fade-up" role="alert">
                 <Warning size={22} weight="bold" />
                 <div>
                   <p className="font-medium">Something went wrong</p>
@@ -221,8 +210,6 @@ export default function Contact() {
               </div>
             )}
           </div>
-
-          {/* Aside */}
           <div ref={asideRef} className="space-y-6">
             <div className="panel p-7">
               <h3 className="mb-6 text-display-1 italic">Other Ways to Connect</h3>
@@ -236,6 +223,7 @@ export default function Contact() {
                       target={link.href.startsWith('mailto:') ? undefined : '_blank'}
                       rel={link.href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
                       className={`group flex items-center gap-4 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-zinc-400 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:text-white active-press ${link.color}`}
+                      aria-label={link.label + ' profile'}
                     >
                       <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/5 transition-all duration-300 group-hover:scale-110 group-hover:bg-white/10">
                         <Icon size={18} weight="bold" />
@@ -249,22 +237,16 @@ export default function Contact() {
                 })}
               </div>
             </div>
-
             <div className="panel p-7">
               <h3 className="mb-6 text-display-1 italic">Availability</h3>
               <div className="space-y-3">
                 {availability.map(({ icon: Icon, label, value }) => (
-                  <div
-                    key={label}
-                    className="group flex items-center gap-4 rounded-xl border border-white/6 bg-white/[0.02] p-3 transition-colors hover:border-white/12"
-                  >
+                  <div key={label} className="group flex items-center gap-4 rounded-xl border border-white/6 bg-white/[0.02] p-3 transition-colors hover:border-white/12">
                     <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/5">
                       <Icon size={18} weight="bold" className="text-zinc-500 transition-colors group-hover:text-white" />
                     </span>
                     <div className="flex-1">
-                      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
-                        {label}
-                      </p>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">{label}</p>
                       <p className="text-sm font-medium">{value}</p>
                     </div>
                   </div>
@@ -278,18 +260,16 @@ export default function Contact() {
   );
 }
 
-const Field = ({ label, name, type = 'text', value, onChange, onFocus, onBlur, focused, placeholder, required, disabled }) => {
+const Field = ({ label, name, type = 'text', value, onChange, onFocus, onBlur, focused, placeholder, required, disabled, autoComplete }) => {
   const lifted = focused || Boolean(value);
   return (
     <div>
-      <span
-        className={`block font-mono text-[10px] uppercase tracking-[0.2em] transition-colors duration-300 ${
-          lifted ? 'text-blue-400' : 'text-zinc-500'
-        }`}
-      >
-        {label} {required && <span className="text-blue-400">*</span>}
+      <label htmlFor={name} className="sr-only">{label}</label>
+      <span className={"block font-mono text-[10px] uppercase tracking-[0.2em] transition-colors duration-300 " + (lifted ? 'text-blue-400' : 'text-zinc-500')}>
+        {label} {required && <span className="text-blue-400" aria-hidden="true">*</span>}
       </span>
       <input
+        id={name}
         type={type}
         name={name}
         value={value}
@@ -299,6 +279,7 @@ const Field = ({ label, name, type = 'text', value, onChange, onFocus, onBlur, f
         placeholder={placeholder}
         required={required}
         disabled={disabled}
+        autoComplete={autoComplete}
         className="mt-3 w-full rounded-xl border border-white/8 bg-white/[0.035] px-5 py-4 font-mono text-sm text-zinc-200 backdrop-blur-xl transition-all duration-300 placeholder:text-zinc-600 focus:border-blue-500/60 focus:outline-none focus:ring-1 focus:ring-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
       />
     </div>

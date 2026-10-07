@@ -97,7 +97,7 @@ export default function Stack() {
   }, [reducedMotion]);
 
   return (
-    <section ref={sectionRef} id="stack" className="section-gap relative px-6">
+    <section ref={sectionRef} id="stack" className="section-gap relative px-6" data-tracking="stack-section">
       <div className="pointer-events-none absolute inset-0">
         <div className="aurora aurora-c left-1/2 top-[12%] h-[460px] w-[460px] -translate-x-1/2 bg-blue-600/12" />
       </div>
@@ -136,7 +136,7 @@ export default function Stack() {
                 {!isActive && (
                   <span className="absolute inset-0 -z-10 rounded-2xl border border-white/8 bg-white/[0.03]" />
                 )}
-                <span className={`grid h-10 w-10 place-items-center rounded-xl ${isActive ? 'bg-white/20' : 'bg-white/5'}`}>
+                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${isActive ? 'bg-white/20' : 'bg-white/5'}`}>
                   {cat.icon}
                 </span>
                 {cat.label}
@@ -180,6 +180,7 @@ export default function Stack() {
                     selected === i ? 'border-white/20' : ''
                   }`}
                   style={{ transitionDelay: `${i * 25}ms` }}
+                  aria-pressed={selected === i}
                 >
                   <div className="flex items-center gap-3">
                     <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${category.color} transition-transform duration-300 group-hover:scale-110`}>
@@ -257,19 +258,14 @@ function OrbitRing({ items, glow, selected, onSelect, reducedMotion }) {
   const onPointerDown = (e) => {
     dragging.current = true;
     lastX.current = e.clientX;
-    lastY.current = e.clientY;
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const onPointerMove = (e) => {
     if (!dragging.current) return;
     const dx = e.clientX - lastX.current;
-    const dy = e.clientY - lastY.current;
     lastX.current = e.clientX;
-    lastY.current = e.clientY;
     velocity.current = dx * 0.35;
     spin.current += dx * 0.35;
-    // Vertical drag orbits the ring in 3D so touch and mouse both work
-    spin.current = clamp(spin.current + dy * 0.2, -180, 180);
   };
   const stop = (e) => {
     dragging.current = false;

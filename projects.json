@@ -7,7 +7,8 @@
     "language": "TypeScript",
     "thumbnail": "https://picsum.photos/seed/beast-invoice-dashboard/800/600",
     "accent": "from-blue-500 to-indigo-500",
-    "tint": "rgba(59,130,246,0.18)"
+    "tint": "rgba(59,130,246,0.18)",
+    "thumbnailAlt": "Beast-Invoice dashboard showing autofill parts and live totals"
   },
   {
     "id": 2,
@@ -17,7 +18,8 @@
     "language": "JavaScript",
     "thumbnail": "https://picsum.photos/seed/playground-3d-engine/800/600",
     "accent": "from-cyan-500 to-blue-500",
-    "tint": "rgba(34,211,238,0.18)"
+    "tint": "rgba(34,211,238,0.18)",
+    "thumbnailAlt": "Interactive 3D constellation workspace with floating game artifacts"
   },
   {
     "id": 3,
@@ -27,6 +29,7 @@
     "language": "HTML",
     "thumbnail": "https://picsum.photos/seed/portfolio-dark-tech/800/600",
     "accent": "from-emerald-500 to-teal-500",
-    "tint": "rgba(52,211,153,0.18)"
+    "tint": "rgba(52,211,153,0.18)",
+    "thumbnailAlt": "Dark-tech portfolio terminal view with neon UI elements"
   }
 ]
