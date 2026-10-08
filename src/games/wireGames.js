@@ -1,6 +1,3 @@
-// Game orchestration, extracted from main.js so it can run inside the React
-// app (World.jsx) as well as standalone. It owns: lazy game loading, the
-// card/overlay open-close logic, and raycasting the 3D world objects.
 import * as THREE from 'three'
 
 // Load each game only when it is first opened. Vite emits one lazy chunk
@@ -33,19 +30,21 @@ const gameLoaders = {
   ))
 }
 
-// Owns the lazy game loaders and their cached instances. The overlay in
-// Games.jsx calls loadGame(name).then(game => game.start()); the returned
-// engine exposes start/stop so the parent can tear it down on close.
-export function createGameLoaders() {
+// Cache successful engines, share concurrent downloads, and allow failed loads to retry.
+export function createGameLoaders(loaders = gameLoaders) {
   const games = new Map()
   const gameLoads = new Map()
 
   function loadGame(name) {
+    if (!Object.hasOwn(loaders, name)) return Promise.reject(new Error(`Unknown game: ${name}`))
     if (games.has(name)) return Promise.resolve(games.get(name))
     if (!gameLoads.has(name)) {
-      gameLoads.set(name, gameLoaders[name]().then(game => {
+      gameLoads.set(name, Promise.resolve().then(() => loaders[name]()).then(game => {
         games.set(name, game)
         return game
+      }).catch(error => {
+        gameLoads.delete(name)
+        throw error
       }))
     }
     return gameLoads.get(name)
@@ -54,11 +53,37 @@ export function createGameLoaders() {
   return { loadGame, games }
 }
 
-export function wireGames({ renderer, camera, pause, resume, clickObjects }) {
+// A single owner prevents duplicate loops and invalidates downloads on close.
+export function createGameSession(loaders = createGameLoaders()) {
+  let active = null
+  let generation = 0
+  function close() {
+    generation++
+    active?.stop()
+    active = null
+  }
+  async function play(name) {
+    close()
+    const request = generation
+    const engine = await loaders.loadGame(name)
+    if (request !== generation) return false
+    active = engine
+    try {
+      engine.start()
+    } catch (error) {
+      close()
+      throw error
+    }
+    return true
+  }
+  return { play, close }
+}
+
+export function wireGames({ renderer, camera, clickObjects, onOpen }) {
   // Click 3D objects in the world to launch their matching game
   const raycaster = new THREE.Raycaster()
   const pointer = new THREE.Vector2()
-  renderer.domElement.addEventListener('pointerdown', e => {
+  const onPointerDown = e => {
     // NDC must be derived from the canvas rect, not the window: the playroom
     // canvas is a bounded element inside the Games section.
     const rect = renderer.domElement.getBoundingClientRect()
@@ -75,9 +100,10 @@ export function wireGames({ renderer, camera, pause, resume, clickObjects }) {
       obj = obj.parent
     }
     if (game) {
-      document.querySelector(`[data-game="${game}"]`)?.click()
+      onOpen(game)
     }
-  })
+  }
+  renderer.domElement.addEventListener('pointerdown', onPointerDown)
 
-  return { dispose: () => {} }
+  return { dispose: () => renderer.domElement.removeEventListener('pointerdown', onPointerDown) }
 }

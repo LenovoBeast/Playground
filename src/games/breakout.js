@@ -1,5 +1,6 @@
 // 3D Breakout — paddle + ball shatter crystalline bricks in 3D space
 import * as THREE from 'three'
+import { upgradeScene, resizeGame } from './graphics.js'
 import { createBreakoutState, hitsBrick, hitsPaddle, movePaddle, BREAKOUT_BOUNDS } from './gameLogic.js'
 import { playBeep } from './sound.js'
 
@@ -10,7 +11,7 @@ export function createBreakout(canvas, scoreEl, statusEl) {
   camera.position.set(0, 0, 12)
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.outputColorSpace = THREE.SRGBColorSpace
+  upgradeScene(renderer, scene)
 
   scene.add(new THREE.AmbientLight(0x6b4d8a, 0.6))
   const key = new THREE.DirectionalLight(0xffffff, 0.7); key.position.set(5, 5, 8); scene.add(key)
@@ -30,14 +31,22 @@ export function createBreakout(canvas, scoreEl, statusEl) {
   )
   scene.add(ball)
 
+  const trailGeometry = new THREE.SphereGeometry(0.17, 12, 12)
+  const trail = Array.from({ length: 10 }, (_, i) => {
+    const mesh = new THREE.Mesh(trailGeometry, new THREE.MeshBasicMaterial({ color: 0x4fdfff, transparent: true, opacity: (1 - i / 10) * 0.35, depthWrite: false }))
+    scene.add(mesh)
+    return mesh
+  })
   let bricks = []
   let ballVel = new THREE.Vector3()
   let score = 0, frame, ro, alive = true, mouseX = 0, mouseActive = false
   const bounds = BREAKOUT_BOUNDS
 
   function buildBricks() {
-    bricks.forEach(b => scene.remove(b.mesh))
-    bricks = []
+    if (bricks.length) {
+      bricks.forEach(brick => { brick.alive = true; scene.add(brick.mesh) })
+      return
+    }
     const colors = [0xc47fff, 0xff6bcf, 0x4fdfff, 0xffaa44, 0x88ff66]
     for (let row = 0; row < 5; row++) {
       for (let col = 0; col < 10; col++) {
@@ -60,6 +69,8 @@ export function createBreakout(canvas, scoreEl, statusEl) {
     ball.position.set(state.ball.x, state.ball.y, 0)
     ballVel.set(state.ballVelocity.x, state.ballVelocity.y, state.ballVelocity.z)
     alive = state.alive
+    mouseActive = false
+    trail.forEach(mesh => mesh.position.copy(ball.position))
     statusEl.textContent = 'Move the paddle with mouse or arrows · clear the bricks'
     buildBricks()
   }
@@ -97,6 +108,8 @@ export function createBreakout(canvas, scoreEl, statusEl) {
     if (mouseActive) {
       paddle.position.x = THREE.MathUtils.clamp(mouseX * (W / 2), bounds.left + 0.95, bounds.right - 0.95)
     }
+    for (let i = trail.length - 1; i > 0; i--) trail[i].position.copy(trail[i - 1].position)
+    trail[0].position.copy(ball.position)
     point.position.copy(ball.position)
     renderer.render(scene, camera)
     frame = requestAnimationFrame(loop)
@@ -120,26 +133,22 @@ export function createBreakout(canvas, scoreEl, statusEl) {
   }
 
   function resize() {
-    const w = canvas.clientWidth, h = canvas.clientHeight
-    if (canvas.width !== w || canvas.height !== h) {
-      renderer.setSize(w, h, false)
-      camera.aspect = w / h
-      camera.updateProjectionMatrix()
-    }
+    resizeGame(renderer, camera, canvas, 1.1)
   }
 
   function start() {
+    stop()
     reset()
     ro = new ResizeObserver(resize); ro.observe(canvas)
     resize()
-    window.addEventListener('mousemove', onMove)
+    canvas.addEventListener('pointermove', onMove)
     window.addEventListener('keydown', onKey)
     loop()
   }
   function stop() {
     cancelAnimationFrame(frame)
     ro?.disconnect()
-    window.removeEventListener('mousemove', onMove)
+    canvas.removeEventListener('pointermove', onMove)
     window.removeEventListener('keydown', onKey)
   }
   return { start, stop }

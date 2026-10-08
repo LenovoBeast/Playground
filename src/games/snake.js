@@ -1,5 +1,6 @@
 // Snake — rendered as 3D orbs on a holographic grid
 import * as THREE from 'three'
+import { upgradeScene, resizeGame } from './graphics.js'
 import { advanceSnake, createSnakeState, directionForKey, spawnSnakeFood, SNAKE_GRID } from './gameLogic.js'
 
 export function createSnake(canvas, scoreEl, statusEl) {
@@ -10,7 +11,7 @@ export function createSnake(canvas, scoreEl, statusEl) {
   camera.lookAt(0, 0, 0)
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.outputColorSpace = THREE.SRGBColorSpace
+  upgradeScene(renderer, scene)
 
   const GRID = SNAKE_GRID
   let snake, dir, nextDir, food, score, alive, frame, lastStep, basePositions = [], stepMs = 140
@@ -26,6 +27,10 @@ export function createSnake(canvas, scoreEl, statusEl) {
   key.position.set(0, 10, 5)
   scene.add(key)
 
+  const headGeometry = new THREE.SphereGeometry(0.45, 24, 24)
+  const bodyGeometry = new THREE.SphereGeometry(0.38, 20, 20)
+  const headMaterial = new THREE.MeshStandardMaterial({ color: 0xc47fff, emissive: 0x7842cc, emissiveIntensity: 0.6, roughness: 0.2, metalness: 0.45 })
+  const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x4fdfff, emissive: 0x138aa3, emissiveIntensity: 0.6, roughness: 0.2, metalness: 0.45 })
   const trail = [] // {mesh, current, target, t}
   const foodMesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.35, 16, 16),
@@ -84,20 +89,15 @@ export function createSnake(canvas, scoreEl, statusEl) {
       step()
       lastStep = performance.now()
     }
-    // Rebuild meshes (small enough for snake length)
-    if (alive || trail.length === 0) {
-      trail.forEach(t => scene.remove(t.mesh))
-      trail.length = 0
-      snake.forEach((s, i) => {
-        const m = new THREE.Mesh(
-          new THREE.SphereGeometry(i === 0 ? 0.45 : 0.38, 16, 16),
-          new THREE.MeshStandardMaterial({ color: i === 0 ? 0xc47fff : 0x4fdfff, emissive: i === 0 ? 0xc47fff : 0x4fdfff, emissiveIntensity: 0.6 })
-        )
-        m.position.set(s.x - GRID / 2 + 0.5, 0.3, s.y - GRID / 2 + 0.5)
-        scene.add(m)
-        trail.push({ mesh: m })
-      })
+    while (trail.length < snake.length) {
+      const head = trail.length === 0
+      const mesh = new THREE.Mesh(head ? headGeometry : bodyGeometry, head ? headMaterial : bodyMaterial)
+      scene.add(mesh)
+      trail.push({ mesh })
     }
+    snake.forEach((segment, index) => {
+      trail[index].mesh.position.set(segment.x - GRID / 2 + 0.5, 0.3, segment.y - GRID / 2 + 0.5)
+    })
     foodMesh.visible = Boolean(food)
     if (food) {
       foodMesh.position.set(food.x - GRID / 2 + 0.5, 0.3 + Math.sin(performance.now() * 0.005) * 0.1, food.y - GRID / 2 + 0.5)
@@ -112,16 +112,12 @@ export function createSnake(canvas, scoreEl, statusEl) {
   }
 
   function resize() {
-    const w = canvas.clientWidth, h = canvas.clientHeight
-    if (canvas.width !== w || canvas.height !== h) {
-      renderer.setSize(w, h, false)
-      camera.aspect = w / h
-      camera.updateProjectionMatrix()
-    }
+    resizeGame(renderer, camera, canvas, 1.8)
   }
 
   let ro
   function start() {
+    stop()
     reset()
     lastStep = performance.now()
     ro = new ResizeObserver(resize)
@@ -144,6 +140,7 @@ export function createSnake(canvas, scoreEl, statusEl) {
       lastStep = performance.now()
       return
     }
+    if (/^(Arrow(Up|Down|Left|Right)|[wasd])$/.test(e.key)) e.preventDefault()
     nextDir = directionForKey(e.key, dir)
   }
 

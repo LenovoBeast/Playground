@@ -4,6 +4,7 @@ import { playBeep } from './sound.js'
 
 export function createLaunch(canvas, scoreEl, statusEl) {
   const context = canvas.getContext('2d')
+  if (!context) throw new Error('This browser cannot create a 2D game canvas.')
   let state = createLaunchState()
   let frame, resizeObserver, lastTime = 0
 
@@ -44,8 +45,8 @@ export function createLaunch(canvas, scoreEl, statusEl) {
 
   function launch() {
     if (state.projectile || !state.alive || state.won) return
-    state = launchProjectile(state);
-        playBeep();
+    state = launchProjectile(state)
+    playBeep()
     statusEl.textContent = 'Watch the arc · drag to aim the next shot'
     scoreEl.textContent = `SCORE: ${state.score} · SHOTS: ${state.shots}`
   }
@@ -84,7 +85,11 @@ export function createLaunch(canvas, scoreEl, statusEl) {
   function circle(x, y, radius, fill, stroke = null) {
     context.beginPath()
     context.arc(x, y, radius, 0, Math.PI * 2)
-    context.fillStyle = fill
+    const gloss = context.createRadialGradient(x - radius * 0.3, y - radius * 0.35, 0, x, y, radius)
+    gloss.addColorStop(0, '#ffffff')
+    gloss.addColorStop(0.3, fill)
+    gloss.addColorStop(1, fill)
+    context.fillStyle = gloss
     context.fill()
     if (stroke) {
       context.strokeStyle = stroke
@@ -103,11 +108,19 @@ export function createLaunch(canvas, scoreEl, statusEl) {
     context.scale(scale, scale)
 
     const sky = context.createLinearGradient(0, 0, 0, 6)
-    sky.addColorStop(0, '#161029')
+    sky.addColorStop(0, '#1b3057')
     sky.addColorStop(1, '#09070e')
     context.fillStyle = sky
     context.fillRect(0, 0, 12, 6)
 
+    // Layered distant skyline gives depth without changing collision geometry.
+    for (let layer = 0; layer < 2; layer++) {
+      context.fillStyle = layer ? '#17213a' : '#253455'
+      for (let i = 0; i < 24; i++) {
+        const height = 0.4 + (Math.sin(i * 7 + layer * 3) + 1) * 0.65
+        context.fillRect(i * 0.55, 5.1 - height, 0.45, height)
+      }
+    }
     context.strokeStyle = 'rgba(79, 223, 255, 0.16)'
     context.lineWidth = 0.015
     for (let x = 0; x <= 12; x++) { context.beginPath(); context.moveTo(x, 0); context.lineTo(x, 5.2); context.stroke() }
@@ -141,7 +154,10 @@ export function createLaunch(canvas, scoreEl, statusEl) {
 
     for (const target of state.targets) {
       if (!target.alive) continue
-      context.fillStyle = '#ffb347'
+      const block = context.createLinearGradient(target.x - target.radius, target.y - target.radius, target.x + target.radius, target.y + target.radius)
+      block.addColorStop(0, '#ffe9b0')
+      block.addColorStop(1, '#cc741f')
+      context.fillStyle = block
       context.fillRect(target.x - target.radius, target.y - target.radius, target.radius * 2, target.radius * 2)
       circle(target.x, target.y, target.radius * 0.62, '#ff6bcf')
     }
@@ -164,6 +180,7 @@ export function createLaunch(canvas, scoreEl, statusEl) {
   }
 
   function start() {
+    stop()
     reset()
     lastTime = 0
     resizeObserver = new ResizeObserver(resize)

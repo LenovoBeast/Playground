@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Play, SquareLogo, CompassTool, X, CaretRight, Planet, ArrowRight, Spinner, Terminal } from '@phosphor-icons/react';
+import { Play, SquareLogo, X, Planet, ArrowRight, Spinner } from '@phosphor-icons/react';
 import { setupScene, buildWorld, clickObjects } from '../world.js';
-import { wireGames, createGameLoaders } from '../games/wireGames.js';
+import { wireGames, createGameSession } from '../games/wireGames.js';
 import { useTilt } from '../hooks/useTilt.js';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
 
@@ -12,7 +12,7 @@ gsap.registerPlugin(ScrollTrigger);
 const GAMES = [
   { name: 'snake', title: 'Snake', desc: 'A 3D snake on a holographic grid. Arrow keys or WASD.', accent: 'from-emerald-500 to-teal-500', tint: 'rgba(52,211,153,0.18)' },
   { name: 'breakout', title: 'Breakout', desc: 'Bounce the ball against the brick wall. Move the paddle with arrows.', accent: 'from-rose-500 to-pink-500', tint: 'rgba(244,114,182,0.18)' },
-  { name: 'racer', title: 'Racer', desc: 'Coast the impossible loop. Arrow keys to steer, hold to drift.', accent: 'from-cyan-500 to-blue-500', tint: 'rgba(34,211,238,0.18)' },
+  { name: 'racer', title: 'Racer', desc: 'Ride the neon loop. Hold Up or W to drive; Down or S to reverse.', accent: 'from-cyan-500 to-blue-500', tint: 'rgba(34,211,238,0.18)' },
   { name: 'match3', title: 'Match 3', desc: 'Swap adjacent orbs to line up three. Click to select, click again to swap.', accent: 'from-fuchsia-500 to-purple-500', tint: 'rgba(217,70,239,0.18)' },
   { name: 'launch', title: 'Launch', desc: 'Aim and fire at the target. Click-drag to set angle and power.', accent: 'from-amber-500 to-orange-500', tint: 'rgba(251,146,60,0.18)' },
 ];
@@ -23,33 +23,13 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Toggle the CSS class that shows/hides the overlay. The `game-overlay`
-  // base class keeps it `display: none`; `.active` flips it on.
-  useEffect(() => {
-    const el = overlayRef.current;
-    if (!el) return;
-    el.classList.toggle('active', open);
-  }, [open]);
-
-  useEffect(() => {
-    return () => {
-      prevFocus.current?.focus?.();
-    };
-  }, []);
-
-  // Auto-focus the play button when the overlay opens
   useEffect(() => {
     if (!open) return;
-    const el = overlayRef.current;
-    if (!el) return;
-    const observer = new MutationObserver(() => {
-      if (el.classList.contains('active')) {
-        const btn = el.querySelector('.play-btn');
-        btn?.focus();
-      }
-    });
-    observer.observe(el, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
+    prevFocus.current = document.activeElement;
+    setLoading(false);
+    setError(null);
+    overlayRef.current?.querySelector('.play-btn')?.focus();
+    return () => prevFocus.current?.focus?.();
   }, [open]);
 
   const handleKeyDown = useCallback((e) => {
@@ -74,9 +54,11 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
     setLoading(true);
     setError(null);
     try {
-      await onPlay();
+      const started = await onPlay();
+      if (started) overlayRef.current?.querySelector('canvas')?.focus();
     } catch (err) {
       setError(err?.message || 'Failed to load game');
+    } finally {
       setLoading(false);
     }
   };
@@ -88,9 +70,8 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
       role="dialog"
       aria-modal="true"
       aria-label={`${title} game overlay`}
-      className="game-overlay fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-md"
+      className={`game-overlay fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-md ${open ? 'active' : ''}`}
       onKeyDown={handleKeyDown}
-      onMouseDown={() => { prevFocus.current = document.activeElement; }}
     >
       <div className="panel relative mx-4 w-full max-w-2xl p-6 md:p-8">
         <button
@@ -106,6 +87,8 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
 
         <canvas
           id={`${name}Canvas`}
+          tabIndex={0}
+          aria-label={`${title} playing field`}
           className="aspect-video w-full rounded-2xl border border-white/8 bg-black/60"
         />
 
@@ -160,7 +143,7 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
   );
 }
 
-function GameCard({ game, index, isHero }) {
+function GameCard({ game, index, isHero, onOpen }) {
   const tilt = useTilt({ max: 8, scale: isHero ? 1.02 : 1.03, lift: isHero ? 20 : 16 });
 
   if (isHero) {
@@ -174,8 +157,8 @@ function GameCard({ game, index, isHero }) {
           <article
             className="panel corner-frame group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden p-7 md:p-8"
             data-game={game.name}
-            onClick={() => open(game)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(game); } }}
+            onClick={() => onOpen(game)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(game); } }}
             tabIndex={0}
             role="button"
             aria-label={`Open ${game.title}`}
@@ -217,8 +200,8 @@ function GameCard({ game, index, isHero }) {
         <article
           className="panel corner-frame group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden p-7"
           data-game={game.name}
-          onClick={() => open(game)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(game); } }}
+          onClick={() => onOpen(game)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(game); } }}
           tabIndex={0}
           role="button"
           aria-label={`Open ${game.title}`}
@@ -251,7 +234,7 @@ function GameCard({ game, index, isHero }) {
 }
 
 // Playroom with Horizontal Pan (GSAP)
-function Playroom() {
+function Playroom({ onOpen }) {
   const hostRef = useRef(null);
   const canvasRef = useRef(null);
   const [live, setLive] = useState(false);
@@ -287,8 +270,6 @@ function Playroom() {
 
       const running = { value: true };
       let raf = 0;
-      const pause = () => { running.value = false; };
-      const resume = () => { running.value = true; raf = requestAnimationFrame(tick); };
 
       const tick = (t) => {
         if (!running.value) return;
@@ -298,7 +279,7 @@ function Playroom() {
         raf = requestAnimationFrame(tick);
       };
 
-      const wired = wireGames({ renderer, camera, pause, resume, clickObjects });
+      const wired = wireGames({ renderer, camera, clickObjects, onOpen });
       disposeGames = wired.dispose;
 
       raf = requestAnimationFrame(tick);
@@ -317,6 +298,7 @@ function Playroom() {
         cancelAnimationFrame(raf);
         ro?.disconnect();
         disposeGames?.();
+        clickObjects.length = 0;
         disposeScene?.();
         setLive(false);
       };
@@ -340,7 +322,7 @@ function Playroom() {
       io.disconnect();
       teardown();
     };
-  }, []);
+  }, [onOpen]);
 
   // Horizontal Pan GSAP
   useEffect(() => {
@@ -396,27 +378,30 @@ function Playroom() {
 
 export default function Games() {
   const [openGame, setOpenGame] = useState(null);
-  const [activeEngine, setActiveEngine] = useState(null);
-  // Lazy loaders live on the component instance so a closed game's engine
-  // stays cached and restarts instantly when reopened.
-  const loaders = useRef(createGameLoaders());
+  const session = useRef(null);
+  if (!session.current) session.current = createGameSession();
 
-  const open = (game) => {
-    setOpenGame(game);
-    setActiveEngine(null);
-  };
+  const open = useCallback((game) => {
+    const entry = typeof game === 'string' ? GAMES.find(item => item.name === game) : game;
+    if (!entry) return;
+    session.current.close();
+    setOpenGame(entry);
+  }, []);
 
-  const play = async (name) => {
-    const engine = await loaders.current.loadGame(name);
-    setActiveEngine(engine);
-    engine.start();
-  };
+  const play = (name) => session.current.play(name);
 
-  const close = () => {
-    activeEngine?.stop?.();
-    setActiveEngine(null);
+  const close = useCallback(() => {
+    session.current.close();
     setOpenGame(null);
-  };
+  }, []);
+
+  useEffect(() => () => session.current.close(), []);
+  useEffect(() => {
+    if (!openGame) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
+  }, [openGame]);
 
   return (
     <section id="games" className="section-gap relative px-6">
@@ -433,20 +418,20 @@ export default function Games() {
             </h2>
           </div>
           <p className="max-w-sm text-body-sm">
-            Five hand-built engines running on raw canvas. Launch one from a card, or click its
+            Five hand-built engines running on WebGL and 2D canvas. Launch one from a card, or click its
             artifact floating in the scene.
           </p>
         </div>
 
         <div className="mb-12">
-          <Playroom />
+          <Playroom onOpen={open} />
         </div>
 
         {/* Bento Grid - 5 games, no empty cells */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 grid-flow-dense">
-          <GameCard key={`${GAMES[0].name}-hero`} game={GAMES[0]} index={0} isHero />
+          <GameCard key={`${GAMES[0].name}-hero`} game={GAMES[0]} index={0} isHero onOpen={open} />
           {GAMES.slice(1).map((game, i) => (
-            <GameCard key={game.name} game={game} index={i + 1} isHero={false} />
+            <GameCard key={game.name} game={game} index={i + 1} isHero={false} onOpen={open} />
           ))}
         </div>
       </div>

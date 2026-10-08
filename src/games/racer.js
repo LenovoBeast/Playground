@@ -1,5 +1,6 @@
 // Micro Racer — toy car on a 3D track loop
 import * as THREE from 'three'
+import { upgradeScene, resizeGame } from './graphics.js'
 import { createRacerState, resetRacerState } from './gameLogic.js'
 
 export function createRacer(canvas, scoreEl, statusEl) {
@@ -11,7 +12,7 @@ export function createRacer(canvas, scoreEl, statusEl) {
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.outputColorSpace = THREE.SRGBColorSpace
+  upgradeScene(renderer, scene)
 
   scene.add(new THREE.AmbientLight(0x6b4d8a, 0.5))
   const dir = new THREE.DirectionalLight(0xffffff, 0.7); dir.position.set(5, 10, 5); scene.add(dir)
@@ -35,6 +36,16 @@ export function createRacer(canvas, scoreEl, statusEl) {
     new THREE.MeshStandardMaterial({ color: 0x4fdfff, emissive: 0x4fdfff, emissiveIntensity: 0.6 })
   )
   scene.add(trackMesh)
+  const sleeperGeometry = new THREE.BoxGeometry(0.5, 0.035, 0.16)
+  const sleeperMaterial = new THREE.MeshStandardMaterial({ color: 0x344c68, metalness: 0.65, roughness: 0.3 })
+  for (let i = 0; i < 96; i++) {
+    const sleeper = new THREE.Mesh(sleeperGeometry, sleeperMaterial)
+    const position = curve.getPointAt(i / 96)
+    sleeper.position.copy(position)
+    sleeper.position.y -= 0.06
+    sleeper.lookAt(curve.getPointAt((i / 96 + 0.01) % 1))
+    scene.add(sleeper)
+  }
 
   // Floor grid
   const floor = new THREE.GridHelper(20, 20, 0xc47fff, 0x1a1525)
@@ -54,6 +65,14 @@ export function createRacer(canvas, scoreEl, statusEl) {
   )
   cabin.position.set(-0.02, 0.1, 0)
   car.add(cabin)
+  const wheelGeometry = new THREE.CylinderGeometry(0.06, 0.06, 0.035, 16)
+  const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x121c2c, metalness: 0.5, roughness: 0.4 })
+  for (const x of [-0.1, 0.1]) for (const z of [-0.11, 0.11]) {
+    const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial)
+    wheel.rotation.x = Math.PI / 2
+    wheel.position.set(x, -0.04, z)
+    car.add(wheel)
+  }
   scene.add(car)
 
   let { t, speed, lap, prevPos, running } = createRacerState()
@@ -89,14 +108,10 @@ export function createRacer(canvas, scoreEl, statusEl) {
   }
   function onKeyUp(e) { if (e.key in keys) keys[e.key] = false }
   function resize() {
-    const w = canvas.clientWidth, h = canvas.clientHeight
-    if (canvas.width !== w || canvas.height !== h) {
-      renderer.setSize(w, h, false)
-      camera.aspect = w / h
-      camera.updateProjectionMatrix()
-    }
+    resizeGame(renderer, camera, canvas, 1.4)
   }
   function start() {
+    stop()
     ({ t, speed, lap, prevPos, running } = resetRacerState())
     Object.keys(keys).forEach(key => { keys[key] = false })
     statusEl.textContent = 'Hold Up or W to drive · Down or S to reverse'

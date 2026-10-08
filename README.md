@@ -22,6 +22,22 @@ The site is deployed automatically to GitHub Pages whenever changes are pushed t
 - **Candy Cascade** — an original match-three puzzle with combos and limited moves.
 - **Sky Sling** — an original aim-and-launch physics game with destructible targets.
 
+## Unified launcher and graphics refresh
+
+All five included games live in this repository, use one launcher, and ship together
+in `dist/`. Cards and 3D artifacts both open the same React-owned dialog. Click
+**Play** to start or restart, and **Escape** to close. Closing or switching while
+an engine downloads cancels its pending start; failed downloads can be retried.
+
+The 3D games use ACES tone mapping, hemisphere/rim lighting, and responsive camera
+framing. Breakout adds a fading ball trail; Racer adds track sleepers and wheels.
+Match 3 has glossy candy shading, and Launch has a layered skyline and shaded targets.
+Snake reuses segment meshes between frames. Game rules and keyboard controls are preserved.
+
+This consolidates the games already in Playground, not external repository histories.
+Other repositories need to be identified and reviewed before importing their games;
+no source repositories have been removed or rewritten.
+
 ## Controls
 
 - Drag the main scene to orbit around the workspace.
@@ -39,14 +55,14 @@ The site is deployed automatically to GitHub Pages whenever changes are pushed t
 Install dependencies and start the Vite development server:
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
 Open the local URL printed by Vite, typically:
 
 ```text
-http://localhost:3000
+http://localhost:5173/Playground/
 ```
 
 ## Test and Production Build

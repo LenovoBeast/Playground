@@ -5,6 +5,7 @@ const candyColors = ['#ff6bcf', '#c47fff', '#4fdfff', '#ffb347', '#7dff8a', '#ff
 
 export function createMatch3(canvas, scoreEl, statusEl) {
   const context = canvas.getContext('2d')
+  if (!context) throw new Error('This browser cannot create a 2D game canvas.')
   let state = createMatch3State()
   let cursor = { row: 3, col: 3 }
   let frame, resizeObserver
@@ -102,7 +103,11 @@ export function createMatch3(canvas, scoreEl, statusEl) {
     context.save()
     context.shadowColor = candyColors[value]
     context.shadowBlur = 14
-    context.fillStyle = candyColors[value]
+    const gloss = context.createRadialGradient(x - radius * 0.35, y - radius * 0.4, radius * 0.08, x, y, radius)
+    gloss.addColorStop(0, '#ffffff')
+    gloss.addColorStop(0.35, candyColors[value])
+    gloss.addColorStop(1, '#23304d')
+    context.fillStyle = gloss
     context.beginPath()
     context.arc(x, y, radius, 0, Math.PI * 2)
     context.fill()
@@ -119,7 +124,10 @@ export function createMatch3(canvas, scoreEl, statusEl) {
     const height = canvas.clientHeight
     const { cell, left, top } = layout()
     context.clearRect(0, 0, width, height)
-    context.fillStyle = 'rgba(12, 9, 20, 0.96)'
+    const background = context.createLinearGradient(0, 0, width, height)
+    background.addColorStop(0, '#172340')
+    background.addColorStop(1, '#080d1c')
+    context.fillStyle = background
     context.fillRect(0, 0, width, height)
     context.strokeStyle = 'rgba(196, 127, 255, 0.2)'
     context.lineWidth = 1
@@ -143,6 +151,7 @@ export function createMatch3(canvas, scoreEl, statusEl) {
   }
 
   function start() {
+    stop()
     reset()
     resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(canvas)

@@ -56,6 +56,7 @@ export function setupScene(canvas, getSize = defaultSize) {
   scene.add(fill)
 
   const dispose = () => {
+    controls.dispose()
     renderer.dispose()
     scene.traverse(obj => {
       if (obj.geometry) obj.geometry.dispose()
@@ -82,20 +83,23 @@ function createOrbitControls(camera, dom, getSize = defaultSize) {
     camera.lookAt(target)
   }
   // Mouse/pen only: touch drags must stay available for scrolling the page.
-  dom.addEventListener('pointerdown', e => {
+  const onDown = e => {
     if (e.pointerType === 'touch') return
     dragging = true; lastX = e.clientX; lastY = e.clientY
     dom.setPointerCapture?.(e.pointerId)
-  })
-  dom.addEventListener('pointerup', e => { dragging = false; dom.releasePointerCapture?.(e.pointerId) })
-  dom.addEventListener('pointercancel', e => { dragging = false; dom.releasePointerCapture?.(e.pointerId) })
-  dom.addEventListener('pointermove', e => {
+  }
+  const onUp = e => { dragging = false; dom.releasePointerCapture?.(e.pointerId) }
+  const onMove = e => {
     if (!dragging) return
     const dx = e.clientX - lastX, dy = e.clientY - lastY
     lastX = e.clientX; lastY = e.clientY
     theta -= dx * 0.005
     phi = Math.max(0.2, Math.min(Math.PI - 0.2, phi - dy * 0.005))
-  })
+  }
+  dom.addEventListener('pointerdown', onDown)
+  dom.addEventListener('pointerup', onUp)
+  dom.addEventListener('pointercancel', onUp)
+  dom.addEventListener('pointermove', onMove)
   // Wheel is intentionally NOT captured — hijacking it would break page scroll.
   update()
   const size = () => getSize()
@@ -105,6 +109,12 @@ function createOrbitControls(camera, dom, getSize = defaultSize) {
       const { width, height } = size()
       camera.aspect = width / height
       camera.updateProjectionMatrix()
+    },
+    dispose() {
+      dom.removeEventListener('pointerdown', onDown)
+      dom.removeEventListener('pointerup', onUp)
+      dom.removeEventListener('pointercancel', onUp)
+      dom.removeEventListener('pointermove', onMove)
     },
     setAutoSpin(v) { autoSpin = v },
     target: { set: (x, y, z) => target.set(x, y, z) },

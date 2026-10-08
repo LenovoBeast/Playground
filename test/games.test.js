@@ -55,3 +55,12 @@ test('App.jsx renders World and Games', () => {
   assert.ok(content.includes('World'), 'App.jsx must render World')
   assert.ok(content.includes('Games'), 'App.jsx must render Games')
 })
+// Regression: a card must call React's launcher, not the browser's window.open.
+test('cards receive and call the shared launcher callback', () => {
+  const content = src('components/Games.jsx')
+  assert.match(content, /function GameCard\([^)]*onOpen/)
+  assert.equal((content.match(/onClick=\{\(\) => onOpen\(game\)\}/g) || []).length, 2)
+  assert.equal((content.match(/isHero(?:=\{false\})? onOpen=\{open\}/g) || []).length, 2)
+  assert.doesNotMatch(content, /\bopen\(game\)/)
+  assert.match(content, /finally\s*\{\s*setLoading\(false\)/)
+})
