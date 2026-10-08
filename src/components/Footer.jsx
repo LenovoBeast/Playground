@@ -1,16 +1,36 @@
-import React from 'react';
-import { GithubLogo, TwitterLogo, LinkedinLogo, Mailbox, ArrowUp } from '@phosphor-icons/react';
-import { scrollToSection } from '../hooks/useActiveSection.js';
+import React from "react";
+import {
+  GithubLogo,
+  TwitterLogo,
+  LinkedinLogo,
+  Mailbox,
+  ArrowUp,
+} from "@phosphor-icons/react";
+import { scrollToSection } from "../hooks/useActiveSection.js";
 
-const MARQUEE = ['WebGPU', 'Rust / Wasm', 'Three.js', 'React', 'GSAP', 'Playwright', 'Edge Runtime'];
+const MARQUEE = [
+  "WebGPU",
+  "Rust / Wasm",
+  "Three.js",
+  "React",
+  "GSAP",
+  "Playwright",
+  "Edge Runtime",
+];
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className="relative overflow-hidden border-t border-white/8 bg-zinc-950/60 px-6 pt-20">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 left-1/2 h-[320px] w-[720px] -translate-x-1/2 rounded-full bg-blue-600/10 blur-[120px]" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-32 left-1/2 h-[320px] w-[720px] -translate-x-1/2 rounded-full bg-blue-600/10 blur-[120px]"
+      />
 
       {/* Ticker */}
       <div className="relative mb-16 overflow-hidden border-y border-white/5 py-5">
@@ -18,7 +38,10 @@ export default function Footer() {
           {[0, 1].map((pass) => (
             <div key={pass} className="flex items-center gap-10">
               {MARQUEE.map((item) => (
-                <span key={`${pass}-${item}`} className="flex items-center gap-10">
+                <span
+                  key={`${pass}-${item}`}
+                  className="flex items-center gap-10"
+                >
                   <span className="font-mono text-xs uppercase tracking-[0.28em] text-zinc-600">
                     {item}
                   </span>
@@ -38,20 +61,23 @@ export default function Footer() {
                 LB
               </span>
               <span className="flex flex-col leading-tight">
-                <span className="text-lg font-black tracking-tight">Lenovo Beast</span>
+                <span className="text-lg font-black tracking-tight">
+                  Lenovo Beast
+                </span>
                 <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500">
                   Senior Game Dev & Web Engineer
                 </span>
               </span>
             </div>
             <p className="max-w-md text-sm leading-relaxed text-zinc-500">
-              Architecting high-performance engines, immersive web experiences, and developer
-              tooling that makes building complex things feel simple.
+              Architecting high-performance engines, immersive web experiences,
+              and developer tooling that makes building complex things feel
+              simple.
             </p>
 
             <button
               type="button"
-              onClick={() => scrollToSection('contact')}
+              onClick={() => scrollToSection("contact")}
               className="magnetic-btn btn-sweep active-press relative mt-7 inline-flex items-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500"
             >
               Start a project
@@ -65,11 +91,11 @@ export default function Footer() {
               </p>
               <ul className="space-y-2.5">
                 {[
-                  ['Work', 'projects'],
-                  ['About', 'about'],
-                  ['Stack', 'stack'],
-                  ['Playroom', 'games'],
-                  ['Contact', 'contact'],
+                  ["Work", "projects"],
+                  ["About", "about"],
+                  ["Stack", "stack"],
+                  ["Playroom", "games"],
+                  ["Contact", "contact"],
                 ].map(([label, id]) => (
                   <li key={id}>
                     <button
@@ -90,16 +116,20 @@ export default function Footer() {
               </p>
               <ul className="space-y-2.5">
                 {[
-                  ['GitHub', 'https://github.com/LenovoBeast'],
-                  ['Twitter', 'https://twitter.com/LenovoBeast'],
-                  ['LinkedIn', 'https://linkedin.com/in/lenovobeast'],
-                  ['Email', 'mailto:lenovobeast@example.com'],
+                  ["GitHub", "https://github.com/LenovoBeast"],
+                  ["Twitter", "https://twitter.com/LenovoBeast"],
+                  ["LinkedIn", "https://linkedin.com/in/lenovobeast"],
+                  ["Email", "mailto:lenovobeast@example.com"],
                 ].map(([label, href]) => (
                   <li key={label}>
                     <a
                       href={href}
-                      target={href.startsWith('mailto:') ? undefined : '_blank'}
-                      rel={href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
+                      target={href.startsWith("mailto:") ? undefined : "_blank"}
+                      rel={
+                        href.startsWith("mailto:")
+                          ? undefined
+                          : "noopener noreferrer"
+                      }
                       className="text-sm text-zinc-400 transition-colors hover:text-white"
                     >
                       {label}
@@ -149,30 +179,49 @@ export default function Footer() {
               className="social-icon grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-purple-400 active-press"
               aria-label="Email"
             >
-              <Mail size={17} weight="bold" />
+              <Mailbox size={17} weight="bold" />
             </a>
 
             <button
               type="button"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               className="footer-icon group grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-white active-press"
               aria-label="Back to top"
             >
-              <ArrowUp size={17} weight="bold" className="transition-transform group-hover:-translate-y-1" />
+              <ArrowUp
+                size={17}
+                weight="bold"
+                className="transition-transform group-hover:-translate-y-1"
+              />
             </button>
           </div>
         </div>
 
         <div className="flex flex-col gap-3 border-t border-white/5 py-6 text-center text-xs text-zinc-600 md:flex-row md:justify-between md:text-left">
           <p>
-            <a href="#main-content" className="underline transition-colors hover:text-white">Privacy Policy</a>
+            <a
+              href="#main-content"
+              className="underline transition-colors hover:text-white"
+            >
+              Privacy Policy
+            </a>
             <span className="mx-2">·</span>
-            <a href="#main-content" className="underline transition-colors hover:text-white">Terms of Service</a>
+            <a
+              href="#main-content"
+              className="underline transition-colors hover:text-white"
+            >
+              Terms of Service
+            </a>
             <span className="mx-2">·</span>
-            <a href="#main-content" className="underline transition-colors hover:text-white">Cookie Policy</a>
+            <a
+              href="#main-content"
+              className="underline transition-colors hover:text-white"
+            >
+              Cookie Policy
+            </a>
           </p>
           <p className="font-mono">
-            Open source —{' '}
+            Open source —{" "}
             <a
               href="https://github.com/LenovoBeast/Playground"
               target="_blank"

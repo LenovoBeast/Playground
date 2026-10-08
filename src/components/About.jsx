@@ -1,19 +1,51 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Terminal, GithubLogo, LinkedinLogo, TwitterLogo, Mailbox, ArrowUpRight } from '@phosphor-icons/react';
-import { useReducedMotion, useInView } from '../hooks/useReducedMotion.js';
-import { SOCIALS } from '../data/nav.js';
+import React, { useEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  Terminal,
+  GithubLogo,
+  LinkedinLogo,
+  TwitterLogo,
+  Mailbox,
+  ArrowUpRight,
+} from "@phosphor-icons/react";
+import { useReducedMotion, useInView } from "../hooks/useReducedMotion.js";
+import { SOCIALS } from "../data/nav.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const SOCIAL_ICONS = { github: GithubLogo, twitter: TwitterLogo, linkedin: LinkedinLogo, mail: Mailbox };
+const SOCIAL_ICONS = {
+  github: GithubLogo,
+  twitter: TwitterLogo,
+  linkedin: LinkedinLogo,
+  mail: Mailbox,
+};
 
 const timeline = [
-  { year: "2024", title: "Senior Game Dev & Web Engineer", company: "Freelance / Open Source", desc: "Architecting high-performance engines, immersive web experiences, and developer tooling." },
-  { year: "2022", title: "Lead Frontend Engineer", company: "Tech Startup", desc: "Built design systems, scaled React architecture, mentored 5 engineers." },
-  { year: "2020", title: "Game Developer", company: "Game Studio", desc: "Shipped 3 commercial titles. Engine development, rendering pipelines, multiplayer networking." },
-  { year: "2018", title: "Full Stack Developer", company: "Digital Agency", desc: "End-to-end web apps, CMS architecture, performance optimization." },
+  {
+    year: "2024",
+    title: "Senior Game Dev & Web Engineer",
+    company: "Freelance / Open Source",
+    desc: "Architecting high-performance engines, immersive web experiences, and developer tooling.",
+  },
+  {
+    year: "2022",
+    title: "Lead Frontend Engineer",
+    company: "Tech Startup",
+    desc: "Built design systems, scaled React architecture, mentored 5 engineers.",
+  },
+  {
+    year: "2020",
+    title: "Game Developer",
+    company: "Game Studio",
+    desc: "Shipped 3 commercial titles. Engine development, rendering pipelines, multiplayer networking.",
+  },
+  {
+    year: "2018",
+    title: "Full Stack Developer",
+    company: "Digital Agency",
+    desc: "End-to-end web apps, CMS architecture, performance optimization.",
+  },
 ];
 
 const stats = [
@@ -36,20 +68,36 @@ export default function About() {
     if (reducedMotion) return;
     const ctx = gsap.context(() => {
       gsap.from(textRef.current?.children || [], {
-        y: 44, opacity: 0, duration: 1, ease: 'expo.out', stagger: 0.09,
-        scrollTrigger: { trigger: textRef.current, start: 'top 82%' },
+        y: 44,
+        opacity: 0,
+        duration: 1,
+        ease: "expo.out",
+        stagger: 0.09,
+        scrollTrigger: { trigger: textRef.current, start: "top 82%" },
       });
       gsap.from(visualRef.current, {
-        x: 60, opacity: 0, rotateY: -10, duration: 1.3, ease: 'expo.out',
-        scrollTrigger: { trigger: visualRef.current, start: 'top 82%' },
+        x: 60,
+        opacity: 0,
+        rotateY: -10,
+        duration: 1.3,
+        ease: "expo.out",
+        scrollTrigger: { trigger: visualRef.current, start: "top 82%" },
       });
       gsap.from(statsRef.current?.children || [], {
-        y: 34, opacity: 0, duration: 0.8, ease: 'expo.out', stagger: 0.07,
-        scrollTrigger: { trigger: statsRef.current, start: 'top 88%' },
+        y: 34,
+        opacity: 0,
+        duration: 0.8,
+        ease: "expo.out",
+        stagger: 0.07,
+        scrollTrigger: { trigger: statsRef.current, start: "top 88%" },
       });
       gsap.from(timelineRef.current?.children || [], {
-        x: 46, opacity: 0, duration: 0.85, ease: 'expo.out', stagger: 0.1,
-        scrollTrigger: { trigger: timelineRef.current, start: 'top 85%' },
+        x: 46,
+        opacity: 0,
+        duration: 0.85,
+        ease: "expo.out",
+        stagger: 0.1,
+        scrollTrigger: { trigger: timelineRef.current, start: "top 85%" },
       });
     }, sectionRef);
     return () => ctx.revert();
@@ -77,35 +125,46 @@ export default function About() {
             </h2>
             <div className="space-y-6 text-base leading-relaxed text-zinc-400 md:text-lg">
               <p>
-                I'm a senior developer with 8+ years pushing browser boundaries. My focus:
-                high-performance gaming engines, immersive web experiences, and developer tooling
-                that makes building complex things feel simple.
+                I'm a senior developer with 8+ years pushing browser boundaries.
+                My focus: high-performance gaming engines, immersive web
+                experiences, and developer tooling that makes building complex
+                things feel simple.
               </p>
               <p>
-                Started with Flash/ActionScript, evolved through jQuery, Backbone, Angular, React,
-                and now WebGPU/Wasm. The stack changes. The craft — clean architecture, performance
-                obsession, delightful UX — stays constant.
+                Started with Flash/ActionScript, evolved through jQuery,
+                Backbone, Angular, React, and now WebGPU/Wasm. The stack
+                changes. The craft — clean architecture, performance obsession,
+                delightful UX — stays constant.
               </p>
               <p>
-                Currently exploring: WebGPU compute shaders, Rust/Wasm for game logic, local-first
-                software, and AI-augmented development workflows.
+                Currently exploring: WebGPU compute shaders, Rust/Wasm for game
+                logic, local-first software, and AI-augmented development
+                workflows.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 border-t border-white/8 pt-8">
               {SOCIALS.map(({ icon, label, href }) => {
-                const Icon = SOCIAL_ICONS[icon] ?? Mail;
+                const Icon = SOCIAL_ICONS[icon] ?? Mailbox;
                 return (
                   <a
                     key={label}
                     href={href}
-                    target={href.startsWith('mailto:') ? undefined : '_blank'}
-                    rel={href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
+                    target={href.startsWith("mailto:") ? undefined : "_blank"}
+                    rel={
+                      href.startsWith("mailto:")
+                        ? undefined
+                        : "noopener noreferrer"
+                    }
                     className="group flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-zinc-300 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.07] hover:text-white active-press"
-                    aria-label={label + ' profile'}
+                    aria-label={label + " profile"}
                   >
                     <Icon size={16} weight="bold" />
                     {label}
-                    <ArrowUpRight size={13} weight="bold" className="opacity-0 transition-opacity duration-300 group-hover:opacity-70" />
+                    <ArrowUpRight
+                      size={13}
+                      weight="bold"
+                      className="opacity-0 transition-opacity duration-300 group-hover:opacity-70"
+                    />
                   </a>
                 );
               })}
@@ -115,20 +174,28 @@ export default function About() {
             <div ref={visualRef} className="relative">
               <div className="panel corner-frame relative aspect-square overflow-hidden p-2">
                 <div className="grid-veil relative grid h-full w-full place-items-center overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-blue-600/10 to-cyan-600/10">
-                  <div aria-hidden="true" className="absolute inset-0 grid place-items-center">
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 grid place-items-center"
+                  >
                     <span className="animate-spin-slow absolute h-[62%] w-[62%] rounded-full border border-dashed border-blue-400/25" />
                     <span className="animate-spin-slower absolute h-[82%] w-[82%] rounded-full border border-cyan-400/20" />
                     <span className="absolute h-[42%] w-[42%] rounded-full bg-blue-500/10 blur-2xl" />
                   </div>
                   <div className="relative grid place-items-center">
                     <span className="absolute h-28 w-28 rounded-full bg-blue-500/20 blur-2xl" />
-                    <Terminal size={72} weight="bold" className="relative text-blue-300/70" />
+                    <Terminal
+                      size={72}
+                      weight="bold"
+                      className="relative text-blue-300/70"
+                    />
                   </div>
                   <span className="absolute bottom-4 left-4 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-500">
                     operator // lb
                   </span>
                   <span className="absolute right-4 top-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-emerald-400/80">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> online
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{" "}
+                    online
                   </span>
                 </div>
               </div>
@@ -139,9 +206,15 @@ export default function About() {
                 <span className="text-xl font-black md:text-2xl">47</span>
               </div>
             </div>
-            <div ref={statsRef} className="grid grid-cols-2 gap-4 border-t border-white/8 pt-8">
+            <div
+              ref={statsRef}
+              className="grid grid-cols-2 gap-4 border-t border-white/8 pt-8"
+            >
               {stats.map((stat) => (
-                <div key={stat.label} className="panel group p-5 transition-colors hover:border-white/15">
+                <div
+                  key={stat.label}
+                  className="panel group p-5 transition-colors hover:border-white/15"
+                >
                   <div className="text-3xl font-black tracking-tight md:text-4xl">
                     <Counter value={stat.value} active={statsInView} />
                   </div>
@@ -171,7 +244,9 @@ export default function About() {
                     <h4 className="mb-2 text-xl font-black uppercase italic tracking-tight">
                       {item.title}
                     </h4>
-                    <p className="mb-3 font-mono text-sm text-cyan-400">{item.company}</p>
+                    <p className="mb-3 font-mono text-sm text-cyan-400">
+                      {item.company}
+                    </p>
                     <p className="leading-relaxed text-zinc-400">{item.desc}</p>
                   </div>
                 </div>
@@ -193,7 +268,7 @@ function Counter({ value, active }) {
 
   useEffect(() => {
     if (!active) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setN(target);
       return;
     }
