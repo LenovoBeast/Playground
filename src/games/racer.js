@@ -1,7 +1,22 @@
 // Micro Racer — toy car on a 3D track loop
 import * as THREE from 'three'
 import { upgradeScene, resizeGame } from './graphics.js'
-import { createRacerState, resetRacerState } from './gameLogic.js'
+import { advanceRacer, createRacerState, formatLapTime, RACER_LAPS, racerLapTime } from './gameLogic.js'
+import {
+  createClock,
+  createKeyState,
+  createPauseState,
+  mirrorState,
+  readBest,
+  withHints,
+  writeBest,
+  isPauseKey,
+  isRestartKey,
+} from './gameKit.js'
+import { playBeep } from './sound.js'
+
+const GAME_NAME = 'racer-bestlap'
+const cameraTarget = new THREE.Vector3()
 
 export function createRacer(canvas, scoreEl, statusEl) {
   const scene = new THREE.Scene()
@@ -17,6 +32,12 @@ export function createRacer(canvas, scoreEl, statusEl) {
   scene.add(new THREE.AmbientLight(0x6b4d8a, 0.5))
   const dir = new THREE.DirectionalLight(0xffffff, 0.7); dir.position.set(5, 10, 5); scene.add(dir)
   const glow = new THREE.PointLight(0xff6bcf, 0.8, 15); glow.position.set(0, 1, 0); scene.add(glow)
+
+  const clock = createClock()
+  const pause = createPauseState()
+  // Left/right never did anything (the car follows the track), so they are gone
+  // rather than advertised as controls.
+  const keys = createKeyState({ ArrowUp: true, ArrowDown: true, w: true, s: true, W: true, S: true })
 
   // Track — closed loop in 3D
   const curve = new THREE.CatmullRomCurve3([
@@ -47,6 +68,16 @@ export function createRacer(canvas, scoreEl, statusEl) {
     scene.add(sleeper)
   }
 
+  // Start/finish line marker so the lap rule is visible
+  const startLine = new THREE.Mesh(
+    new THREE.BoxGeometry(1.4, 0.02, 0.18),
+    new THREE.MeshStandardMaterial({ color: 0xfff06b, emissive: 0xfff06b, emissiveIntensity: 0.6 })
+  )
+  const startPoint = curve.getPointAt(0)
+  startLine.position.set(startPoint.x, startPoint.y - 0.05, startPoint.z)
+  startLine.lookAt(curve.getPointAt(0.01))
+  scene.add(startLine)
+
   // Floor grid
   const floor = new THREE.GridHelper(20, 20, 0xc47fff, 0x1a1525)
   floor.position.y = -0.5
@@ -67,66 +98,125 @@ export function createRacer(canvas, scoreEl, statusEl) {
   car.add(cabin)
   const wheelGeometry = new THREE.CylinderGeometry(0.06, 0.06, 0.035, 16)
   const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x121c2c, metalness: 0.5, roughness: 0.4 })
+  const wheels = []
   for (const x of [-0.1, 0.1]) for (const z of [-0.11, 0.11]) {
     const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial)
     wheel.rotation.x = Math.PI / 2
     wheel.position.set(x, -0.04, z)
     car.add(wheel)
+    wheels.push(wheel)
   }
   scene.add(car)
 
-  let { t, speed, lap, prevPos, running } = createRacerState()
-  let targetSpeed = 0, frame, ro
-  const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, s: false }
+  let state = createRacerState()
+  let bestLap = 0
+  let frame, ro
 
-  function update(dt) {
-    targetSpeed = keys.ArrowUp || keys.w ? 0.3 : keys.ArrowDown || keys.s ? -0.15 : 0
-    speed += (targetSpeed - speed) * 0.05
-    t = (t + speed * dt + 1) % 1
-    const pos = curve.getPointAt(t)
-    const ahead = curve.getPointAt((t + 0.01) % 1)
+  function syncHud() {
+    // Racer is time-based, so it shows lap time where the other games show a
+    // score — but through the same formatting helpers.
+    scoreEl.textContent = `LAP ${Math.min(state.lap, RACER_LAPS)}/${RACER_LAPS} · ${formatLapTime(racerLapTime(state))} · BEST ${formatLapTime(bestLap || null)}`
+  }
+
+  function placeCar() {
+    const pos = curve.getPointAt(state.t)
+    const ahead = curve.getPointAt((state.t + 0.01) % 1)
     car.position.copy(pos)
     car.position.y += 0.12
     car.lookAt(ahead.x, ahead.y + 0.12, ahead.z)
-    if (prevPos && pos.distanceTo(prevPos) > 3) lap++
-    prevPos = pos.clone()
-    camera.position.lerp(new THREE.Vector3(pos.x * 0.6, pos.y + 4, pos.z + 8), 0.05)
+    for (const wheel of wheels) wheel.rotation.z -= state.speed * 0.6
+    cameraTarget.set(pos.x * 0.6, pos.y + 4, pos.z + 8)
+    camera.position.lerp(cameraTarget, 0.08)
     camera.lookAt(car.position)
   }
 
-  function loop() {
-    if (running) {
-      scoreEl.textContent = `LAP: ${Math.min(lap, 3)} / 3`
-      update(0.016)
+  function update(dt) {
+    const next = advanceRacer(state, {
+      accelerate: keys.held.ArrowUp || keys.held.w || keys.held.W,
+      reverse: keys.held.ArrowDown || keys.held.s || keys.held.S,
+    }, dt, { laps: RACER_LAPS })
+    state = next
+    for (const event of next.events) {
+      if (event === 'lap') {
+        playBeep(660, 0.08)
+        statusEl.textContent = withHints(`Lap ${Math.min(state.lap, RACER_LAPS)} of ${RACER_LAPS} · last ${formatLapTime(racerLapTime(state))}`)
+      } else if (event === 'lap-lost') {
+        statusEl.textContent = withHints(`Lap ${state.lap} of ${RACER_LAPS} · crossed the line backwards`)
+      } else if (event === 'finish') {
+        const lap = state.bestLap ?? racerLapTime(state)
+        if (lap < bestLap || bestLap === 0) {
+          bestLap = lap
+          writeBest(GAME_NAME, Math.round(lap * 1000))
+        }
+        playBeep(980, 0.3)
+        statusEl.textContent = withHints(
+          `Finished! Best lap ${formatLapTime(bestLap)} · R to race again`,
+          { pause: false }
+        )
+      }
     }
+    placeCar()
+  }
+
+  function loop() {
+    const dt = clock.tick(performance.now())
+    if (!pause.paused) update(dt)
+    syncHud()
+    mirrorState(canvas, [Math.round(state.t * 100), state.lap, pause.paused ? 'paused' : state.finished ? 'finished' : 'racing'])
     renderer.render(scene, camera)
     frame = requestAnimationFrame(loop)
   }
 
   function onKey(e) {
-    if (e.key in keys) { keys[e.key] = true; e.preventDefault() }
+    if (keys.down(e.key)) { e.preventDefault(); return }
+    if (isRestartKey(e.key)) {
+      e.preventDefault()
+      start()
+      return
+    }
+    if (isPauseKey(e.key)) {
+      e.preventDefault()
+      if (!state.finished) {
+        const paused = pause.toggle()
+        statusEl.textContent = paused ? withHints('Paused') : withHints('Back on the track')
+      }
+    }
   }
-  function onKeyUp(e) { if (e.key in keys) keys[e.key] = false }
+
+  function onKeyUp(e) {
+    keys.up(e.key)
+  }
+
   function resize() {
     resizeGame(renderer, camera, canvas, 1.4)
   }
+
   function start() {
     stop()
-    ({ t, speed, lap, prevPos, running } = resetRacerState())
-    Object.keys(keys).forEach(key => { keys[key] = false })
-    statusEl.textContent = 'Hold Up or W to drive · Down or S to reverse'
+    state = createRacerState()
+    clock.reset()
+    pause.set(false)
+    keys.clear()
+    const stored = readBest(GAME_NAME)
+    bestLap = stored ? stored / 1000 : 0
+    statusEl.textContent = withHints(
+      `Hold ↑ or W to drive · ${RACER_LAPS} laps${bestLap ? ` · best ${formatLapTime(bestLap)}` : ''}`
+    )
     ro = new ResizeObserver(resize); ro.observe(canvas)
     resize()
+    placeCar()
     window.addEventListener('keydown', onKey)
     window.addEventListener('keyup', onKeyUp)
     loop()
   }
+
   function stop() {
-    running = false
     cancelAnimationFrame(frame)
     ro?.disconnect()
     window.removeEventListener('keydown', onKey)
     window.removeEventListener('keyup', onKeyUp)
+    keys.clear()
   }
+
   return { start, stop }
 }

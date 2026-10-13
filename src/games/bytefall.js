@@ -13,6 +13,17 @@ import {
   PLAYER_H,
   MAX_LIVES,
 } from './bytefallLogic.js'
+import {
+  createClock,
+  createPauseState,
+  formatScore,
+  mirrorState,
+  readBest,
+  withHints,
+  writeBest,
+  isPauseKey,
+  isRestartKey,
+} from './gameKit.js'
 import { playBeep } from './sound.js'
 
 const PALETTE = {
@@ -37,7 +48,7 @@ const PALETTE = {
   pole: '#b4b2a9',
 }
 
-const BEST_KEY = 'bytefall-best'
+const GAME_NAME = 'bytefall'
 
 export function createBytefall(canvas, scoreEl, statusEl) {
   const context = canvas.getContext('2d')
@@ -46,17 +57,13 @@ export function createBytefall(canvas, scoreEl, statusEl) {
   let state = createBytefallState(0)
   let frame = 0
   let resizeObserver = null
-  let lastTime = 0
-  let paused = false
+  const clock = createClock({ maxStep: 0.032 })
+  const pause = createPauseState()
   let best = 0
   let touchMode = false
   let hud = { score: -1, lives: -1, level: -1, time: -1 }
 
-  try {
-    best = Number(localStorage.getItem(BEST_KEY)) || 0
-  } catch {
-    best = 0
-  }
+  best = readBest(GAME_NAME)
 
   // ---------------------------------------------------------------- input
   const held = { left: false, right: false, jump: false }
@@ -81,9 +88,9 @@ export function createBytefall(canvas, scoreEl, statusEl) {
       restart()
       return
     }
-    if (event.key === 'p' || event.key === 'P') {
+    if (isPauseKey(event.key)) {
       event.preventDefault()
-      paused = !paused
+      pause.toggle()
       announce()
       return
     }
@@ -192,16 +199,16 @@ export function createBytefall(canvas, scoreEl, statusEl) {
   // ---------------------------------------------------------------- state
   function restart() {
     state = createBytefallState(0)
-    paused = false
+    pause.set(false)
     hud = { score: -1, lives: -1, level: -1, time: -1 }
     playBeep(330, 0.08)
     announce()
   }
 
   function statusFor() {
-    if (paused) return 'Paused · press P to resume'
-    if (state.phase === 'won') return `All levels cleared · score ${state.score} · R to run it again`
-    if (state.phase === 'gameover') return `Game over · score ${state.score} · R to try again`
+    if (pause.paused) return withHints('Paused')
+    if (state.phase === 'won') return withHints(`All levels cleared · score ${state.score}`, { pause: false })
+    if (state.phase === 'gameover') return withHints(`Game over · score ${state.score}`, { pause: false })
     if (state.phase === 'dead') return `Life lost · ${state.player.lives} left`
     if (state.phase === 'clear') return 'Level clear · bonus banked'
     if (state.player.turbo) return 'Turbo online · double jump ready'
@@ -215,20 +222,13 @@ export function createBytefall(canvas, scoreEl, statusEl) {
   }
 
   function syncHud() {
-    // Compact state mirror for the smoke check and for debugging: the canvas
-    // pixels alone can't prove the player is actually moving.
-    canvas.dataset.bfState = [
-      state.score,
-      state.player.lives,
-      state.levelIndex + 1,
-      state.player.x.toFixed(2),
-      state.phase,
-    ].join('|')
+    // Same mirror shape as every other game (score | progress | phase): the
+    // smoke check reads `progress` to prove the player is actually moving,
+    // which canvas pixels can't (they change on resize and CSS animation).
+    mirrorState(canvas, [state.score, state.player.x, state.phase])
     if (hud.score !== state.score) {
       hud.score = state.score
-      scoreEl.textContent = `SCORE ${String(state.score).padStart(6, '0')} · BEST ${String(
-        Math.max(best, state.score)
-      ).padStart(6, '0')}`
+      scoreEl.textContent = formatScore(state.score, best)
     }
     if (
       hud.lives !== state.player.lives ||
@@ -466,7 +466,7 @@ export function createBytefall(canvas, scoreEl, statusEl) {
       gameover: 'GAME OVER · R TO RETRY',
       won: 'ALL LEVELS CLEARED',
     }
-    const text = paused ? 'PAUSED' : messages[state.phase]
+    const text = pause.paused ? 'PAUSED' : messages[state.phase]
     if (!text) return
     context.fillStyle = 'rgba(3,7,18,0.66)'
     context.fillRect(0, v.groundY - v.scale * 3.2, v.width, v.scale * 3.2)
@@ -508,10 +508,9 @@ export function createBytefall(canvas, scoreEl, statusEl) {
 
   // ---------------------------------------------------------------- loop
   function loop(time) {
-    const dt = lastTime ? Math.min(0.032, (time - lastTime) / 1000) : 1 / 60
-    lastTime = time
+    const dt = clock.tick(time)
 
-    if (!paused) {
+    if (!pause.paused) {
       state.input = held
       stepBytefall(state, dt)
       for (const event of state.events) {
@@ -526,14 +525,7 @@ export function createBytefall(canvas, scoreEl, statusEl) {
       state.events.length = 0
 
       if (state.phase === 'gameover' || state.phase === 'won') {
-        if (state.score > best) {
-          best = state.score
-          try {
-            localStorage.setItem(BEST_KEY, String(best))
-          } catch {
-            /* storage disabled: the best score just won't persist */
-          }
-        }
+        best = writeBest(GAME_NAME, state.score)
       }
     }
 
@@ -546,8 +538,8 @@ export function createBytefall(canvas, scoreEl, statusEl) {
   function start() {
     stop()
     state = createBytefallState(0)
-    paused = false
-    lastTime = 0
+    pause.set(false)
+    clock.reset()
     touchMode = Boolean(isTouchDevice())
     held.left = false
     held.right = false

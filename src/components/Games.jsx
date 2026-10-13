@@ -25,10 +25,10 @@ const GAMES = [
     controls: 'Arrows or A/D to run · Space or W to jump (hold for height) · R restart · P pause',
   },
   { name: 'snake', title: 'Snake', desc: 'A 3D snake on a holographic grid. Arrow keys or WASD.', accent: 'from-emerald-500 to-teal-500', tint: 'rgba(52,211,153,0.18)', span: 1, controls: 'Arrow keys or WASD to steer' },
-  { name: 'breakout', title: 'Breakout', desc: 'Bounce the ball against the brick wall. Move the paddle with arrows.', accent: 'from-rose-500 to-pink-500', tint: 'rgba(244,114,182,0.18)', span: 1, controls: 'Left/Right arrows to move the paddle · Space to serve' },
-  { name: 'racer', title: 'Racer', desc: 'Ride the neon loop. Hold Up or W to drive; Down or S to reverse.', accent: 'from-cyan-500 to-blue-500', tint: 'rgba(34,211,238,0.18)', span: 1, controls: 'Hold Up/W to accelerate · Down/S to reverse' },
-  { name: 'match3', title: 'Match 3', desc: 'Swap adjacent orbs to line up three. Arrow keys move, Enter selects; or click two neighbors.', accent: 'from-fuchsia-500 to-purple-500', tint: 'rgba(217,70,239,0.18)', span: 1, controls: 'Arrows to move · Enter to select · or click two neighbours' },
-  { name: 'launch', title: 'Launch', desc: 'Aim and fire at the target. Arrows set angle and power, Space fires; or click-drag.', accent: 'from-amber-500 to-orange-500', tint: 'rgba(251,146,60,0.18)', span: 1, controls: 'Arrows to aim · Space to fire · or drag and release' },
+  { name: 'breakout', title: 'Breakout', desc: 'Bounce the ball against the brick wall — three lives, and every brick is reachable. Move the paddle with the mouse or arrows.', accent: 'from-rose-500 to-pink-500', tint: 'rgba(244,114,182,0.18)', span: 1, controls: 'Mouse or ← → to move the paddle · R restart · P pause' },
+  { name: 'racer', title: 'Racer', desc: 'Ride the neon loop for three timed laps. Hold Up or W to drive; Down or S to reverse.', accent: 'from-cyan-500 to-blue-500', tint: 'rgba(34,211,238,0.18)', span: 1, controls: 'Hold ↑/W to accelerate · ↓/S to reverse · R restart · P pause' },
+  { name: 'match3', title: 'Match 3', desc: 'Swap adjacent orbs to line up three. Cascades multiply the score, and the board reshuffles if you run out of moves.', accent: 'from-fuchsia-500 to-purple-500', tint: 'rgba(217,70,239,0.18)', span: 1, controls: 'Arrows to move · Enter to select · or click two neighbours · R restart · P pause' },
+  { name: 'launch', title: 'Launch', desc: 'Eight shots to clear three targets — finish with shots to spare for an accuracy bonus. Arrows set angle and power, Space fires; or click-drag.', accent: 'from-amber-500 to-orange-500', tint: 'rgba(251,146,60,0.18)', span: 1, controls: 'Arrows to aim · Space to fire · or drag and release · R restart · P pause' },
 ];
 
 function GameOverlay({ name, title, desc, accent, controls, open, status, error, onRestart, onClose }) {

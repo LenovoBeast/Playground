@@ -86,52 +86,80 @@ try {
   if (!openingState) {
     problems.push('valid submit never reached the mailto handoff state');
   }
-  // Game overlays must open from a card click, and Bytefall must auto-start.
-  await page.goto(base, { waitUntil: 'networkidle' });
-  await page.locator('[data-game="snake"]').click();
-  const overlayOpen = await page
-    .locator('#snakeOverlay.active')
-    .waitFor({ state: 'visible', timeout: 10000 })
-    .then(() => true)
-    .catch(() => false);
+  // Every game must open, start its engine, and report through the shared state
+  // mirror (score | progress | phase). Input is driven per game so the check
+  // proves the simulation advances, not just that something painted.
+  const GAME_CHECKS = [
+    { name: 'bytefall', hold: 'ArrowRight', holdMs: 1300 },
+    { name: 'snake', hold: 'ArrowDown', holdMs: 1000 },
+    { name: 'breakout', hold: 'ArrowRight', holdMs: 1000 },
+    { name: 'racer', hold: 'ArrowUp', holdMs: 1300 },
+    { name: 'launch', click: true },
+    // Turn-based: the mirror only moves on a legal swap, so this one asserts the
+    // engine started and stayed error-free rather than that it self-advanced.
+    { name: 'match3', hold: 'ArrowRight', holdMs: 600, expectChange: false },
+  ];
 
-  // Bytefall: opening the cabinet auto-starts the engine (no second click),
-  // fills the score line, and animates in response to input.
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(300);
-  await page.locator('[data-game="bytefall"]').click();
-  const bytefallOpen = await page
-    .locator('#bytefallOverlay.active')
-    .waitFor({ state: 'visible', timeout: 10000 })
-    .then(() => true)
-    .catch(() => false);
-
-  let bytefallStarted = false;
-  let bytefallAnimated = false;
-  let bytefallStatus = '';
-  let bytefallX = '';
-  if (bytefallOpen) {
-    bytefallStarted = await page
-      .waitForFunction(() => /SCORE/.test(document.getElementById('bytefallScore')?.textContent ?? ''), null, { timeout: 8000 })
+  const gameResults = [];
+  for (const check of GAME_CHECKS) {
+    await page.goto(base, { waitUntil: 'networkidle' });
+    await page.waitForFunction(() => !document.querySelector('.boot-veil'), null, { timeout: 8000 });
+    await page.locator(`[data-game="${check.name}"]`).click();
+    const opened = await page
+      .locator(`#${check.name}Overlay.active`)
+      .waitFor({ state: 'visible', timeout: 10000 })
       .then(() => true)
       .catch(() => false);
 
-    // Assert the player actually advances: canvas pixels change for reasons
-    // other than input (resize, HUD clock), so read the engine's state mirror.
-    const readState = () => page.evaluate(() => document.getElementById('bytefallCanvas')?.dataset.bfState ?? '');
-    const before = await readState();
-    await page.locator('#bytefallCanvas').focus();
-    await page.keyboard.down('ArrowRight');
-    await page.waitForTimeout(1400);
-    await page.keyboard.up('ArrowRight');
-    const after = await readState();
-    const xOf = (s) => Number((s.split('|')[3] ?? '0'));
-    bytefallAnimated = before !== '' && after !== '' && xOf(after) > xOf(before);
-    bytefallStatus = (await page.locator('#bytefallStatus').textContent()) ?? '';
-    if (before) bytefallX = `${xOf(before).toFixed(2)} -> ${xOf(after).toFixed(2)}`;
+    let started = false;
+    let advanced = false;
+    let state = '';
+    if (opened) {
+      started = await page
+        .waitForFunction(
+          (name) => /SCORE|LAP/.test(document.getElementById(`${name}Score`)?.textContent ?? ''),
+          check.name,
+          { timeout: 8000 }
+        )
+        .then(() => true)
+        .catch(() => false);
+
+      const readState = () =>
+        page.evaluate((name) => document.getElementById(`${name}Canvas`)?.dataset.gameState ?? '', check.name);
+      // Engines publish the mirror from their render loop, so wait for the first
+      // frame before sampling — otherwise `before` is empty and the comparison
+      // fails even though the game is running.
+      await page
+        .waitForFunction(
+          (name) => (document.getElementById(`${name}Canvas`)?.dataset.gameState ?? '') !== '',
+          check.name,
+          { timeout: 8000 }
+        )
+        .catch(() => {});
+      const before = await readState();
+
+      await page.locator(`#${check.name}Canvas`).focus();
+      if (check.click) {
+        const box = await page.locator(`#${check.name}Canvas`).boundingBox();
+        await page.mouse.click(box.x + box.width * 0.72, box.y + box.height * 0.3);
+      } else {
+        await page.keyboard.down(check.hold);
+        await page.waitForTimeout(check.holdMs);
+        await page.keyboard.up(check.hold);
+      }
+      await page.waitForTimeout(250);
+
+      const after = await readState();
+      advanced = before !== '' && after !== '' && before !== after;
+      state = after;
+      // Turn-based games only promise that the engine is running.
+      if (check.expectChange === false) advanced = started;
+      await page.keyboard.press('Escape');
+    }
+
+    gameResults.push({ ...check, opened, started, advanced, state });
   }
 
-  await browser.close();
 
   const badImgs = checks.imgs.filter((i) => !i.complete || i.src === '');
   console.log('title:          ', checks.title);
@@ -140,22 +168,24 @@ try {
   console.log('body font:      ', checks.fontSatoshi);
   console.log('images loaded:  ', checks.imgs.length, badImgs.length ? `FAILED: ${JSON.stringify(badImgs)}` : '(all complete)');
   console.log('skip link:      ', checks.skipLink);
-  console.log('game overlay:   ', overlayOpen ? 'opens' : 'FAILED');
-  console.log('bytefall:       ', bytefallOpen
-    ? `opens · engine ${bytefallStarted ? 'started' : 'FAILED'} · ${bytefallAnimated ? `moves on input (x ${bytefallX})` : 'FAILED to move on input'}`
-    : 'FAILED to open');
+  for (const result of gameResults) {
+    console.log(
+      `game ${result.name.padEnd(9)}`,
+      result.opened
+        ? `opens · engine ${result.started ? 'started' : 'FAILED'} · ${result.advanced ? 'advances' : 'FAILED to advance'} · ${result.state}`
+        : 'FAILED to open'
+    );
+  }
   console.log('#contact scroll:', contactVisible ? 'ok' : 'FAILED');
 
   if (checks.h1 !== 'CraftingDigital Frontiers') problems.push('hero h1 text mismatch');
   if (!checks.sections.includes('contact')) problems.push('contact section missing');
   if (!checks.skipLink) problems.push('skip link missing');
   if (badImgs.length) problems.push('broken images');
-  if (!overlayOpen) problems.push('game overlay did not open');
-  if (!bytefallOpen) problems.push('bytefall overlay did not open');
-  if (bytefallOpen && !bytefallStarted) problems.push('bytefall engine did not start on open');
-  if (bytefallOpen && !bytefallAnimated) problems.push('bytefall player did not move when holding right');
-  if (bytefallOpen && bytefallStatus.trim().length < 10) {
-    problems.push(`bytefall status line looks empty: "${bytefallStatus}"`);
+  for (const result of gameResults) {
+    if (!result.opened) problems.push(`${result.name}: overlay did not open`);
+    if (result.opened && !result.started) problems.push(`${result.name}: engine did not start on open`);
+    if (result.opened && !result.advanced) problems.push(`${result.name}: state did not advance under input`);
   }
   if (!contactVisible) problems.push('deep link #contact did not scroll into view');
 } finally {

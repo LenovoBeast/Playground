@@ -1,5 +1,14 @@
+import { substeps } from './gameKit.js'
+
 export const SNAKE_GRID = 16
-export const BREAKOUT_BOUNDS = Object.freeze({ left: -6, right: 6, top: 2, bottom: -3 })
+// `top` sits above the highest brick row (y=3.0, half-height 0.2). It used to be
+// 2, which bounced the ball at y=2.2 — below rows 0 and 1 — so a fifth of the
+// wall was unreachable and the "clear every brick" win could never trigger.
+export const BREAKOUT_BOUNDS = Object.freeze({ left: -6, right: 6, top: 3.8, bottom: -4.6 })
+export const BREAKOUT_BALL_RADIUS = 0.22
+export const BREAKOUT_PADDLE_Y = -3.5
+export const BREAKOUT_LIVES = 3
+export const BREAKOUT_BRICK_POINTS = 10
 export const MATCH3_SIZE = 8
 export const MATCH3_COLORS = 6
 
@@ -45,6 +54,36 @@ export function spawnSnakeFood(snake, grid = SNAKE_GRID, random = Math.random) {
   return available[index]
 }
 
+// Direction inputs are buffered (up to two) and each is validated against the
+// direction the snake will actually be travelling when it is applied. Without
+// the buffer, a quick "up then left" while heading right silently dropped the
+// second press; validating against the previous queued turn is what keeps the
+// buffer from allowing a 180-degree reversal into the snake's own neck.
+export const SNAKE_INPUT_BUFFER = 2
+
+export function queueSnakeDirection(queue, currentDirection, key) {
+  const candidate = snakeDirections[key] ?? snakeDirections[key?.toLowerCase()]
+  if (!candidate) return queue
+  const reference = queue.length ? queue[queue.length - 1] : currentDirection
+  if (candidate.x === -reference.x && candidate.y === -reference.y) return queue
+  if (candidate.x === reference.x && candidate.y === reference.y) return queue
+  if (queue.length >= SNAKE_INPUT_BUFFER) return queue
+  return [...queue, candidate]
+}
+
+// The snake advances on a fixed cadence, but the cadence must not be tied to the
+// display refresh rate. The old loop compared wall-clock time and reset the
+// timestamp to `now`, discarding the remainder — so the snake ran at a slightly
+// different speed on every machine, and at most one step could happen per frame.
+// This accumulator keeps the remainder and caps catch-up steps after a stall.
+export const SNAKE_MAX_CATCHUP = 4
+
+export function snakeStepsDue(accumulatorMs, dtMs, stepMs, maxSteps = SNAKE_MAX_CATCHUP) {
+  const total = accumulatorMs + dtMs
+  const steps = Math.min(maxSteps, Math.floor(total / stepMs))
+  return { steps, remainder: total - steps * stepMs }
+}
+
 export function advanceSnake({ snake, direction, food, grid = SNAKE_GRID }) {
   const head = snake[0]
   const nextHead = { x: head.x + direction.x, y: head.y + direction.y }
@@ -64,11 +103,96 @@ export function advanceSnake({ snake, direction, food, grid = SNAKE_GRID }) {
 export function createBreakoutState(random = Math.random) {
   return {
     score: 0,
+    lives: BREAKOUT_LIVES,
     paddleX: 0,
     ball: { x: 0, y: -3 },
     ballVelocity: { x: (random() - 0.5) * 3, y: 5, z: 0 },
-    alive: true
+    alive: true,
+    won: false,
+    events: []
   }
+}
+
+// Ball speed stays inside a range the paddle can react to.
+export function clampBallSpeed(velocity, min = 2, max = 9) {
+  const speed = Math.hypot(velocity.x, velocity.y)
+  if (speed === 0) return { ...velocity, y: min }
+  const clamped = Math.max(min, Math.min(max, speed))
+  const scale = clamped / speed
+  return { ...velocity, x: velocity.x * scale, y: velocity.y * scale }
+}
+
+// ---------------------------------------------------------------- breakout physics
+// Pure simulation of the ball, walls, paddle and bricks, sub-stepped so a fast
+// ball can't pass through a 0.4-tall brick between frames. `bricks` are the
+// engine's plain records ({ x, y, alive }); the function flips `alive` on a hit
+// and reports the destroyed bricks so the caller can drop their meshes.
+export function stepBreakout(state, dt, { paddleX, bricks = [], bounds = BREAKOUT_BOUNDS } = {}) {
+  if (!state.alive || state.won) {
+    return { ...state, events: [], destroyed: [] }
+  }
+  const r = BREAKOUT_BALL_RADIUS
+  const ball = { ...state.ball }
+  let velocity = { ...state.ballVelocity }
+  const destroyed = []
+  const events = []
+  let score = state.score
+  let lives = state.lives
+  let alive = true
+  let won = false
+
+  for (const step of substeps(dt, 1 / 240)) {
+    ball.x += velocity.x * step
+    ball.y += velocity.y * step
+
+    // walls (reflect against the ball's edge, not its centre)
+    if (ball.x - r < bounds.left) { ball.x = bounds.left + r; velocity.x = Math.abs(velocity.x) }
+    if (ball.x + r > bounds.right) { ball.x = bounds.right - r; velocity.x = -Math.abs(velocity.x) }
+    if (ball.y + r > bounds.top) { ball.y = bounds.top - r; velocity.y = -Math.abs(velocity.y) }
+
+    if (hitsPaddle(ball, { x: paddleX, y: BREAKOUT_PADDLE_Y }, velocity)) {
+      ball.y = BREAKOUT_PADDLE_Y + 0.32
+      velocity.y = Math.abs(velocity.y)
+      // Where the ball lands on the paddle steers it — the core of the game.
+      velocity.x += (ball.x - paddleX) * 1.5
+      velocity = ensureBallSpread(ensureBallDescent(clampBallSpeed(velocity)))
+      events.push('paddle')
+    }
+
+    for (const brick of bricks) {
+      if (!hitsBrick(ball, brick)) continue
+      brick.alive = false
+      destroyed.push(brick)
+      velocity = ensureBallDescent(
+        clampBallSpeed(resolveBrickBounce(velocity, brickBounceAxis(ball, brick, velocity)))
+      )
+      score += BREAKOUT_BRICK_POINTS
+      events.push('brick')
+      break
+    }
+
+    if (ball.y - r < bounds.bottom) {
+      lives -= 1
+      if (lives <= 0) {
+        alive = false
+        events.push('gameover')
+      } else {
+        ball.x = 0
+        ball.y = -3
+        velocity = { x: 0, y: 5, z: 0 }
+        events.push('serve')
+      }
+      break
+    }
+  }
+
+  if (bricks.length && bricks.every((brick) => !brick.alive)) {
+    won = true
+    alive = false
+    events.push('won')
+  }
+
+  return { ...state, ball, ballVelocity: velocity, score, lives, alive, won, events, destroyed }
 }
 
 export function movePaddle(paddleX, key, bounds = BREAKOUT_BOUNDS) {
@@ -87,12 +211,158 @@ export function hitsBrick(ball, brick) {
   return brick.alive && Math.abs(ball.x - brick.x) < 0.6 && Math.abs(ball.y - brick.y) < 0.22
 }
 
+// A held key must move the paddle over TIME, not once per key-repeat event:
+// the old implementation moved 0.5 units per keydown, so paddle speed depended
+// on the operating system's repeat delay and rate.
+export const PADDLE_SPEED = 7.5 // units per second
+
+export function movePaddleAxis(paddleX, axis, dt, bounds = BREAKOUT_BOUNDS, speed = PADDLE_SPEED) {
+  const next = paddleX + axis * speed * dt
+  return Math.max(bounds.left + 0.95, Math.min(bounds.right - 0.95, next))
+}
+
+// Which axis a ball should bounce off when it hits a brick. The old code always
+// flipped the vertical component, so a ball hitting a brick's side bounced
+// upward — visibly wrong, and it could drive the ball into a neighbouring brick.
+// The correct axis is the one the ball entered through: the smaller penetration
+// depth. Bricks are wide and thin (0.6 x 0.22 half-extents).
+export const BREAKOUT_BRICK_HALF = Object.freeze({ x: 0.6, y: 0.22 })
+
+export function brickBounceAxis(ball, brick, velocity = { x: 0, y: 0 }) {
+  const penX = BREAKOUT_BRICK_HALF.x - Math.abs(ball.x - brick.x)
+  const penY = BREAKOUT_BRICK_HALF.y - Math.abs(ball.y - brick.y)
+  if (penX < penY) return 'x'
+  if (penY < penX) return 'y'
+  // Dead-centre corner: fall back to the dominant direction of travel.
+  return Math.abs(velocity.x) >= Math.abs(velocity.y) ? 'x' : 'y'
+}
+
+export function resolveBrickBounce(velocity, axis) {
+  const next = { ...velocity }
+  if (axis === 'x') next.x *= -1
+  else next.y *= -1
+  return next
+}
+
+// Keep the ball from settling into a flat horizontal path (vy ~ 0), which made
+// rallies stall: it would bounce side to side forever and never come down.
+export function ensureBallDescent(velocity, minimum = 1.6) {
+  const next = { ...velocity }
+  if (Math.abs(next.y) < minimum) next.y = next.y < 0 ? -minimum : minimum
+  return next
+}
+
+// ...and the mirror problem: a dead-centre paddle hit produced a perfectly
+// vertical ball, which then rallied up and down a single cleared column forever.
+// A minimum sideways component guarantees the ball keeps finding new bricks.
+export function ensureBallSpread(velocity, minimum = 1.2) {
+  const next = { ...velocity }
+  if (Math.abs(next.x) < minimum) {
+    next.x = next.x < 0 ? -minimum : minimum
+  }
+  return next
+}
+
+// ---------------------------------------------------------------- racer
+// Lap tracking is positional, not distance-based: the old check incremented the
+// lap whenever the car moved more than 3 units in one frame, so a fast frame or
+// a frame hitch added phantom laps and reversing never removed them.
+export const RACER_LAPS = 3
+export const RACER_MAX_SPEED = 0.3   // track fractions per second
+export const RACER_REVERSE_SPEED = 0.15
+
 export function createRacerState() {
-  return { t: 0, speed: 0, lap: 0, prevPos: null, running: true }
+  return {
+    t: 0,
+    speed: 0,
+    lap: 0,
+    lapStartAt: 0,
+    bestLap: null,
+    elapsed: 0,
+    prevT: 0,
+    running: true,
+    finished: false,
+  }
 }
 
 export function resetRacerState() {
   return createRacerState()
+}
+
+// Advance the car along the closed track. `input` is { accelerate, reverse }.
+// Returns a new state plus one-shot events the engine can react to.
+export function advanceRacer(state, input = {}, dt = 1 / 60, { laps = RACER_LAPS } = {}) {
+  if (state.finished) return { ...state, events: [] }
+
+  const target = input.accelerate
+    ? RACER_MAX_SPEED
+    : input.reverse
+      ? -RACER_REVERSE_SPEED
+      : 0
+  // Frame-rate independent smoothing (the old code applied a fixed 0.05 per
+  // frame, so acceleration differed between 30Hz and 144Hz displays).
+  const blend = Math.min(1, dt * 3)
+  const speed = state.speed + (target - state.speed) * blend
+  const elapsed = state.elapsed + dt
+
+  let t = state.t + speed * dt
+  let lap = state.lap
+  let lapStartAt = state.lapStartAt
+  let bestLap = state.bestLap
+  let finished = false
+  const events = []
+
+  // Crossing the start line forward completes a lap; crossing it backward
+  // (reversing over the line) un-counts one.
+  while (t >= 1) {
+    t -= 1
+    const lapTime = elapsed - lapStartAt
+    if (lap > 0 || state.elapsed > 0) {
+      bestLap = bestLap === null ? lapTime : Math.min(bestLap, lapTime)
+    }
+    lap += 1
+    lapStartAt = elapsed
+    events.push('lap')
+    if (lap >= laps) {
+      finished = true
+      events.push('finish')
+      break
+    }
+  }
+  while (t < 0) {
+    t += 1
+    if (lap > 0) {
+      lap -= 1
+      events.push('lap-lost')
+    }
+  }
+
+  return {
+    ...state,
+    t,
+    speed: finished ? 0 : speed,
+    lap,
+    lapStartAt,
+    bestLap,
+    elapsed,
+    prevT: state.t,
+    running: !finished,
+    finished,
+    events,
+  }
+}
+
+// Current lap time in seconds (frozen once the race is finished).
+export function racerLapTime(state) {
+  return state.finished ? state.lapStartAt : Math.max(0, state.elapsed - state.lapStartAt)
+}
+
+export function formatLapTime(seconds) {
+  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return '--:--'
+  const whole = Math.max(0, seconds)
+  const minutes = Math.floor(whole / 60)
+  const rest = whole - minutes * 60
+  return `${String(minutes).padStart(2, '0')}:${rest.toFixed(2).padStart(5, '0')}`
 }
 
 function cloneBoard(board) {
@@ -165,10 +435,12 @@ export function swapMatch3Cells(board, first, second) {
 export function resolveMatch3Board(board, random = Math.random) {
   const nextBoard = cloneBoard(board)
   let cleared = 0
+  const cascadeClears = []
   for (let round = 0; round < 100; round++) {
     const matches = findMatch3Cells(nextBoard)
     if (matches.length === 0) break
     cleared += matches.length
+    cascadeClears.push(matches.length)
     const matched = new Set(matches.map(({ row, col }) => `${row},${col}`))
     for (let col = 0; col < nextBoard.length; col++) {
       const survivors = []
@@ -182,7 +454,43 @@ export function resolveMatch3Board(board, random = Math.random) {
       }
     }
   }
-  return { board: nextBoard, cleared }
+  return { board: nextBoard, cleared, cascadeClears }
+}
+
+// Scoring rewards chain reactions: each successive cascade in one turn is worth
+// more per candy than the last, so setting up a double or triple is worth doing.
+export const MATCH3_BASE_POINTS = 10
+
+export function scoreMatch3Cascades(cascadeClears) {
+  return cascadeClears.reduce((total, count, index) =>
+    total + count * MATCH3_BASE_POINTS * (index + 1), 0)
+}
+
+// A board can run out of legal swaps while the player still has moves left. The
+// old build simply let them click forever with nothing happening.
+export function hasMatch3Move(board) {
+  const size = board.length
+  const produces = (first, second) => {
+    const swapped = swapMatch3Cells(board, first, second)
+    return swapped.valid && swapped.matches.length > 0
+  }
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      if (col + 1 < size && produces({ row, col }, { row, col: col + 1 })) return true
+      if (row + 1 < size && produces({ row, col }, { row: row + 1, col })) return true
+    }
+  }
+  return false
+}
+
+// Reshuffle until the board has no pre-made matches AND at least one legal move.
+export function shuffleMatch3Board(random = Math.random, size = MATCH3_SIZE) {
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const board = createMatch3Board(size, random)
+    if (hasMatch3Move(board)) return { board, shuffled: true, attempts: attempt + 1 }
+  }
+  // Extremely unlikely: fall back to the last board so the game keeps running.
+  return { board: createMatch3Board(size, random), shuffled: false, attempts: 40 }
 }
 
 export function createMatch3State(random = Math.random) {
@@ -199,19 +507,43 @@ export function createMatch3State(random = Math.random) {
 export function playMatch3Turn(state, first, second, random = Math.random) {
   if (!state.alive || state.won) return state
   const swapped = swapMatch3Cells(state.board, first, second)
-  if (!swapped.valid || swapped.matches.length === 0) return { ...state, selected: first }
+  if (!swapped.valid || swapped.matches.length === 0) {
+    // Report the failure explicitly; the engine used to infer it by comparing
+    // scores, which breaks the moment scoring rules change.
+    return { ...state, selected: first, lastTurnValid: false }
+  }
   const resolved = resolveMatch3Board(swapped.board, random)
-  const score = state.score + resolved.cleared * 10
+  const score = state.score + scoreMatch3Cascades(resolved.cascadeClears)
   const moves = state.moves - 1
+  const board = resolved.board
+  const deadlocked = moves > 0 && score < 300 && !hasMatch3Move(board)
   return {
     ...state,
-    board: resolved.board,
+    board,
     score,
     moves,
     selected: null,
+    lastTurnValid: true,
+    lastCascade: resolved.cascadeClears.length,
+    deadlocked,
     alive: moves > 0 && score < 300,
     won: score >= 300
   }
+}
+
+// ---------------------------------------------------------------- launch
+export const LAUNCH_MAX_SHOTS = 8
+export const LAUNCH_TARGET_POINTS = 100
+export const LAUNCH_SHOT_BONUS = 25
+
+export function shotsLeft(state) {
+  return Math.max(0, LAUNCH_MAX_SHOTS - state.shots)
+}
+
+// Bonus for finishing with shots to spare — turns the game from "poke at it"
+// into a precision challenge, since every extra shot costs points.
+export function launchAccuracyBonus(state) {
+  return shotsLeft(state) * LAUNCH_SHOT_BONUS
 }
 
 export function createLaunchState() {
@@ -219,10 +551,12 @@ export function createLaunchState() {
     angle: 0.72,
     power: 0.78,
     projectile: null,
+    // Spread across the skyline: clustered targets let a single lucky arc clear
+    // the whole board, which made the shot budget meaningless.
     targets: [
-      { x: 8.2, y: 4.55, radius: 0.42, alive: true },
-      { x: 9.2, y: 4.55, radius: 0.42, alive: true },
-      { x: 8.7, y: 3.65, radius: 0.42, alive: true }
+      { x: 7.2, y: 4.6, radius: 0.42, alive: true },
+      { x: 9.4, y: 3.5, radius: 0.42, alive: true },
+      { x: 10.9, y: 4.7, radius: 0.42, alive: true }
     ],
     score: 0,
     shots: 0,
@@ -241,6 +575,7 @@ export function adjustLaunchAim(state, angleDelta = 0, powerDelta = 0) {
 
 export function launchProjectile(state) {
   if (!state.alive || state.won || state.projectile) return state
+  if (shotsLeft(state) <= 0) return state
   const speed = 3 + state.power * 7
   return {
     ...state,

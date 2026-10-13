@@ -1,7 +1,29 @@
 // Snake — rendered as 3D orbs on a holographic grid
 import * as THREE from 'three'
 import { upgradeScene, resizeGame } from './graphics.js'
-import { advanceSnake, createSnakeState, directionForKey, spawnSnakeFood, SNAKE_GRID } from './gameLogic.js'
+import {
+  advanceSnake,
+  createSnakeState,
+  queueSnakeDirection,
+  spawnSnakeFood,
+  snakeStepsDue,
+  SNAKE_GRID,
+} from './gameLogic.js'
+import {
+  createClock,
+  createPauseState,
+  formatScore,
+  mirrorState,
+  readBest,
+  withHints,
+  writeBest,
+  isPauseKey,
+  isRestartKey,
+  isConfirmKey,
+} from './gameKit.js'
+import { playBeep } from './sound.js'
+
+const GAME_NAME = 'snake'
 
 export function createSnake(canvas, scoreEl, statusEl) {
   const scene = new THREE.Scene()
@@ -14,8 +36,13 @@ export function createSnake(canvas, scoreEl, statusEl) {
   upgradeScene(renderer, scene)
 
   const GRID = SNAKE_GRID
-  let snake, dir, nextDir, food, score, alive, frame, lastStep, basePositions = [], stepMs = 140
+  const clock = createClock()
+  const pause = createPauseState()
+
+  let snake, dir, food, score, best, alive, won, frame, accumulator = 0
+  let stepMs = 140
   let foodPulseUntil = 0
+  let turns = []
 
   const grid = new THREE.GridHelper(GRID, GRID, 0xc47fff, 0x2a1f3a)
   grid.position.y = -0.01
@@ -31,7 +58,7 @@ export function createSnake(canvas, scoreEl, statusEl) {
   const bodyGeometry = new THREE.SphereGeometry(0.38, 20, 20)
   const headMaterial = new THREE.MeshStandardMaterial({ color: 0xc47fff, emissive: 0x7842cc, emissiveIntensity: 0.6, roughness: 0.2, metalness: 0.45 })
   const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x4fdfff, emissive: 0x138aa3, emissiveIntensity: 0.6, roughness: 0.2, metalness: 0.45 })
-  const trail = [] // {mesh, current, target, t}
+  const trail = [] // { mesh }
   const foodMesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.35, 16, 16),
     new THREE.MeshStandardMaterial({ color: 0xff6bcf, emissive: 0xff6bcf, emissiveIntensity: 0.7 })
@@ -41,18 +68,25 @@ export function createSnake(canvas, scoreEl, statusEl) {
   const glow = new THREE.PointLight(0xc47fff, 0.5, 6)
   scene.add(glow)
 
+  function syncScore() {
+    scoreEl.textContent = formatScore(score, best)
+  }
+
   function reset() {
     const state = createSnakeState()
     snake = state.snake
     dir = state.direction
-    nextDir = state.nextDirection
     score = state.score
     alive = state.alive
+    won = false
     stepMs = state.stepMs
+    turns = []
+    accumulator = 0
+    pause.set(false)
+    clock.reset()
     placeFood()
-    scoreEl.textContent = `SCORE: ${score}`
-    statusEl.textContent = 'Use arrows or WASD · collect the pink orb'
-    // Clear existing meshes
+    syncScore()
+    statusEl.textContent = withHints('Collect the pink orb — each one speeds you up')
     trail.forEach(t => scene.remove(t.mesh))
     trail.length = 0
   }
@@ -60,40 +94,59 @@ export function createSnake(canvas, scoreEl, statusEl) {
   function placeFood() {
     food = spawnSnakeFood(snake, GRID)
     if (!food) {
+      // Board full: a legitimate win, not a crash.
       alive = false
-      statusEl.textContent = 'YOU WIN · every cell collected · press Space to restart'
+      won = true
+      best = writeBest(GAME_NAME, score)
+      syncScore()
+      statusEl.textContent = withHints('Board cleared — every cell collected!', { pause: false, extra: 'R restart' })
     }
   }
 
   function step() {
-    dir = nextDir
+    if (turns.length) dir = turns.shift()
     const result = advanceSnake({ snake, direction: dir, food, grid: GRID })
     snake = result.snake
     if (!result.alive) {
       alive = false
-      statusEl.textContent = 'GAME OVER · press Space to restart'
+      best = writeBest(GAME_NAME, score)
+      syncScore()
+      statusEl.textContent = withHints(`Crashed at ${score} points`, { pause: false })
+      playBeep(150, 0.25)
       return
     }
     if (result.ateFood) {
       score += 10
-      scoreEl.textContent = `SCORE: ${score}`
-      statusEl.textContent = '+10 orb collected · keep going!'
+      best = Math.max(best, score)
       foodPulseUntil = performance.now() + 500
-      placeFood()
+      playBeep(720, 0.06)
       stepMs = Math.max(60, stepMs - 4)
+      placeFood()
+      syncScore()
+      if (alive) statusEl.textContent = `+10 · length ${snake.length} · speed ${Math.round(60000 / stepMs / 10) / 10}/s`
     }
   }
 
   function render() {
-    if (alive && performance.now() - lastStep > stepMs) {
-      step()
-      lastStep = performance.now()
+    const dt = clock.tick(performance.now())
+    if (alive && !pause.paused) {
+      // Fixed cadence with a kept remainder: the old loop compared wall-clock
+      // time and reset its timestamp, so the snake's speed drifted and only one
+      // step could ever happen per frame.
+      const due = snakeStepsDue(accumulator, dt * 1000, stepMs)
+      accumulator = due.remainder
+      for (let i = 0; i < due.steps && alive; i++) step()
     }
+
     while (trail.length < snake.length) {
       const head = trail.length === 0
       const mesh = new THREE.Mesh(head ? headGeometry : bodyGeometry, head ? headMaterial : bodyMaterial)
       scene.add(mesh)
       trail.push({ mesh })
+    }
+    // A shorter snake after a restart leaves orphan meshes behind.
+    while (trail.length > snake.length) {
+      scene.remove(trail.pop().mesh)
     }
     snake.forEach((segment, index) => {
       trail[index].mesh.position.set(segment.x - GRID / 2 + 0.5, 0.3, segment.y - GRID / 2 + 0.5)
@@ -107,6 +160,10 @@ export function createSnake(canvas, scoreEl, statusEl) {
       foodMesh.material.color.setHex(alive ? 0xff6bcf : 0xff3333)
     }
 
+    // progress = head cell, so the mirror changes as the snake moves (its length
+    // only changes when it eats, which a smoke test can't rely on).
+    const head = snake[0]
+    mirrorState(canvas, [score, head.x + head.y * GRID, pause.paused ? 'paused' : won ? 'won' : alive ? 'playing' : 'dead'])
     renderer.render(scene, camera)
     frame = requestAnimationFrame(render)
   }
@@ -118,8 +175,8 @@ export function createSnake(canvas, scoreEl, statusEl) {
   let ro
   function start() {
     stop()
+    best = readBest(GAME_NAME)
     reset()
-    lastStep = performance.now()
     ro = new ResizeObserver(resize)
     ro.observe(canvas)
     resize()
@@ -134,14 +191,25 @@ export function createSnake(canvas, scoreEl, statusEl) {
   }
 
   function onKey(e) {
-    if (e.key === ' ' && !alive) {
+    if (isRestartKey(e.key) || (isConfirmKey(e.key) && !alive)) {
       e.preventDefault()
       reset()
-      lastStep = performance.now()
       return
     }
-    if (/^(Arrow(Up|Down|Left|Right)|[wasd])$/.test(e.key)) e.preventDefault()
-    nextDir = directionForKey(e.key, dir)
+    if (isPauseKey(e.key)) {
+      e.preventDefault()
+      if (alive) {
+        const paused = pause.toggle()
+        statusEl.textContent = paused
+          ? withHints('Paused')
+          : withHints('Back in — keep collecting')
+      }
+      return
+    }
+    if (e.key === ' ' || /^(Arrow(Up|Down|Left|Right)|[wasd])$/.test(e.key)) e.preventDefault()
+    // Buffer the turn instead of overwriting it: two quick presses used to lose
+    // the second one, which made fast cornering feel unresponsive.
+    turns = queueSnakeDirection(turns, dir, e.key)
   }
 
   return { start, stop }

@@ -1,8 +1,32 @@
 // 3D Breakout — paddle + ball shatter crystalline bricks in 3D space
 import * as THREE from 'three'
 import { upgradeScene, resizeGame } from './graphics.js'
-import { createBreakoutState, hitsBrick, hitsPaddle, movePaddle, BREAKOUT_BOUNDS } from './gameLogic.js'
+import {
+  BREAKOUT_BOUNDS,
+  BREAKOUT_LIVES,
+  BREAKOUT_PADDLE_Y,
+  createBreakoutState,
+  movePaddleAxis,
+  stepBreakout,
+} from './gameLogic.js'
+import {
+  createClock,
+  createKeyState,
+  createPauseState,
+  formatScore,
+  mirrorState,
+  readBest,
+  withHints,
+  writeBest,
+  isPauseKey,
+  isRestartKey,
+  isConfirmKey,
+} from './gameKit.js'
 import { playBeep } from './sound.js'
+
+const GAME_NAME = 'breakout'
+const BRICK_ROWS = 5
+const BRICK_COLS = 10
 
 export function createBreakout(canvas, scoreEl, statusEl) {
   const scene = new THREE.Scene()
@@ -18,11 +42,17 @@ export function createBreakout(canvas, scoreEl, statusEl) {
   const point = new THREE.PointLight(0xff6bcf, 0.6, 20); scene.add(point)
 
   const W = 12, H = 8
+  const clock = createClock()
+  const pause = createPauseState()
+  const keys = createKeyState({
+    ArrowLeft: true, ArrowRight: true, a: true, d: true, A: true, D: true,
+  })
+
   const paddle = new THREE.Mesh(
     new THREE.BoxGeometry(1.6, 0.3, 0.4),
     new THREE.MeshStandardMaterial({ color: 0xc47fff, emissive: 0xc47fff, emissiveIntensity: 0.5 })
   )
-  paddle.position.set(0, -H / 2 + 0.5, 0)
+  paddle.position.set(0, BREAKOUT_PADDLE_Y, 0)
   scene.add(paddle)
 
   const ball = new THREE.Mesh(
@@ -38,9 +68,15 @@ export function createBreakout(canvas, scoreEl, statusEl) {
     return mesh
   })
   let bricks = []
-  let ballVel = new THREE.Vector3()
-  let score = 0, frame, ro, alive = true, mouseX = 0, mouseActive = false
+  let state = createBreakoutState()
+  let best = 0
+  let frame, ro
+  let mouseX = 0, mouseActive = false
   const bounds = BREAKOUT_BOUNDS
+
+  function syncScore() {
+    scoreEl.textContent = formatScore(state.score, best)
+  }
 
   function buildBricks() {
     if (bricks.length) {
@@ -48,8 +84,8 @@ export function createBreakout(canvas, scoreEl, statusEl) {
       return
     }
     const colors = [0xc47fff, 0xff6bcf, 0x4fdfff, 0xffaa44, 0x88ff66]
-    for (let row = 0; row < 5; row++) {
-      for (let col = 0; col < 10; col++) {
+    for (let row = 0; row < BRICK_ROWS; row++) {
+      for (let col = 0; col < BRICK_COLS; col++) {
         const m = new THREE.Mesh(
           new THREE.BoxGeometry(1.1, 0.4, 0.6),
           new THREE.MeshStandardMaterial({ color: colors[row], emissive: colors[row], emissiveIntensity: 0.4, roughness: 0.3, metalness: 0.2 })
@@ -62,48 +98,62 @@ export function createBreakout(canvas, scoreEl, statusEl) {
   }
 
   function reset() {
-    const state = createBreakoutState()
-    score = state.score
-    scoreEl.textContent = `SCORE: ${score}`
+    state = createBreakoutState()
+    clock.reset()
+    pause.set(false)
+    mouseActive = false
     paddle.position.x = state.paddleX
     ball.position.set(state.ball.x, state.ball.y, 0)
-    ballVel.set(state.ballVelocity.x, state.ballVelocity.y, state.ballVelocity.z)
-    alive = state.alive
-    mouseActive = false
     trail.forEach(mesh => mesh.position.copy(ball.position))
-    statusEl.textContent = 'Move the paddle with mouse or arrows · clear the bricks'
     buildBricks()
+    syncScore()
+    statusEl.textContent = withHints('Mouse or ← → to move · clear every brick')
+  }
+
+  function livesLabel() {
+    return '●'.repeat(Math.max(0, state.lives)) + '○'.repeat(Math.max(0, BREAKOUT_LIVES - state.lives))
   }
 
   function loop() {
-    if (alive) {
-      ball.position.addScaledVector(ballVel, 1 / 60)
-      if (ball.position.x < bounds.left + 0.2) { ball.position.x = bounds.left + 0.2; ballVel.x *= -1 }
-      if (ball.position.x > bounds.right - 0.2) { ball.position.x = bounds.right - 0.2; ballVel.x *= -1 }
-      if (ball.position.y > bounds.top + 0.2) { ball.position.y = bounds.top + 0.2; ballVel.y *= -1 }
-      if (ball.position.y < -H / 2 - 0.5) {
-        alive = false
-        statusEl.textContent = 'GAME OVER · press Space to restart'
+    const dt = clock.tick(performance.now())
+
+    if (state.alive && !pause.paused) {
+      // Keyboard input is integrated over time; the old code moved the paddle a
+      // fixed amount per keydown event, so its speed depended on the OS repeat rate.
+      const axis = keys.axis(['ArrowRight', 'd', 'D'], ['ArrowLeft', 'a', 'A'])
+      if (axis !== 0) {
+        mouseActive = false
+        paddle.position.x = movePaddleAxis(paddle.position.x, axis, dt, bounds)
       }
-      if (hitsPaddle(ball.position, paddle.position, ballVel)) {
-        ballVel.y *= -1
-        ballVel.x += (ball.position.x - paddle.position.x) * 1.5
-        ballVel.clampLength(2, 9)
+
+      const next = stepBreakout(state, dt, { paddleX: paddle.position.x, bricks })
+      state = next
+
+      // Reflect the simulation into the scene: the physics is pure and reports
+      // what changed instead of touching three.js objects itself.
+      ball.position.set(state.ball.x, state.ball.y, 0)
+      for (const brick of next.destroyed) {
+        scene.remove(brick.mesh)
+        playBeep()
       }
-      for (const b of bricks) {
-        if (!hitsBrick(ball.position, b)) continue
-        b.alive = false
-        scene.remove(b.mesh)
-        ballVel.y *= -1
-        score += 10; playBeep();
-        scoreEl.textContent = `SCORE: ${score}`
-        if (bricks.every(brick => !brick.alive)) {
-          alive = false
-          statusEl.textContent = 'YOU WIN · press Space to play again'
+      for (const event of next.events) {
+        if (event === 'paddle') playBeep(520, 0.05)
+        else if (event === 'serve') statusEl.textContent = withHints(`${livesLabel()} · ${state.lives} left`)
+        else if (event === 'gameover') {
+          best = writeBest(GAME_NAME, state.score)
+          syncScore()
+          statusEl.textContent = withHints(`Game over at ${state.score}`, { pause: false })
+          playBeep(140, 0.25)
+        } else if (event === 'won') {
+          best = writeBest(GAME_NAME, state.score)
+          syncScore()
+          statusEl.textContent = withHints('Wall cleared!', { pause: false })
+          playBeep(980, 0.3)
         }
-        break
       }
+      if (next.events.includes('brick')) syncScore()
     }
+
     // Keep keyboard control from being overwritten until the pointer moves again.
     if (mouseActive) {
       paddle.position.x = THREE.MathUtils.clamp(mouseX * (W / 2), bounds.left + 0.95, bounds.right - 0.95)
@@ -111,6 +161,14 @@ export function createBreakout(canvas, scoreEl, statusEl) {
     for (let i = trail.length - 1; i > 0; i--) trail[i].position.copy(trail[i - 1].position)
     trail[0].position.copy(ball.position)
     point.position.copy(ball.position)
+
+    mirrorState(canvas, [
+      state.score,
+      // progress = ball x, which moves continuously, so the mirror proves the
+      // simulation is live even before the first brick breaks
+      state.ball.x,
+      pause.paused ? 'paused' : state.won ? 'won' : state.alive ? 'playing' : 'over',
+    ])
     renderer.render(scene, camera)
     frame = requestAnimationFrame(loop)
   }
@@ -120,16 +178,29 @@ export function createBreakout(canvas, scoreEl, statusEl) {
     mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1
     mouseActive = true
   }
+
   function onKey(e) {
-    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'ArrowRight' || e.key === 'd') {
+    if (keys.down(e.key)) {
       mouseActive = false
-      paddle.position.x = movePaddle(paddle.position.x, e.key, bounds)
       e.preventDefault()
+      return
     }
-    if (e.key === ' ' && !alive) {
+    if (isRestartKey(e.key) || (isConfirmKey(e.key) && !state.alive)) {
       e.preventDefault()
       reset()
+      return
     }
+    if (isPauseKey(e.key)) {
+      e.preventDefault()
+      if (state.alive) {
+        const paused = pause.toggle()
+        statusEl.textContent = paused ? withHints('Paused') : withHints('Back in — watch the ball')
+      }
+    }
+  }
+
+  function onKeyUp(e) {
+    keys.up(e.key)
   }
 
   function resize() {
@@ -138,18 +209,24 @@ export function createBreakout(canvas, scoreEl, statusEl) {
 
   function start() {
     stop()
+    best = readBest(GAME_NAME)
     reset()
     ro = new ResizeObserver(resize); ro.observe(canvas)
     resize()
     canvas.addEventListener('pointermove', onMove)
     window.addEventListener('keydown', onKey)
+    window.addEventListener('keyup', onKeyUp)
     loop()
   }
+
   function stop() {
     cancelAnimationFrame(frame)
     ro?.disconnect()
     canvas.removeEventListener('pointermove', onMove)
     window.removeEventListener('keydown', onKey)
+    window.removeEventListener('keyup', onKeyUp)
+    keys.clear()
   }
+
   return { start, stop }
 }

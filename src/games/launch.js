@@ -1,17 +1,50 @@
 // Sky Sling — an original aim-and-launch physics game
-import { adjustLaunchAim, createLaunchState, launchProjectile, stepLaunch } from './gameLogic.js'
+import {
+  adjustLaunchAim,
+  createLaunchState,
+  launchAccuracyBonus,
+  launchProjectile,
+  shotsLeft,
+  stepLaunch,
+  LAUNCH_MAX_SHOTS,
+} from './gameLogic.js'
+import {
+  createClock,
+  createPauseState,
+  formatScore,
+  mirrorState,
+  readBest,
+  substeps,
+  withHints,
+  writeBest,
+  isPauseKey,
+  isRestartKey,
+  isConfirmKey,
+} from './gameKit.js'
 import { playBeep } from './sound.js'
+
+const GAME_NAME = 'launch'
 
 export function createLaunch(canvas, scoreEl, statusEl) {
   const context = canvas.getContext('2d')
   if (!context) throw new Error('This browser cannot create a 2D game canvas.')
+  const clock = createClock()
+  const pause = createPauseState()
+
   let state = createLaunchState()
-  let frame, resizeObserver, lastTime = 0
+  let best = 0
+  let frame, resizeObserver
+
+  function syncHud() {
+    scoreEl.textContent = `${formatScore(state.score, best)} · SHOTS ${shotsLeft(state)}`
+  }
 
   function reset() {
     state = createLaunchState()
-    scoreEl.textContent = `SCORE: ${state.score} · SHOTS: ${state.shots}`
-    statusEl.textContent = 'Aim with arrows or drag · Space/click to launch · R clears'
+    clock.reset()
+    pause.set(false)
+    syncHud()
+    statusEl.textContent = withHints(`Aim with arrows or drag · ${LAUNCH_MAX_SHOTS} shots for three targets`)
   }
 
   function resize() {
@@ -45,10 +78,13 @@ export function createLaunch(canvas, scoreEl, statusEl) {
 
   function launch() {
     if (state.projectile || !state.alive || state.won) return
+    const before = state.shots
     state = launchProjectile(state)
-    playBeep()
-    statusEl.textContent = 'Watch the arc · drag to aim the next shot'
-    scoreEl.textContent = `SCORE: ${state.score} · SHOTS: ${state.shots}`
+    if (state.shots !== before) {
+      playBeep()
+      syncHud()
+      statusEl.textContent = withHints(`Shot away · ${shotsLeft(state)} left`)
+    }
   }
 
   function onPointerMove(event) {
@@ -62,12 +98,20 @@ export function createLaunch(canvas, scoreEl, statusEl) {
   }
 
   function onKey(event) {
-    if (event.key.toLowerCase() === 'r' || (event.key === ' ' && (state.won || !state.alive))) {
+    if (isRestartKey(event.key) || (isConfirmKey(event.key) && (!state.alive || state.won))) {
       event.preventDefault()
       reset()
       return
     }
-    if (event.key === ' ') {
+    if (isPauseKey(event.key)) {
+      event.preventDefault()
+      if (state.alive && !state.won) {
+        const paused = pause.toggle()
+        statusEl.textContent = paused ? withHints('Paused') : withHints('Back to aiming')
+      }
+      return
+    }
+    if (isConfirmKey(event.key)) {
       event.preventDefault()
       launch()
       return
@@ -117,8 +161,8 @@ export function createLaunch(canvas, scoreEl, statusEl) {
     for (let layer = 0; layer < 2; layer++) {
       context.fillStyle = layer ? '#17213a' : '#253455'
       for (let i = 0; i < 24; i++) {
-        const height = 0.4 + (Math.sin(i * 7 + layer * 3) + 1) * 0.65
-        context.fillRect(i * 0.55, 5.1 - height, 0.45, height)
+        const buildingHeight = 0.4 + (Math.sin(i * 7 + layer * 3) + 1) * 0.65
+        context.fillRect(i * 0.55, 5.1 - buildingHeight, 0.45, buildingHeight)
       }
     }
     context.strokeStyle = 'rgba(79, 223, 255, 0.16)'
@@ -135,7 +179,6 @@ export function createLaunch(canvas, scoreEl, statusEl) {
     if (!state.projectile && state.alive && !state.won) {
       const speed = 3 + state.power * 7
       context.setLineDash([0.08, 0.12])
-      context.fillStyle = 'rgba(255, 240, 107, 0.7)'
       for (let i = 1; i <= 12; i++) {
         const time = i * 0.08
         circle(1.35 + Math.cos(state.angle) * speed * time, 4.65 - Math.sin(state.angle) * speed * time + 3.75 * time * time, 0.035, 'rgba(255,240,107,0.7)')
@@ -162,27 +205,64 @@ export function createLaunch(canvas, scoreEl, statusEl) {
       circle(target.x, target.y, target.radius * 0.62, '#ff6bcf')
     }
     context.restore()
+
+    if (pause.paused) {
+      context.fillStyle = 'rgba(3,7,18,0.6)'
+      context.fillRect(0, 0, width, height)
+      context.fillStyle = '#e8f1ff'
+      context.font = `700 ${Math.round(Math.min(width, height) * 0.06)}px ui-monospace, monospace`
+      context.textAlign = 'center'
+      context.textBaseline = 'middle'
+      context.fillText('PAUSED', width / 2, height / 2)
+    }
+
+    mirrorState(canvas, [
+      state.score,
+      shotsLeft(state),
+      pause.paused ? 'paused' : state.won ? 'won' : state.alive ? 'playing' : 'over',
+    ])
     frame = requestAnimationFrame(loop)
   }
 
-  function loop(time) {
-    const dt = lastTime ? Math.min(0.032, (time - lastTime) / 1000) : 1 / 60
-    lastTime = time
-    const previousScore = state.score
-    state = stepLaunch(state, dt)
-    if (state.score !== previousScore) {
-      scoreEl.textContent = `SCORE: ${state.score} · SHOTS: ${state.shots}`
-      statusEl.textContent = state.won ? 'YOU WIN · press Space to play again' : 'Target hit · line up another shot'
-    } else if (!state.projectile && state.shots > 0 && state.alive) {
-      statusEl.textContent = 'Missed · adjust your aim and launch again'
+  function loop() {
+    const dt = clock.tick(performance.now())
+    if (!pause.paused && state.alive && !state.won && state.projectile) {
+      const previousScore = state.score
+      // Sub-stepped so a fast shot can't pass through a target between frames.
+      for (const step of substeps(dt, 1 / 240)) {
+        state = stepLaunch(state, step)
+        if (!state.projectile) break
+      }
+      if (state.score !== previousScore) {
+        syncHud()
+        playBeep(880, 0.08)
+      }
+      if (state.won) {
+        // Reward the shots you didn't need — precision now pays.
+        const bonus = launchAccuracyBonus(state)
+        state = { ...state, score: state.score + bonus }
+        best = writeBest(GAME_NAME, state.score)
+        syncHud()
+        playBeep(980, 0.3)
+        statusEl.textContent = withHints(`All targets down · +${bonus} accuracy bonus`, { pause: false })
+      } else if (!state.projectile && state.alive) {
+        if (shotsLeft(state) <= 0) {
+          state = { ...state, alive: false }
+          best = writeBest(GAME_NAME, state.score)
+          syncHud()
+          statusEl.textContent = withHints(`Out of shots at ${state.score}`, { pause: false })
+        } else {
+          statusEl.textContent = withHints(`Missed · ${shotsLeft(state)} shots left · adjust your aim`)
+        }
+      }
     }
     draw()
   }
 
   function start() {
     stop()
+    best = readBest(GAME_NAME)
     reset()
-    lastTime = 0
     resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(canvas)
     resize()
