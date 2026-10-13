@@ -37,3 +37,7 @@ preview-frames/
 
 # Nested game-studio scaffold repo (separate project)
 my-game/
+
+# Local verification screenshots
+*-shot.png
+*-mobile.png

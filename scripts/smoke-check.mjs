@@ -86,6 +86,7 @@ try {
   if (!openingState) {
     problems.push('valid submit never reached the mailto handoff state');
   }
+  // Game overlays must open from a card click, and Bytefall must auto-start.
   await page.goto(base, { waitUntil: 'networkidle' });
   await page.locator('[data-game="snake"]').click();
   const overlayOpen = await page
@@ -93,6 +94,45 @@ try {
     .waitFor({ state: 'visible', timeout: 10000 })
     .then(() => true)
     .catch(() => false);
+
+  // Bytefall: opening the cabinet auto-starts the engine (no second click),
+  // fills the score line, and animates in response to input.
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  await page.locator('[data-game="bytefall"]').click();
+  const bytefallOpen = await page
+    .locator('#bytefallOverlay.active')
+    .waitFor({ state: 'visible', timeout: 10000 })
+    .then(() => true)
+    .catch(() => false);
+
+  let bytefallStarted = false;
+  let bytefallAnimated = false;
+  let bytefallStatus = '';
+  if (bytefallOpen) {
+    bytefallStarted = await page
+      .waitForFunction(() => /SCORE/.test(document.getElementById('bytefallScore')?.textContent ?? ''), null, { timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
+
+    const sample = () => page.evaluate(() => {
+      const canvas = document.getElementById('bytefallCanvas');
+      const ctx = canvas.getContext('2d');
+      const data = ctx.getImageData(0, 0, Math.min(canvas.width, 240), Math.min(canvas.height, 140)).data;
+      let hash = 0;
+      for (let i = 0; i < data.length; i += 61) hash = (hash * 31 + data[i]) >>> 0;
+      return hash;
+    });
+
+    const before = await sample();
+    await page.locator('#bytefallCanvas').focus();
+    await page.keyboard.down('ArrowRight');
+    await page.waitForTimeout(900);
+    await page.keyboard.up('ArrowRight');
+    const after = await sample();
+    bytefallAnimated = before !== after;
+    bytefallStatus = (await page.locator('#bytefallStatus').textContent()) ?? '';
+  }
 
   await browser.close();
 
@@ -104,6 +144,9 @@ try {
   console.log('images loaded:  ', checks.imgs.length, badImgs.length ? `FAILED: ${JSON.stringify(badImgs)}` : '(all complete)');
   console.log('skip link:      ', checks.skipLink);
   console.log('game overlay:   ', overlayOpen ? 'opens' : 'FAILED');
+  console.log('bytefall:       ', bytefallOpen
+    ? `opens · engine ${bytefallStarted ? 'started' : 'FAILED'} · ${bytefallAnimated ? 'animating on input' : 'FAILED to animate'}`
+    : 'FAILED to open');
   console.log('#contact scroll:', contactVisible ? 'ok' : 'FAILED');
 
   if (checks.h1 !== 'CraftingDigital Frontiers') problems.push('hero h1 text mismatch');
@@ -111,6 +154,12 @@ try {
   if (!checks.skipLink) problems.push('skip link missing');
   if (badImgs.length) problems.push('broken images');
   if (!overlayOpen) problems.push('game overlay did not open');
+  if (!bytefallOpen) problems.push('bytefall overlay did not open');
+  if (bytefallOpen && !bytefallStarted) problems.push('bytefall engine did not start on open');
+  if (bytefallOpen && !bytefallAnimated) problems.push('bytefall did not animate in response to input');
+  if (bytefallOpen && bytefallStatus.trim().length < 10) {
+    problems.push(`bytefall status line looks empty: "${bytefallStatus}"`);
+  }
   if (!contactVisible) problems.push('deep link #contact did not scroll into view');
 } finally {
   await browser.close().catch(() => {});

@@ -6,6 +6,11 @@
 // Load each game only when it is first opened. Vite emits one lazy chunk
 // per module, so the rest of the bundle stays light until it is needed.
 const gameLoaders = {
+  bytefall: () => import('./bytefall.js').then(({ createBytefall }) => createBytefall(
+    document.getElementById('bytefallCanvas'),
+    document.getElementById('bytefallScore'),
+    document.getElementById('bytefallStatus')
+  )),
   snake: () => import('./snake.js').then(({ createSnake }) => createSnake(
     document.getElementById('snakeCanvas'),
     document.getElementById('snakeScore'),

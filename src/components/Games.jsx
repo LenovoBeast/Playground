@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Play, SquareLogo, X, Planet, ArrowRight, Spinner } from '@phosphor-icons/react';
+import { Play, SquareLogo, X, Planet, ArrowRight, Spinner, ArrowClockwise } from '@phosphor-icons/react';
 import { useTilt } from '../hooks/useTilt.js';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
 // gameSession is three-free: keeping it out of the three import graph lets the
@@ -11,25 +11,33 @@ import ErrorBoundary from './ErrorBoundary.jsx';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// The catalogue is the single source of truth for the launcher: name must match
+// a loader in games/gameSession.js, and `span`/`badge` drive the bento layout.
 const GAMES = [
-  { name: 'snake', title: 'Snake', desc: 'A 3D snake on a holographic grid. Arrow keys or WASD.', accent: 'from-emerald-500 to-teal-500', tint: 'rgba(52,211,153,0.18)' },
-  { name: 'breakout', title: 'Breakout', desc: 'Bounce the ball against the brick wall. Move the paddle with arrows.', accent: 'from-rose-500 to-pink-500', tint: 'rgba(244,114,182,0.18)' },
-  { name: 'racer', title: 'Racer', desc: 'Ride the neon loop. Hold Up or W to drive; Down or S to reverse.', accent: 'from-cyan-500 to-blue-500', tint: 'rgba(34,211,238,0.18)' },
-  { name: 'match3', title: 'Match 3', desc: 'Swap adjacent orbs to line up three. Arrow keys move, Enter selects; or click two neighbors.', accent: 'from-fuchsia-500 to-purple-500', tint: 'rgba(217,70,239,0.18)' },
-  { name: 'launch', title: 'Launch', desc: 'Aim and fire at the target. Arrows set angle and power, Space fires; or click-drag.', accent: 'from-amber-500 to-orange-500', tint: 'rgba(251,146,60,0.18)' },
+  {
+    name: 'bytefall',
+    title: 'Bytefall',
+    desc: 'Original platformer. Run, stomp glitch-mites, break cache blocks for packets, and reach the terminal flag before the timer runs out.',
+    accent: 'from-blue-500 to-cyan-500',
+    tint: 'rgba(59,130,246,0.18)',
+    span: 2,
+    badge: 'new',
+    controls: 'Arrows or A/D to run · Space or W to jump (hold for height) · R restart · P pause',
+  },
+  { name: 'snake', title: 'Snake', desc: 'A 3D snake on a holographic grid. Arrow keys or WASD.', accent: 'from-emerald-500 to-teal-500', tint: 'rgba(52,211,153,0.18)', span: 1, controls: 'Arrow keys or WASD to steer' },
+  { name: 'breakout', title: 'Breakout', desc: 'Bounce the ball against the brick wall. Move the paddle with arrows.', accent: 'from-rose-500 to-pink-500', tint: 'rgba(244,114,182,0.18)', span: 1, controls: 'Left/Right arrows to move the paddle · Space to serve' },
+  { name: 'racer', title: 'Racer', desc: 'Ride the neon loop. Hold Up or W to drive; Down or S to reverse.', accent: 'from-cyan-500 to-blue-500', tint: 'rgba(34,211,238,0.18)', span: 1, controls: 'Hold Up/W to accelerate · Down/S to reverse' },
+  { name: 'match3', title: 'Match 3', desc: 'Swap adjacent orbs to line up three. Arrow keys move, Enter selects; or click two neighbors.', accent: 'from-fuchsia-500 to-purple-500', tint: 'rgba(217,70,239,0.18)', span: 1, controls: 'Arrows to move · Enter to select · or click two neighbours' },
+  { name: 'launch', title: 'Launch', desc: 'Aim and fire at the target. Arrows set angle and power, Space fires; or click-drag.', accent: 'from-amber-500 to-orange-500', tint: 'rgba(251,146,60,0.18)', span: 1, controls: 'Arrows to aim · Space to fire · or drag and release' },
 ];
 
-function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
+function GameOverlay({ name, title, desc, accent, controls, open, status, error, onRestart, onClose }) {
   const overlayRef = useRef(null);
   const prevFocus = useRef(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!open) return;
     prevFocus.current = document.activeElement;
-    setLoading(false);
-    setError(null);
     overlayRef.current?.querySelector('.play-btn')?.focus();
     return () => prevFocus.current?.focus?.();
   }, [open]);
@@ -41,7 +49,7 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
     if (!el) return;
     const focusable = Array.from(el.querySelectorAll(
       'button, [href], [tabindex="0"]'
-    )).filter(el => !el.hasAttribute('disabled'));
+    )).filter(node => !node.hasAttribute('disabled'));
     if (!focusable.length) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
@@ -52,18 +60,8 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
     }
   }, [onClose]);
 
-  const handlePlay = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const started = await onPlay();
-      if (started) overlayRef.current?.querySelector('canvas')?.focus();
-    } catch (err) {
-      setError(err?.message || 'Failed to load game');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const playing = status === 'playing';
+  const loading = status === 'loading';
 
   return (
     <div
@@ -75,7 +73,9 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
       className={`game-overlay fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-md ${open ? 'active' : ''}`}
       onKeyDown={handleKeyDown}
     >
-      <div className="panel relative mx-4 w-full max-w-2xl p-6 md:p-8">
+      {/* Scrollable on short screens: the cabinet is taller than a phone
+          viewport, and without this the Close button is unreachable. */}
+      <div className="panel relative mx-4 max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto p-6 md:p-8">
         <button
           onClick={onClose}
           className="close-btn absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
@@ -94,31 +94,49 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
           className="aspect-video w-full rounded-2xl border border-white/8 bg-black/60"
         />
 
-        <div className="mt-4 flex items-center justify-between font-mono text-sm">
-          <span className="text-zinc-400">Score</span>
-          <span id={`${name}Score`} className="tabular-nums text-white" />
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 font-mono text-xs sm:text-sm">
+          <span className="shrink-0 text-zinc-400">Score</span>
+          <span id={`${name}Score`} className="min-w-0 break-words text-right tabular-nums text-white" />
         </div>
-        <div className="mt-2 flex items-center justify-between font-mono text-sm">
-          <span className="text-zinc-400">Status</span>
-          <span id={`${name}Status`} className="text-zinc-400" />
+        {/* Single live region: the engine pushes state changes here, so score
+            and life changes are announced instead of silently repainting. */}
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-x-3 gap-y-1 font-mono text-xs sm:text-sm">
+          <span className="shrink-0 text-zinc-400">Status</span>
+          <span
+            id={`${name}Status`}
+            role="status"
+            aria-live="polite"
+            className="min-w-0 text-right text-zinc-400"
+          />
         </div>
+
+        <p className="mt-4 font-mono text-[11px] uppercase leading-relaxed tracking-[0.16em] text-zinc-400">
+          {controls}
+        </p>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
-            onClick={handlePlay}
+            onClick={onRestart}
             disabled={loading}
             className="play-btn magnetic-btn btn-sweep active-press relative flex flex-1 items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? (
+            {loading && (
               <>
                 <Spinner size={20} weight="bold" className="animate-spin" />
                 Loading…
               </>
-            ) : (
+            )}
+            {playing && (
+              <>
+                <ArrowClockwise size={20} weight="bold" />
+                Restart
+              </>
+            )}
+            {!loading && !playing && (
               <>
                 Play
-                <ArrowRight size={20} weight="bold" className="transition-transform group-hover:translate-x-1.5" />
+                <ArrowRight size={20} weight="bold" />
               </>
             )}
           </button>
@@ -145,62 +163,19 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
   );
 }
 
-function GameCard({ game, index, isHero, onOpen }) {
+function GameCard({ game, index, onOpen }) {
+  const isHero = (game.span ?? 1) > 1;
   const tilt = useTilt({ max: 8, scale: isHero ? 1.02 : 1.03, lift: isHero ? 20 : 16 });
-
-  if (isHero) {
-    return (
-      <div
-        className="tilt-scene h-full lg:col-span-2 lg:row-span-1"
-        onPointerMove={tilt.onPointerMove}
-        onPointerLeave={tilt.onPointerLeave}
-      >
-        <div ref={tilt.ref} className="tilt-body h-full">
-          <div
-            className="panel corner-frame group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden p-7 md:p-8"
-            data-game={game.name}
-            onClick={() => onOpen(game)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(game); } }}
-            tabIndex={0}
-            role="button"
-            aria-label={`Open ${game.title}`}
-          >
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
-              style={{ background: `radial-gradient(110% 90% at 20% 0%, ${game.tint} 0%, transparent 60%)` }}
-            />
-            <div className="tilt-sheen" />
-
-            <div className="relative flex items-center justify-between" style={{ transform: 'translateZ(26px)' }}>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
-                {String(index + 1).padStart(2, '0')} · {game.name}
-              </span>
-              <span className="grid h-9 w-9 place-items-center rounded-full border border-white/8 bg-white/[0.04] text-zinc-400 transition-all duration-300 group-hover:scale-110 group-hover:border-white/20 group-hover:text-white">
-                <Play size={14} weight="bold" />
-              </span>
-            </div>
-
-            <div className="relative mt-10 flex-1" style={{ transform: 'translateZ(18px)' }}>
-              <h3 className="mb-3 text-display-1 italic leading-[1.02]">{game.title}</h3>
-              <p className="line-clamp-3 text-body-sm text-zinc-400">{game.desc}</p>
-              <div className={`mt-5 h-[3px] w-full rounded-full bg-gradient-to-r ${game.accent} opacity-40 transition-opacity duration-500 group-hover:opacity-100`} />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
-      className="tilt-scene h-full"
+      className={`tilt-scene h-full ${isHero ? 'lg:col-span-2' : ''}`}
       onPointerMove={tilt.onPointerMove}
       onPointerLeave={tilt.onPointerLeave}
     >
       <div ref={tilt.ref} className="tilt-body h-full">
         <div
-          className="panel corner-frame group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden p-7"
+          className="panel corner-frame group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden p-7 md:p-8"
           data-game={game.name}
           onClick={() => onOpen(game)}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(game); } }}
@@ -216,16 +191,21 @@ function GameCard({ game, index, isHero, onOpen }) {
           <div className="tilt-sheen" />
 
           <div className="relative flex items-center justify-between" style={{ transform: 'translateZ(26px)' }}>
-            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
+            <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
               {String(index + 1).padStart(2, '0')} · {game.name}
+              {game.badge && (
+                <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-cyan-300">
+                  {game.badge}
+                </span>
+              )}
             </span>
             <span className="grid h-9 w-9 place-items-center rounded-full border border-white/8 bg-white/[0.04] text-zinc-400 transition-all duration-300 group-hover:scale-110 group-hover:border-white/20 group-hover:text-white">
               <Play size={14} weight="bold" />
             </span>
           </div>
 
-          <div className="relative mt-10" style={{ transform: 'translateZ(18px)' }}>
-            <h3 className="mb-3 text-display-1 italic leading-[1.02]">{game.title}</h3>
+          <div className={`relative mt-10 ${isHero ? 'flex-1' : ''}`} style={{ transform: 'translateZ(18px)' }}>
+            <h3 className={`mb-3 italic leading-[1.02] ${isHero ? 'text-display-1' : 'text-display-1'}`}>{game.title}</h3>
             <p className="line-clamp-3 text-body-sm text-zinc-400">{game.desc}</p>
             <div className={`mt-5 h-[3px] w-full rounded-full bg-gradient-to-r ${game.accent} opacity-40 transition-opacity duration-500 group-hover:opacity-100`} />
           </div>
@@ -388,8 +368,10 @@ function Playroom({ onOpen }) {
           <span className={`h-1.5 w-1.5 rounded-full ${live ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
           {live ? 'engine live' : 'engine idle'}
         </div>
-        <div className="pointer-events-none absolute bottom-4 right-4 hidden items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400 md:flex">
-          <SquareLogo size={12} weight="bold" /> click an artifact to play
+        {/* Shown on every pointer type: this hint used to be desktop-only, which
+            left touch visitors with a 3D scene and no visible way in. */}
+        <div className="pointer-events-none absolute bottom-4 right-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
+          <SquareLogo size={12} weight="bold" /> tap an artifact to play
         </div>
       </div>
     </div>
@@ -398,6 +380,8 @@ function Playroom({ onOpen }) {
 
 export default function Games() {
   const [openGame, setOpenGame] = useState(null);
+  const [status, setStatus] = useState('idle'); // idle | loading | playing | error
+  const [error, setError] = useState(null);
   const session = useRef(null);
   if (!session.current) session.current = createGameSession();
 
@@ -405,14 +389,54 @@ export default function Games() {
     const entry = typeof game === 'string' ? GAMES.find(item => item.name === game) : game;
     if (!entry) return;
     session.current.close();
+    setError(null);
     setOpenGame(entry);
   }, []);
 
-  const play = (name) => session.current.play(name);
+  // Start the engine as soon as the cabinet opens: the old flow made visitors
+  // click a card and then click Play before anything happened.
+  useEffect(() => {
+    if (!openGame) return;
+    let cancelled = false;
+    setStatus('loading');
+    setError(null);
+    session.current.play(openGame.name)
+      .then(() => {
+        if (cancelled) return;
+        setStatus('playing');
+        // Move focus to the field so keyboard play works immediately.
+        document.getElementById(`${openGame.name}Canvas`)?.focus();
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setStatus('error');
+        setError(err?.message || 'Failed to load game');
+      });
+    return () => {
+      cancelled = true;
+      session.current.close();
+    };
+  }, [openGame]);
+
+  const restart = useCallback(() => {
+    if (!openGame) return;
+    setStatus('loading');
+    setError(null);
+    session.current.play(openGame.name)
+      .then(() => {
+        setStatus('playing');
+        document.getElementById(`${openGame.name}Canvas`)?.focus();
+      })
+      .catch((err) => {
+        setStatus('error');
+        setError(err?.message || 'Failed to load game');
+      });
+  }, [openGame]);
 
   const close = useCallback(() => {
     session.current.close();
     setOpenGame(null);
+    setStatus('idle');
   }, []);
 
   useEffect(() => () => session.current.close(), []);
@@ -438,7 +462,7 @@ export default function Games() {
             </h2>
           </div>
           <p className="max-w-sm text-body-sm">
-            Five hand-built engines running on WebGL and 2D canvas. Launch one from a card, or click its
+            Six hand-built engines running on WebGL and 2D canvas. Launch one from a card, or click its
             artifact floating in the scene.
           </p>
         </div>
@@ -453,7 +477,7 @@ export default function Games() {
                 <div className="grid-veil absolute inset-0" aria-hidden="true" />
                 <p className="relative z-10 max-w-sm px-6 text-center text-body-sm">
                   The 3D playroom is unavailable on this device.
-                  All five games are playable from the cards below.
+                  All six games are playable from the cards below.
                 </p>
               </div>
             }
@@ -462,11 +486,10 @@ export default function Games() {
           </ErrorBoundary>
         </div>
 
-        {/* Bento Grid - 5 games, no empty cells */}
+        {/* Bento grid: the hero card spans two columns, the rest fill in */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 grid-flow-dense">
-          <GameCard key={`${GAMES[0].name}-hero`} game={GAMES[0]} index={0} isHero onOpen={open} />
-          {GAMES.slice(1).map((game, i) => (
-            <GameCard key={game.name} game={game} index={i + 1} isHero={false} onOpen={open} />
+          {GAMES.map((game, index) => (
+            <GameCard key={game.name} game={game} index={index} onOpen={open} />
           ))}
         </div>
       </div>
@@ -476,7 +499,9 @@ export default function Games() {
           key={game.name}
           {...game}
           open={openGame?.name === game.name}
-          onPlay={() => play(game.name)}
+          status={status}
+          error={openGame?.name === game.name ? error : null}
+          onRestart={restart}
           onClose={close}
         />
       ))}
