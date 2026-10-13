@@ -2,10 +2,12 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Play, SquareLogo, X, Planet, ArrowRight, Spinner } from '@phosphor-icons/react';
-import { setupScene, buildWorld, clickObjects } from '../world.js';
-import { wireGames, createGameSession } from '../games/wireGames.js';
 import { useTilt } from '../hooks/useTilt.js';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
+// gameSession is three-free: keeping it out of the three import graph lets the
+// 514 kB vendor-three chunk load lazily with the 3D scenes that need it.
+import { createGameSession } from '../games/gameSession.js';
+import ErrorBoundary from './ErrorBoundary.jsx';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -248,21 +250,30 @@ function Playroom({ onOpen }) {
     let started = false;
     let teardown = () => {};
 
-    const boot = () => {
+    const boot = async () => {
       const size = () => {
         const rect = host.getBoundingClientRect();
         return { width: Math.max(rect.width, 1), height: Math.max(rect.height, 1) };
       };
 
-      let scene, camera, renderer, controls, world, disposeScene, disposeGames;
+      let scene, camera, renderer, controls, world, disposeScene, disposeGames, clickObjects, wireGames;
       try {
-        const built = setupScene(canvas, size);
+        // Loaded on demand (with world.js): keeps three.js out of the entry
+        // chunk. Module instances are shared, so `clickObjects` stays the same
+        // array the raycaster in wireGames reads.
+        const [worldModule, wireGamesModule] = await Promise.all([
+          import('../world.js'),
+          import('../games/wireGames.js'),
+        ]);
+        wireGames = wireGamesModule.wireGames;
+        clickObjects = worldModule.clickObjects;
+        const built = worldModule.setupScene(canvas, size);
         scene = built.scene;
         camera = built.camera;
         renderer = built.renderer;
         controls = built.controls;
         disposeScene = built.dispose;
-        world = buildWorld(scene);
+        world = worldModule.buildWorld(scene);
       } catch (err) {
         console.warn('[playroom] 3D scene unavailable', err);
         return () => {};
@@ -304,15 +315,24 @@ function Playroom({ onOpen }) {
       };
     };
 
+    // boot() is async (it dynamically imports the 3D modules). Keep the
+    // promise-to-cleanup handoff explicit so an unmount during the import
+    // window still disposes correctly.
+    const startBoot = () => {
+      boot().then((fn) => {
+        teardown = typeof fn === 'function' ? fn : () => {};
+      });
+    };
+
     if (typeof IntersectionObserver === 'undefined') {
-      teardown = boot();
+      startBoot();
       return () => teardown();
     }
 
     const io = new IntersectionObserver((entries) => {
       if (entries[0]?.isIntersecting && !started) {
         started = true;
-        teardown = boot();
+        startBoot();
         io.disconnect();
       }
     }, { rootMargin: '250px' });
@@ -424,7 +444,22 @@ export default function Games() {
         </div>
 
         <div className="mb-12">
-          <Playroom onOpen={open} />
+          {/* The floating 3D scene is a nice-to-have entrance to the games; if
+              it fails, the cards below are the fully accessible path. */}
+          <ErrorBoundary
+            label="3D playroom"
+            fallback={
+              <div className="panel corner-frame relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-[1.75rem] md:aspect-[21/9]">
+                <div className="grid-veil absolute inset-0" aria-hidden="true" />
+                <p className="relative z-10 max-w-sm px-6 text-center text-body-sm">
+                  The 3D playroom is unavailable on this device.
+                  All five games are playable from the cards below.
+                </p>
+              </div>
+            }
+          >
+            <Playroom onOpen={open} />
+          </ErrorBoundary>
         </div>
 
         {/* Bento Grid - 5 games, no empty cells */}

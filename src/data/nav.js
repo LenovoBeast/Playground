@@ -1,6 +1,8 @@
 // Single source of truth for site navigation.
 // Drives: Nav.jsx, useActiveSection, World.jsx (3D constellation)
 
+import { CONTACT_EMAIL, CONTACT_MAILTO } from './contact.js';
+
 export const SECTIONS = [
   { id: 'hero', label: 'Home', index: '01', color: 0x3b82f6, blurb: 'Welcome' },
   { id: 'projects', label: 'Work', index: '02', color: 0x22d3ee, blurb: 'Shipped products' },
@@ -16,5 +18,5 @@ export const SOCIALS = [
   { icon: 'github', label: 'GitHub', handle: 'LenovoBeast', href: 'https://github.com/LenovoBeast' },
   { icon: 'twitter', label: 'Twitter', handle: '@LenovoBeast', href: 'https://twitter.com/LenovoBeast' },
   { icon: 'linkedin', label: 'LinkedIn', handle: '/in/lenovobeast', href: 'https://linkedin.com/in/lenovobeast' },
-  { icon: 'mail', label: 'Email', handle: 'lenovobeast@example.com', href: 'mailto:lenovobeast@example.com' },
+  { icon: 'mail', label: 'Email', handle: CONTACT_EMAIL, href: CONTACT_MAILTO },
 ];

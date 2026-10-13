@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X, Hamburger, GithubLogo, ArrowUpRight, Compass } from '@phosphor-icons/react';
 import { SECTIONS } from '../data/nav.js';
 import { scrollToSection } from '../hooks/useActiveSection.js';
+import { subscribeScroll } from '../hooks/scrollSignal.js';
+import { useFocusTrap } from '../hooks/useFocusTrap.js';
 
 export default function Nav({ active }) {
   const [open, setOpen] = useState(false);
@@ -10,12 +12,15 @@ export default function Nav({ active }) {
   const [hidden, setHidden] = useState(false);
   const progressRef = useRef(null);
   const lastY = useRef(0);
+  const drawerPanelRef = useRef(null);
+
+  // Trap Tab focus inside the open drawer and restore it to the toggle on
+  // close; Escape also closes (same contract as the game overlay).
+  useFocusTrap(drawerPanelRef, open, { onEscape: () => setOpen(false) });
 
   useEffect(() => {
-    let raf = 0;
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const measure = () => {
-      const y = window.scrollY;
+    const measure = (y) => {
       const max = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
       if (progressRef.current && !prefersReduced) {
         progressRef.current.style.transform = `scaleX(${Math.min(y / max, 1)})`;
@@ -27,30 +32,14 @@ export default function Nav({ active }) {
         lastY.current = y;
       }
     };
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(measure);
-    };
-    measure();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
+    // Shared scroll signal — see hooks/scrollSignal.js
+    return subscribeScroll(measure);
   }, []);
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [open]);
-
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
 
   const go = (id) => {
     setOpen(false);
@@ -151,6 +140,7 @@ export default function Nav({ active }) {
           >
             <div className="backdrop" onClick={() => setOpen(false)} />
             <motion.nav
+              ref={drawerPanelRef}
               aria-label="Mobile"
               className="panel mx-auto mt-24 flex-1 flex-col items-center justify-center gap-4 p-8"
               initial={{ y: -24, opacity: 0, scale: 0.98 }}

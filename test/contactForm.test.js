@@ -21,8 +21,12 @@ test('the form submits via mailto, with no backend dependency', () => {
     'Contact.jsx must not reference Netlify Forms')
   assert.equal((content.match(/bot-field/g) || []).length, 0,
     'a honeypot is pointless without a server to POST to')
-  assert.match(content, /mailto:lenovobeast@example\.com/,
-    'the form must hand off to the owner email address')
+  // The address itself lives in src/data/contact.js; the component only
+  // consumes the constant.
+  assert.ok(content.includes("data/contact.js"),
+    'Contact.jsx must import the shared contact constants')
+  assert.ok(content.includes('CONTACT_MAILTO'),
+    'Contact.jsx must use CONTACT_MAILTO for the handoff')
 })
 
 test('subject and body are URL-encoded in the mailto URL', () => {

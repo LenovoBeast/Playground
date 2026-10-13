@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight, GithubLogo, Code, Globe, Stack, ArrowSquareOut, Funnel } from '@phosphor-icons/react';
 import { projects } from '../data/projects.js';
 import { useTilt } from '../hooks/useTilt.js';
+import { useScrollTriggerRefresh } from '../hooks/useScrollTriggerRefresh.js';
 
 const UI = {
   TypeScript: { color: 'from-blue-500 to-indigo-500', icon: <Code size={26} weight="bold" />, tint: 'rgba(59,130,246,0.16)' },
@@ -114,6 +115,11 @@ const ProjectCard = ({ project, index }) => {
 
 export default function ProjectGrid() {
   const [filter, setFilter] = useState('All');
+
+  // Filtering adds/removes cards and changes document height — recompute every
+  // ScrollTrigger afterward or About/Stack/Games animations fire at stale
+  // scroll offsets.
+  useScrollTriggerRefresh(filter);
 
   const languages = useMemo(
     () => ['All', ...Array.from(new Set(projects.map((p) => p.language)))],

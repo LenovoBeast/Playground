@@ -3,6 +3,7 @@ import { gsap } from 'gsap';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Cpu, DesktopTower, GameController, Database, Check, ArrowRight } from '@phosphor-icons/react';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
+import { useScrollTriggerRefresh } from '../hooks/useScrollTriggerRefresh.js';
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -78,6 +79,9 @@ export default function Stack() {
   const headerRef = useRef(null);
   const tabsRef = useRef(null);
   const reducedMotion = useReducedMotion();
+
+  // Swapping tab panels changes panel height; keep triggers honest.
+  useScrollTriggerRefresh(activeTab);
 
   const category = categories.find((c) => c.id === activeTab) ?? categories[0];
 
@@ -225,9 +229,9 @@ export default function Stack() {
         </div>
 
         <div className="mt-20 border-t border-white/8 pt-14">
-          <h3 className="mb-8 text-center text-label">Open Source & Tooling</h3>
+          <h3 className="mb-8 text-center text-label">Open Source &amp; Tooling</h3>
           <div className="flex flex-wrap justify-center gap-3">
-            {['Vite', 'React', 'Tailwind', 'TypeScript', 'GSAP', 'Framer Motion', 'Playwright', 'Vitest', 'ESLint', 'Prettier'].map((tool) => (
+            {['Vite', 'React', 'Tailwind', 'Three.js', 'GSAP', 'Framer Motion', 'Playwright', 'Node test runner'].map((tool) => (
               <a
                 key={tool}
                 href={`https://github.com/search?q=${tool}`}

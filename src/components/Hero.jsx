@@ -15,6 +15,100 @@ import { scrollToSection } from "../hooks/useActiveSection.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const iconMap = {
+  cpu: <Cpu size={18} weight="bold" />,
+  zap: <Lightning size={18} weight="bold" />,
+  code: <Code size={18} weight="bold" />,
+  terminal: <Terminal size={18} weight="bold" />,
+};
+
+const StatCard = ({ value, label, icon }) => (
+  <div className="group flex items-start gap-3">
+    <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/8 bg-white/[0.04] text-blue-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110">
+      {iconMap[icon]}
+    </span>
+    <span className="flex flex-col">
+      <span className="text-2xl font-black leading-none tracking-tight md:text-3xl tabular-nums">
+        {value}
+      </span>
+      <span className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">
+        {label}
+      </span>
+    </span>
+  </div>
+);
+
+const TerminalWindow3D = () => (
+  <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[1.125rem] border border-white/5 bg-zinc-950/75 backdrop-blur-sm">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+    >
+      <div className="scan-line h-16 w-full bg-gradient-to-b from-transparent via-blue-500/8 to-transparent" />
+    </div>
+    <div className="flex items-center gap-2 border-b border-white/5 bg-zinc-900/50 px-4 py-3">
+      <div className="flex gap-1.5">
+        <div className="h-3 w-3 rounded-full bg-red-500/80" />
+        <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
+        <div className="h-3 w-3 rounded-full bg-green-500/80" />
+      </div>
+      <div className="flex-1 text-center font-mono text-xs text-zinc-400">
+        main.tsx
+      </div>
+      <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-400/80 sm:inline">
+        live
+      </span>
+    </div>
+    <div className="no-scrollbar flex-1 overflow-auto p-5 font-mono text-[13px] leading-relaxed text-zinc-300 md:p-6">
+      <div className="space-y-2.5">
+        <CodeLine
+          prefix="> "
+          content="npm create vite@latest my-game --template react-ts"
+        />
+        <CodeLine
+          prefix="✓ "
+          content="Project scaffolded in 247ms"
+          className="text-green-400"
+        />
+        <CodeLine
+          prefix="> "
+          content="npm install three @react-three/fiber @react-three/drei"
+        />
+        <CodeLine
+          prefix="✓ "
+          content="WebGPU renderer + physics pipeline ready"
+          className="text-cyan-400"
+        />
+        <CodeLine prefix="> " content="npm run dev" />
+        <CodeLine
+          prefix="▲ "
+          content="Local:   http://localhost:5173"
+          className="text-blue-400"
+        />
+        <CodeLine
+          prefix="▲ "
+          content="Network: http://192.168.1.47:5173"
+          className="text-blue-400"
+        />
+        <div className="h-4" />
+        <CodeLine
+          prefix="// "
+          content="Engine initialized — ready to build"
+          className="italic text-zinc-400"
+        />
+        <CodeLine prefix="▌" content="" className="text-blue-400" />
+      </div>
+    </div>
+  </div>
+);
+
+const CodeLine = ({ prefix, content, className = "" }) => (
+  <div className={`flex gap-2 ${className}`}>
+    <span className="whitespace-nowrap text-zinc-400">{prefix}</span>
+    <span className="break-all">{content}</span>
+  </div>
+);
+
 export default function Hero() {
   const heroRef = useRef(null);
   const line1Ref = useRef(null);
@@ -99,99 +193,6 @@ export default function Hero() {
     };
   }, [reducedMotion]);
 
-  const iconMap = {
-    cpu: <Cpu size={18} weight="bold" />,
-    zap: <Lightning size={18} weight="bold" />,
-    code: <Code size={18} weight="bold" />,
-    terminal: <Terminal size={18} weight="bold" />,
-  };
-
-  const StatCard = ({ value, label, icon }) => (
-    <div className="group flex items-start gap-3">
-      <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/8 bg-white/[0.04] text-blue-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110">
-        {iconMap[icon]}
-      </span>
-      <span className="flex flex-col">
-        <span className="text-2xl font-black leading-none tracking-tight md:text-3xl tabular-nums">
-          {value}
-        </span>
-        <span className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">
-          {label}
-        </span>
-      </span>
-    </div>
-  );
-
-  const TerminalWindow3D = () => (
-    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[1.125rem] border border-white/5 bg-zinc-950/75 backdrop-blur-sm">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        <div className="scan-line h-16 w-full bg-gradient-to-b from-transparent via-blue-500/8 to-transparent" />
-      </div>
-      <div className="flex items-center gap-2 border-b border-white/5 bg-zinc-900/50 px-4 py-3">
-        <div className="flex gap-1.5">
-          <div className="h-3 w-3 rounded-full bg-red-500/80" />
-          <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-          <div className="h-3 w-3 rounded-full bg-green-500/80" />
-        </div>
-        <div className="flex-1 text-center font-mono text-xs text-zinc-400">
-          main.tsx
-        </div>
-        <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-400/80 sm:inline">
-          live
-        </span>
-      </div>
-      <div className="no-scrollbar flex-1 overflow-auto p-5 font-mono text-[13px] leading-relaxed text-zinc-300 md:p-6">
-        <div className="space-y-2.5">
-          <CodeLine
-            prefix="> "
-            content="npm create vite@latest my-game --template react-ts"
-          />
-          <CodeLine
-            prefix="✓ "
-            content="Project scaffolded in 247ms"
-            className="text-green-400"
-          />
-          <CodeLine
-            prefix="> "
-            content="npm install three @react-three/fiber @react-three/drei"
-          />
-          <CodeLine
-            prefix="✓ "
-            content="WebGPU renderer + physics pipeline ready"
-            className="text-cyan-400"
-          />
-          <CodeLine prefix="> " content="npm run dev" />
-          <CodeLine
-            prefix="▲ "
-            content="Local:   http://localhost:5173"
-            className="text-blue-400"
-          />
-          <CodeLine
-            prefix="▲ "
-            content="Network: http://192.168.1.47:5173"
-            className="text-blue-400"
-          />
-          <div className="h-4" />
-          <CodeLine
-            prefix="// "
-            content="Engine initialized — ready to build"
-            className="italic text-zinc-400"
-          />
-          <CodeLine prefix="▌" content="" className="text-blue-400" />
-        </div>
-      </div>
-    </div>
-  );
-
-  const CodeLine = ({ prefix, content, className = "" }) => (
-    <div className={`flex gap-2 ${className}`}>
-      <span className="whitespace-nowrap text-zinc-400">{prefix}</span>
-      <span className="break-all">{content}</span>
-    </div>
-  );
 
   return (
     <section

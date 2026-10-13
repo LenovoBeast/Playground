@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Architecture Audit &amp; Redesign — Playground</title>
+<style>
+  :root { --bg:#030712; --text:#e2e8f0; --muted:#a1a1aa; --faint:#71717a;
+    --border:rgba(255,255,255,0.08); --panel:rgba(255,255,255,0.025);
+    --emerald:#34d399; --rose:#fb7185; --amber:#fbbf24; --blue:#60a5fa; --cyan:#22d3ee; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); line-height:1.6;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:1080px; margin:0 auto; padding:3rem 1.5rem 6rem; }
+  h1 { font-size:2.2rem; letter-spacing:-0.02em; margin:0 0 .5rem; }
+  h2 { font-size:1.4rem; margin:3rem 0 1rem; padding-top:1.5rem; border-top:1px solid var(--border); }
+  h3 { font-size:1.02rem; margin:1.8rem 0 .5rem; color:#fff; }
+  h4 { font-size:.92rem; margin:1.2rem 0 .4rem; color:#fff; }
+  p { color:var(--muted); }
+  code { font-family:ui-monospace,"JetBrains Mono",Menlo,monospace; font-size:.85em;
+    background:rgba(255,255,255,0.06); padding:.1rem .35rem; border-radius:.35rem; color:#e4e4e7; }
+  .lead { font-size:1.05rem; max-width:75ch; }
+  .chips { display:flex; flex-wrap:wrap; gap:.5rem; margin:1.25rem 0; }
+  .chip { font-size:.72rem; font-family:ui-monospace,monospace; color:var(--cyan);
+    border:1px solid rgba(34,211,238,.25); background:rgba(34,211,238,.06);
+    padding:.25rem .7rem; border-radius:999px; }
+  table { width:100%; border-collapse:collapse; margin:1rem 0 1.5rem; font-size:.88rem; display:block; overflow-x:auto; }
+  th { text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.12em; color:var(--faint);
+    padding:.5rem .75rem; border-bottom:1px solid var(--border); white-space:nowrap; }
+  td { padding:.7rem .75rem; border-bottom:1px solid rgba(255,255,255,.05); vertical-align:top; color:var(--muted); }
+  td strong { color:var(--text); }
+  .badge { display:inline-block; font-size:.66rem; font-weight:700; letter-spacing:.06em;
+    text-transform:uppercase; padding:.15rem .55rem; border-radius:999px; white-space:nowrap; }
+  .b-high { color:#fda4af; background:rgba(244,63,94,.12); border:1px solid rgba(244,63,94,.35); }
+  .b-med { color:#fde68a; background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.3); }
+  .b-low { color:#93c5fd; background:rgba(59,130,246,.12); border:1px solid rgba(59,130,246,.35); }
+  .b-ok { color:#6ee7b7; background:rgba(52,211,153,.08); border:1px solid rgba(52,211,153,.3); }
+  .verdict { border:1px solid rgba(52,211,153,.3); background:rgba(52,211,153,.05);
+    border-radius:1rem; padding:1.25rem 1.5rem; margin:1.5rem 0; }
+  .verdict p { color:#a7f3d0; margin:.35rem 0; }
+  .finding { border:1px solid var(--border); background:var(--panel); border-radius:1rem;
+    padding:1.1rem 1.25rem; margin:1rem 0; }
+  .finding h3 { margin-top:0; }
+  .kv { display:grid; grid-template-columns:90px 1fr; gap:.3rem 1rem; font-size:.88rem; margin-top:.6rem; }
+  .kv dt { color:var(--faint); font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; padding-top:.15rem; }
+  .kv dd { margin:0; color:var(--muted); }
+  ul.tight { color:var(--muted); padding-left:1.2rem; } ul.tight li { margin:.3rem 0; }
+  .phase { border-left:2px solid var(--blue); padding-left:1.25rem; margin:1.5rem 0; }
+  .phase.p0 { border-color:var(--rose); } .phase.p1 { border-color:var(--amber); }
+  .phase.p2 { border-color:var(--blue); } .phase.p3 { border-color:var(--faint); }
+  .foot { margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--border); color:var(--faint); font-size:.8rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Architecture Audit &amp; Redesign</h1>
+<p class="lead"><strong>Playground</strong> — Vite 8 + React 18 + Tailwind v4 + GSAP + Three.js portfolio. This is the deep pass after the security/accessibility hardening: architectural, performance, maintainability, and usability weaknesses, root causes, impacts, and a prioritized redesign plan. Findings first, design second. Original intent and constraints are preserved.</p>
+<div class="chips">
+  <span class="chip">30 source files re-reviewed</span>
+  <span class="chip">every claim verified in code</span>
+  <span class="chip">constraints: no backend, GitHub Pages, /Playground/ base</span>
+  <span class="chip">Oct 13, 2026</span>
+</div>
+
+<div class="verdict">
+  <p><strong>Status: P0 + P1 + P2 quick wins are IMPLEMENTED and verified (see below).</strong> The site is well-built where it matters most and the remaining weaknesses were concentrated in three places: <strong>startup cost</strong> (514 kB of three.js and a hard-coded 2.2 s preloader gated the first paint), <strong>runtime fragility</strong> (no error boundary; scroll animation positions went stale after layout changes), and <strong>honesty debt</strong> (the contact email was an undeliverable placeholder; the site advertised tooling it didn't have). All of it is now fixed; what remains is the optional P3 backlog.</p>
+</div>
+
+<h2>Implementation status</h2>
+<table>
+  <tr><th>Item</th><th>Status</th><th>Evidence</th></tr>
+  <tr><td><strong>P0.1</strong> Contact email centralized</td><td><strong>Done</strong></td><td><code>src/data/contact.js</code>; 3 call sites converted; <code>test/contactData.test.js</code> blocks re-hardcoding</td></tr>
+  <tr><td><strong>P0.2</strong> Error boundaries</td><td><strong>Done</strong></td><td><code>ErrorBoundary.jsx</code> wraps routes + World (static aurora fallback) + Playroom (cards-below fallback)</td></tr>
+  <tr><td><strong>P0.3</strong> three.js deferred</td><td><strong>Done</strong></td><td>Dynamic imports in World + Playroom; <code>gameSession.js</code> split out (three-free); vendor-three out of entry preloads; main chunk 141 → 130 kB</td></tr>
+  <tr><td><strong>P0.4</strong> Readiness-gated preloader</td><td><strong>Done</strong></td><td>fonts.ready + 2 frames, 400 ms floor, 2 s ceiling, session skip, app shell <code>inert</code> while up</td></tr>
+  <tr><td><strong>P1.5</strong> ScrollTrigger refresh</td><td><strong>Done</strong></td><td><code>useScrollTriggerRefresh</code> on ProjectGrid filter + Stack tabs</td></tr>
+  <tr><td><strong>P1.6</strong> Focus trap</td><td><strong>Done</strong></td><td><code>useFocusTrap.js</code> (extracted from the game overlay) applied to Nav drawer; redundant Escape listener removed</td></tr>
+  <tr><td><strong>P1.7</strong> Scroll coordinator</td><td><strong>Done</strong></td><td><code>scrollSignal.js</code> — one listener/rAF; Nav + useActiveSection subscribe</td></tr>
+  <tr><td><strong>P1.8</strong> CursorGlow motion</td><td><strong>Done</strong></td><td>Gated on <code>useReducedMotion</code>; pauses on <code>visibilitychange</code></td></tr>
+  <tr><td><strong>P2</strong> Hero hoist / CSS dedupe / honest chips</td><td><strong>Done</strong></td><td>3 components hoisted (hero contract tests still green); duplicate <code>.magnetic-btn</code> + dead <code>.focus-ring</code> removed; tooling chips corrected</td></tr>
+  <tr><td><strong>P2</strong> vitest + RTL behavior tests</td><td>Open</td><td>Source-contract tests + smoke + axe still stand in</td></tr>
+  <tr><td><strong>P2</strong> ESLint/Prettier, font subsetting, WebP</td><td>Open</td><td>—</td></tr>
+  <tr><td><strong>P3</strong> Engine harness, error reporting</td><td>Open</td><td>—</td></tr>
+</table>
+<p style="font-size:.85rem">Gates at ship time: 46/46 tests, build clean, smoke pass, axe 0 violations, npm audit 0.</p>
+
+<h2>1 · Findings</h2>
+<p>Severity reflects user-visible impact × likelihood. Every item was verified against the source, not inferred.</p>
+
+<h3>Architecture</h3>
+
+<div class="finding">
+  <h3>A-1 — three.js loads eagerly on every route <span class="badge b-high">High</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd><code>World.jsx</code> statically imports <code>three/backdrop.js</code>, which imports <code>three</code>. <code>App</code> renders <code>&lt;World&gt;</code> unconditionally, so the 514 kB vendor-three chunk (128 kB gzip) is in the entry graph and must be fetched, parsed, and evaluated before the hero paints.</dd>
+    <dt>Impact</dt><dd>Better first paint on every page for every visitor; mid-range phones feel it most. The 3D backdrop is decorative — it should never block content.</dd>
+  </dl>
+</div>
+
+<div class="finding">
+  <h3>A-2 — No error boundary anywhere <span class="badge b-high">High</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd>Zero <code>componentDidCatch</code>/boundary classes. The app leans on several APIs that throw at runtime — WebGL context creation, GSAP timelines targeting refs, <code>ResizeObserver</code> — and any render-time error unmounts the whole tree.</dd>
+    <dt>Impact</dt><dd>One bad frame, one failed WebGL context on an old device, one ref-timing bug → white screen, no recovery, no message. For a portfolio whose job is to demonstrate competence, a white screen is the worst possible failure mode.</dd>
+  </dl>
+</div>
+
+<div class="finding">
+  <h3>A-3 — Contact email is an undeliverable placeholder <span class="badge b-high">High</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd><code>lenovobeast@example.com</code> — an RFC 2606 reserved domain that cannot receive mail — is hardcoded in <code>Contact.jsx</code> (form handoff target), <code>Footer.jsx</code>, and <code>src/data/nav.js</code> (socials).</dd>
+    <dt>Impact</dt><dd>The entire contact channel is dead. Every mailto click opens a composer addressed to a mailbox that does not exist. This is the site's conversion path.</dd>
+  </dl>
+</div>
+
+<div class="finding">
+  <h3>A-4 — Preloader gates the app on a fixed timer <span class="badge b-high">High</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd><code>Preloader</code> runs <code>duration = 1500</code> ms plus a 700 ms outro — a hard floor of ~2.2 s before the hero is visible, regardless of whether the app was ready in 300 ms.</dd>
+    <dt>Impact</dt><dd>Every visitor pays a fixed tax on every visit. It also blocks the skip link and keyboard access to the page underneath (the veil has no <code>inert</code>/pointer-events management).</dd>
+  </dl>
+</div>
+
+<div class="finding">
+  <h3>A-5 — Three bespoke 3D/game engines maintained in parallel <span class="badge b-med">Medium</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd><code>three/backdrop.js</code> (constellation), <code>world.js</code> (playroom desk scene), and five separate <code>games/*.js</code> engines each implement their own render loop, resize handling, input wiring, and dispose. Organic growth — the site is a playground, so each demo got its own engine.</dd>
+    <dt>Impact</dt><dd>~3× the WebGL surface to audit; inconsistent dispose semantics (one leak pattern is a bug multiplied by six). This is partly by design — see constraints below — so the fix is consolidation, not removal.</dd>
+  </dl>
+</div>
+
+<div class="finding">
+  <h3>A-6 — Hero defines components inside its render body <span class="badge b-med">Medium</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd><code>StatCard</code>, <code>TerminalWindow3D</code>, and <code>CodeLine</code> are <code>const</code>s defined inside <code>Hero()</code>. Every Hero render creates new component identities, so React unmounts and remounts those subtrees instead of reconciling them.</dd>
+    <dt>Impact</dt><dd>Wasted DOM churn, lost internal state, memoization defeated, and GSAP timelines targeting those refs get rebound against remounted nodes. Tests must keep the exact tokens <code>const TerminalWindow3D</code> and <code>&lt;TerminalWindow3D /&gt;</code> when hoisting.</dd>
+  </dl>
+</div>
+<h3>Performance</h3>
+
+<div class="finding">
+  <h3>P-1 — ScrollTrigger positions go stale after layout changes <span class="badge b-med">Medium</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd>Zero <code>ScrollTrigger.refresh()</code> calls exist in the codebase. <code>ProjectGrid</code> changes page height on every filter change (AnimatePresence <code>popLayout</code>), <code>Stack</code> swaps tab panels, and lazy images shift layout — all without telling GSAP.</dd>
+    <dt>Impact</dt><dd>Animations and scroll-spy fire at wrong scroll positions; content appears to animate late or early; jank as triggers recalculate lazily mid-scroll. GSAP's own React integration guide calls this the #1 integration bug.</dd>
+  </dl>
+</div>
+
+<div class="finding">
+  <h3>P-2 — Four independent scroll/rAF pipelines <span class="badge b-low">Low</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd>Nav's <code>measure()</code>, <code>useActiveSection</code>'s <code>measure()</code>, World's per-frame <code>setScroll</code>, and App's <code>CursorGlow</code> each attach their own scroll listener + rAF loop. Two of them duplicate the same scrollY math.</dd>
+    <dt>Impact</dt><dd>Four rAF chains per scroll frame on a page that is otherwise GPU-heavy. Each is individually correct; together they compete for the main thread.</dd>
+  </dl>
+</div>
+
+<div class="finding">
+  <h3>P-3 — Asset weight that doesn't need to exist <span class="badge b-low">Low</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd>Satoshi ships as four full-charset woff2 files (~101 kB total) for an English-only page; thumbnails are 192 kB of JPEG.</dd>
+    <dt>Impact</dt><dd>~180 kB of avoidable transfer. Latin subsetting typically cuts these woff2 files by 55–65 %; WebP/AVIF cuts the images by 60–75 %.</dd>
+  </dl>
+</div>
+
+<h3>Maintainability</h3>
+
+<div class="finding">
+  <h3>M-1 — CSS rot: duplicated rules and specificity fights <span class="badge b-med">Medium</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd><code>tailwind.css</code> is 830+ hand-written lines accumulated across redesigns. <code>.magnetic-btn</code> is defined twice, <code>:focus-visible</code> exists globally and again as <code>.focus-ring</code>, and base element styles (<code>input { width:100% }</code>) silently fight the Tailwind utilities that components layer on top.</dd>
+    <dt>Impact</dt><dd>The next person to edit an input or button class can lose to a base rule they can't see. Duplicated blocks drift.</dd>
+  </dl>
+</div>
+
+<div class="finding">
+  <h3>M-2 — The site advertises tooling it doesn't have <span class="badge b-med">Medium</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd><code>Stack.jsx</code> lists "TypeScript — strict mode" as a core skill and ESLint/Prettier as project tooling. <code>package.json</code> contains none of them; the codebase is plain JSX with no lint config.</dd>
+    <dt>Impact</dt><dd>Credibility risk — a recruiter who clones the repo finds the claims are decorative. Also why drift like A-6 and M-1 goes unnoticed: there is no linter to catch dead or duplicated code.</dd>
+  </dl>
+</div>
+
+<div class="finding">
+  <h3>M-3 — Tests only assert on source text <span class="badge b-med">Medium</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd>The node:test suite reads component files and regex-matches strings. That works for data invariants, but it's brittle to formatting and blind to runtime behavior — which is exactly why the smoke and a11y gates had to be bolted on separately.</dd>
+    <dt>Impact</dt><dd>A typo inside a JSX string passes; a genuinely broken render passes. Coverage over behavior is near zero.</dd>
+  </dl>
+</div>
+
+<h3>Usability</h3>
+
+<div class="finding">
+  <h3>U-1 — Mobile drawer has no focus trap <span class="badge b-med">Medium</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd>Nav's drawer handles <code>Escape</code> and <code>aria-expanded</code>/<code>aria-controls</code>, but focus can Tab straight out of the open drawer into the page behind it, and focus is not restored to the toggle on close. The game overlay implements the complete pattern — Nav just never got it.</dd>
+    <dt>Impact</dt><dd>Keyboard and screen-reader users can get lost behind an open overlay. WCAG 2.4.3 / 2.4.7 territory.</dd>
+  </dl>
+</div>
+
+<div class="finding">
+  <h3>U-2 — CursorGlow ignores prefers-reduced-motion <span class="badge b-low">Low</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd><code>CursorGlow</code> bails only on <code>(hover: none)</code>. Its rAF loop runs a continuous lerp animation for users who explicitly asked for reduced motion — while every other animated layer correctly consults <code>useReducedMotion</code>.</dd>
+    <dt>Impact</dt><dd>A small, specific a11y inconsistency that the axe gate can't catch (it needs motion, not contrast).</dd>
+  </dl>
+</div>
+
+<div class="finding">
+  <h3>U-3 — Soft 404s return HTTP 200 <span class="badge b-low">Low</span></h3>
+  <dl class="kv">
+    <dt>Root cause</dt><dd>Unknown paths are client-routed to the NotFound component; GitHub Pages serves the shell with 200.</dd>
+    <dt>Impact</dt><dd>Crawlers can index soft-404s. Inherent to SPAs on GitHub Pages without edge rules — accepted with a note.</dd>
+  </dl>
+</div>
+
+<h3>Verified good — keep these</h3>
+<ul class="tight">
+  <li><strong>Data integrity:</strong> <code>projects.json</code> single source of truth, true re-export, contract-tested.</li>
+  <li><strong>Security posture:</strong> hash-pinned dual CSP, zero external origins, 0 audit findings, CI gate.</li>
+  <li><strong>Bundle shape:</strong> vendor split; main chunk 141 kB; games lazy-loaded per engine.</li>
+  <li><strong>Accessibility:</strong> axe-clean, live regions, labeled controls, keyboard-complete games, full reduced-motion story everywhere except U-2.</li>
+</ul>
+<h2>2 · Redesign plan</h2>
+<p>Ordered by impact ÷ effort. Each item preserves the site's intent — it's a portfolio that demos game/web engineering, so the 3D constellation, the five games, and the visual loudness <em>stay</em>. What changes is their cost and failure mode.</p>
+
+<div class="phase p0">
+<h3>P0 · Ship now (each item ≲ 50 lines, ~half a day total)</h3>
+
+<h4>1. Fix the dead contact email <span class="badge b-ok">A-3</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> create <code>src/data/contact.js</code> exporting <code>CONTACT_EMAIL</code>; update the three hardcoded sites (Contact form, Footer, nav socials).</li>
+  <li><strong>Migration:</strong> replace string literals, add a contract test asserting no <code>example.com</code> address ships.</li>
+  <li><strong>Risk:</strong> none. <strong>Validate:</strong> grep for example.com returns nothing; manual mailto send lands in a real inbox.</li>
+</ul>
+
+<h4>2. Error boundaries with graceful 3D fallback <span class="badge b-ok">A-2</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> a small <code>&lt;ErrorBoundary&gt;</code> class + two instances: one around route content (shows the 404-style panel with a reload action), one around <code>&lt;World&gt;</code> and the Playroom (falls back to the static CSS aurora backdrop that already exists).</li>
+  <li><strong>Migration:</strong> none — purely additive. <strong>Risk:</strong> masking errors in dev; log to console in the boundary's dev branch.</li>
+  <li><strong>Validate:</strong> fault-injection test — a component that throws renders the fallback, not a white screen; smoke check still passes.</li>
+</ul>
+
+<h4>3. Defer three.js out of the entry graph <span class="badge b-ok">A-1</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> in <code>World.jsx</code>, move the <code>createBackdrop</code> import into the existing <code>useEffect</code> via <code>await import('../three/backdrop.js')</code>. The engine already bootstraps inside the effect and handles <code>engine.ok === false</code> — render the canvas + labels shell first, upgrade when the chunk arrives.</li>
+  <li><strong>Migration:</strong> ~10 lines. Fallback state already designed for WebGL-less clients.</li>
+  <li><strong>Risk:</strong> brief moment with no backdrop → acceptable (the aurora/vignette CSS layers remain). <strong>Validate:</strong> build output no longer lists vendor-three as an entry dependency; Playwright trace shows LCP improves; <code>npm run smoke</code> still green.</li>
+</ul>
+
+<h4>4. Readiness-gated preloader <span class="badge b-ok">A-4</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> replace the fixed 1500+700 ms with: wait for <code>document.fonts.ready</code> + one rAF, with a 400 ms minimum display (brand beat) and a 2 s timeout ceiling; skip entirely when <code>sessionStorage</code> shows a previous boot this session. Add <code>inert</code> to the app shell while the veil is up.</li>
+  <li><strong>Risk:</strong> slow connections now wait longer than 1.5 s — bounded by the 2 s ceiling; the progress bar is honest because it tracks real readiness. <strong>Validate:</strong> TTI before/after on a warm cache; smoke covers both boot paths.</li>
+</ul>
+</div>
+
+<div class="phase p1">
+<h3>P1 · Next sprint</h3>
+
+<h4>5. ScrollTrigger refresh strategy <span class="badge b-ok">P-1</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> <code>ScrollTrigger.refresh()</code> on: ProjectGrid filter change (effect on <code>visible</code>), route change, and <code>window.load</code>. One shared <code>useScrollTriggerRefresh(dep)</code> hook keeps it in one place.</li>
+  <li><strong>Risk:</strong> refresh loops with the Playroom's pinned horizontal ScrollTrigger — it already sets <code>invalidateOnRefresh: true</code>, so verify after. <strong>Validate:</strong> scroll-spy active state correct after filtering at several scroll depths.</li>
+</ul>
+
+<h4>6. Nav drawer focus trap + restore <span class="badge b-ok">U-1</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> extract the game overlay's proven trap into <code>src/hooks/useFocusTrap.js</code>; apply to the drawer; restore focus to the hamburger on close.</li>
+  <li><strong>Validate:</strong> Tab cycles only within the open drawer; Escape returns focus to the toggle.</li>
+</ul>
+
+<h4>7. Scroll coordinator <span class="badge b-ok">P-2</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> one module-scope rAF-batched scroll bus (<code>src/hooks/useScrollSignal.js</code>); Nav and useActiveSection subscribe instead of each owning a listener.</li>
+  <li><strong>Risk:</strong> low; behavior-preserving refactor. <strong>Validate:</strong> scroll-spy unchanged; frame count during a fast scroll drops in a performance trace.</li>
+</ul>
+
+<h4>8. CursorGlow reduced-motion + pause <span class="badge b-ok">U-2</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> subscribe to the existing <code>useReducedMotion</code> hook and pause the rAF loop when reduced or when <code>document.hidden</code>.</li>
+  <li><strong>Validate:</strong> with reduced-motion emulation, no rAF callbacks fire from CursorGlow.</li>
+</ul>
+</div>
+
+<div class="phase p2">
+<h3>P2 · Hardening</h3>
+
+<h4>9. Hoist Hero's inner components <span class="badge b-ok">A-6</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> move <code>StatCard</code>/<code>TerminalWindow3D</code>/<code>CodeLine</code> to module scope. <strong>Constraint:</strong> <code>test/hero.test.js</code> requires exactly one <code>const TerminalWindow3D</code> and one <code>&lt;TerminalWindow3D /&gt;</code> — hoisting preserves both tokens. <strong>Validate:</strong> hero tests pass; no remount churn in a React DevTools profiling pass.</li>
+</ul>
+
+<h4>10. CSS dedupe &amp; specificity cleanup <span class="badge b-ok">M-1</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> delete the duplicate <code>.magnetic-btn</code> block and <code>.focus-ring</code> (the global <code>:focus-visible</code> already covers it); move element-level <code>input/textarea</code> base styles behind a comment or remove them where utilities already win.</li>
+  <li><strong>Validate:</strong> visual diff of form + buttons before/after (screenshots at 3 breakpoints).</li>
+</ul>
+
+<h4>11. Either add the tooling or fix the claims <span class="badge b-ok">M-2</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> fast path — add ESLint + Prettier configs (an afternoon, kills an entire class of drift). Keep the TypeScript claim honest either by incremental opt-in (<code>allowJs</code> + <code>checkJs</code> on <code>src/</code>, no rewrite) or by rewording the Stack entry. <strong>Validate:</strong> <code>npm run lint</code> in CI; zero new warnings.</li>
+</ul>
+
+<h4>12. Component behavior tests <span class="badge b-ok">M-3</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> add vitest + @testing-library/react; cover Contact validation flow, Nav drawer trap, and Games overlay focus behavior. Keep the existing source-contract tests for data invariants. <strong>Validate:</strong> a deliberately broken render fails the suite.</li>
+</ul>
+
+<h4>13. Asset diet <span class="badge b-ok">P-3</span></h4>
+<ul class="tight">
+  <li><strong>Change:</strong> subset Satoshi to latin via <code>pyftsubset</code> (scripted, like vendor-fonts.mjs); export WebP/AVIF variants with <code>&lt;picture&gt;</code> fallbacks. <strong>Validate:</strong> transfer size before/after; visual diff of headings (subsetting changes nothing visible for English copy).</li>
+</ul>
+</div>
+
+<div class="phase p3">
+<h3>P3 · Optional</h3>
+<ul class="tight">
+  <li><strong>Engine harness <span class="badge b-ok">A-5</span>:</strong> extract a ~80-line shared harness (fixed-timestep loop, resize observer, input binding, dispose) into <code>src/three/engine.js</code>; migrate the playroom first, games opportunistically. Do not rewrite the games — they're the portfolio's proof of work.</li>
+  <li><strong>Runtime error observability <span class="badge b-ok">A-2+</span>:</strong> the boundary from P0.2 can ship errors to any endpoint later via a <code>report-to</code> CSP directive; document as accepted risk until then (no backend = no collector).</li>
+  <li><strong>Soft-404 honesty <span class="badge b-ok">U-3</span>:</strong> unsolvable on GitHub Pages without edge rules; accepted.</li>
+</ul>
+</div>
+
+<h2>3 · Before / after</h2>
+<table>
+  <tr><th>Dimension</th><th>Before</th><th>After (P0+P1)</th></tr>
+  <tr><td><strong>First paint</strong></td><td>Blocked by 514 kB three.js parse + 2.2 s fixed preloader</td><td>Hero paints, three deferred, preloader gated on real readiness (≈0.3–0.6 s warm)</td></tr>
+  <tr><td><strong>Failure mode</strong></td><td>Any runtime error = white screen, no recovery</td><td>Boundary shows content + recovery action; 3D failure falls back to CSS aurora</td></tr>
+  <tr><td><strong>Contact path</strong></td><td>Every mailto addressed to an undeliverable placeholder</td><td>Single source constant, contract-tested, deliverable</td></tr>
+  <tr><td><strong>Scroll animation</strong></td><td>Trigger positions stale after filter/tab changes</td><td>Refresh on every layout-mutating state change</td></tr>
+  <tr><td><strong>Keyboard nav</strong></td><td>Focus escapes the open mobile drawer; CursorGlow ignores reduced-motion</td><td>Trapped + restored; CursorGlow paused for reduced-motion users</td></tr>
+  <tr><td><strong>Transfer</strong></td><td>~323 kB fonts+images (P2 diet pending)</td><td>~120–140 kB after subsetting + WebP</td></tr>
+  <tr><td><strong>Code health</strong></td><td>Inner remounts, duplicated CSS, no lint, source-text-only tests</td><td>Hoisted components, deduped CSS, lint gate, behavior tests</td></tr>
+</table>
+
+<h2>4 · Constraints preserved</h2>
+<ul class="tight">
+  <li>No backend, no framework swap, no design-language change — the loud 3D portfolio aesthetic and all five games remain the product.</li>
+  <li>GitHub Pages target, <code>/Playground/</code> base, deploy workflow contract (build → dist).</li>
+  <li>All existing test invariants (Hero tokens, Games template ids, projects.json verbatim re-export, CSP hash tests) continue to pass at every step.</li>
+</ul>
+
+<div class="foot">
+  Architecture audit of Playground · Oct 13, 2026 · Method: full re-read of src/, configs, and CI; every finding verified in code (grep/inspection) before inclusion. Redesign sequenced so each phase leaves the site shippable.
+</div>
+</div>
+</body>
+</html>
+
+

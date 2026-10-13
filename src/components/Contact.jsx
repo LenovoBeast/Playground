@@ -15,6 +15,7 @@ import {
   Cpu,
 } from "@phosphor-icons/react";
 import { useReducedMotion } from "../hooks/useReducedMotion.js";
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "../data/contact.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -47,7 +48,7 @@ const links = [
   {
     icon: "mail",
     label: "Email",
-    href: "mailto:lenovobeast@example.com",
+    href: CONTACT_MAILTO,
     color: "group-hover:text-purple-400",
   },
 ];
@@ -135,7 +136,7 @@ export default function Contact() {
       formData.email.trim() ? ` (${formData.email.trim()})` : ""
     }`;
     const mailto =
-      "mailto:lenovobeast@example.com" +
+      CONTACT_MAILTO +
       `?subject=${encodeURIComponent(formData.subject.trim())}` +
       `&body=${encodeURIComponent(body)}`;
 
@@ -159,7 +160,7 @@ export default function Contact() {
     } catch {
       setFormState("error");
       setStatusMessage(
-        "Your mail app could not be opened. Email lenovobeast@example.com directly."
+        "Your mail app could not be opened. Email " + CONTACT_EMAIL + " directly."
       );
     }
   };

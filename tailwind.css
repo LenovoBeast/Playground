@@ -79,6 +79,18 @@ body {
   transition: opacity 0.6s ease;
 }
 
+/* Static stand-in when the WebGL engine fails: the aurora blooms and
+   vignette above/below still render, so the page keeps its atmosphere. */
+.nexus-canvas-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 45% at 50% 35%, rgba(59, 130, 246, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 35% at 75% 70%, rgba(168, 85, 247, 0.08) 0%, transparent 70%);
+}
+
 .nexus-canvas.is-interactive {
   pointer-events: auto;
   cursor: grab;
@@ -786,30 +798,6 @@ img[data-blur-up] {
 }
 img[data-blur-up="loaded"] {
   filter: blur(0);
-}
-
-/* Magnetic button effect */
-.magnetic-btn {
-  position: relative;
-  overflow: hidden;
-}
-
-.magnetic-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(37,99,233,0.08));
-  opacity: 0;
-  transition: opacity 0.35s ease;
-}
-
-.magnetic-btn:hover::before { opacity: 1; }
-
-/* Focus ring for keyboard navigation */
-.focus-ring:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(59,130,246,0.2);
 }
 
 /* Reduced motion overrides for all animations */

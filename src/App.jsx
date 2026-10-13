@@ -13,17 +13,31 @@ import World from './components/World';
 import Nav from './components/Nav';
 import Preloader from './components/Preloader';
 import NotFound from './components/NotFound';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Shown where the interactive 3D layers would be if their engine fails:
+// the site's static aurora/vignette layers keep working underneath, so the
+// fallback is simply "no 3D" rather than an error panel.
+const Quiet3DFallback = () => (
+  <div className="nexus-canvas-fallback" aria-hidden="true" />
+);
 
 import { SECTION_IDS } from './data/nav.js';
 import { useActiveSection, scrollToSection } from './hooks/useActiveSection.js';
+import { useReducedMotion } from './hooks/useReducedMotion.js';
 import './index.css';
 
 // Pointer-tracking ambient light
 function CursorGlow() {
   const ref = useRef(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // Respect the user's motion preference (this layer used to animate
+    // regardless) and skip entirely on touch devices.
+    if (reducedMotion) return;
     if (window.matchMedia('(hover: none)').matches) return;
+
     let raf = 0;
     let x = window.innerWidth / 2;
     let y = window.innerHeight / 2;
@@ -43,13 +57,21 @@ function CursorGlow() {
       raf = requestAnimationFrame(loop);
     };
 
+    const onVisibility = () => {
+      cancelAnimationFrame(raf);
+      if (!document.hidden) raf = requestAnimationFrame(loop);
+    };
+
     window.addEventListener('pointermove', onMove, { passive: true });
+    document.addEventListener('visibilitychange', onVisibility);
     raf = requestAnimationFrame(loop);
+
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('pointermove', onMove);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, []);
+  }, [reducedMotion]);
 
   return <div ref={ref} className="cursor-glow" aria-hidden="true" />;
 }
@@ -68,38 +90,50 @@ function App() {
   }, [hash]);
 
   return (
-    <div className="noise-overlay relative min-h-screen">
+    <div
+      className="noise-overlay relative min-h-screen"
+      // While the boot veil is up, the page behind it is inert: keyboard focus
+      // and screen-reader navigation can't wander into hidden content.
+      {...(booting ? { inert: '' } : {})}
+    >
       {/* Skip link for accessibility */}
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
       <AnimatePresence>{booting && <Preloader onDone={() => setBooting(false)} />}</AnimatePresence>
 
-      {/* Interactive 3D constellation behind every route */}
-      <World activeId={active} />
+      {/* Interactive 3D constellation behind every route. Isolated: a WebGL or
+          engine failure degrades to the static backdrop, never a white screen. */}
+      <ErrorBoundary label="3D backdrop" fallback={<Quiet3DFallback />}>
+        <World activeId={active} />
+      </ErrorBoundary>
       <div className="vignette" aria-hidden="true" />
       <CursorGlow />
 
       <Nav active={active} />
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <Hero />
-              <main id="main-content">
-                <ProjectGrid />
-                <About />
-                <Stack />
-                <Games />
-                <Contact />
-              </main>
-              <Footer />
-            </>
-          }
-        />
-        <Route path="*" element={<main id="main-content"><NotFound /></main>} />
-      </Routes>
+      {/* Route content is isolated from the chrome: any render error in a
+          section shows a recoverable panel instead of unmounting the app. */}
+      <ErrorBoundary label="this page" onReset={() => window.location.reload()}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                <Hero />
+                <main id="main-content">
+                  <ProjectGrid />
+                  <About />
+                  <Stack />
+                  <Games />
+                  <Contact />
+                </main>
+                <Footer />
+              </>
+            }
+          />
+          <Route path="*" element={<main id="main-content"><NotFound /></main>} />
+        </Routes>
+      </ErrorBoundary>
     </div>
   );
 }

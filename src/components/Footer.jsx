@@ -7,6 +7,7 @@ import {
   ArrowUp,
 } from "@phosphor-icons/react";
 import { scrollToSection } from "../hooks/useActiveSection.js";
+import { CONTACT_MAILTO } from "../data/contact.js";
 
 const MARQUEE = [
   "WebGPU",
@@ -119,7 +120,7 @@ export default function Footer() {
                   ["GitHub", "https://github.com/LenovoBeast"],
                   ["Twitter", "https://twitter.com/LenovoBeast"],
                   ["LinkedIn", "https://linkedin.com/in/lenovobeast"],
-                  ["Email", "mailto:lenovobeast@example.com"],
+                  ["Email", CONTACT_MAILTO],
                 ].map(([label, href]) => (
                   <li key={label}>
                     <a
@@ -175,7 +176,7 @@ export default function Footer() {
               <LinkedinLogo size={17} weight="bold" />
             </a>
             <a
-              href="mailto:lenovobeast@example.com"
+              href={CONTACT_MAILTO}
               className="social-icon grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-purple-400 active-press"
               aria-label="Email"
             >

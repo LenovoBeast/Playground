@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 
 const STEPS = [
@@ -8,25 +8,76 @@ const STEPS = [
   'linking sections',
 ];
 
-export default function Preloader({ onDone, duration = 1500 }) {
+// The veil used to be a fixed 1500 ms + 700 ms timer — a hard tax on every
+// visit regardless of whether the app was ready in 300 ms. Now it tracks real
+// readiness (fonts + a painted frame), holds a short brand beat, and skips
+// itself entirely for repeat visits within the same session.
+const MIN_DISPLAY_MS = 400;
+const MAX_WAIT_MS = 2000;
+const SESSION_KEY = 'boot-veil-shown';
+
+export default function Preloader({ onDone }) {
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
 
+  // Keep the callback out of the effect's deps: App passes a fresh arrow each
+  // render, which would otherwise restart the boot sequence.
+  const onDoneRef = useRef(onDone);
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
+
   useEffect(() => {
     const start = performance.now();
+    let settled = false;
     let raf = 0;
-    const tick = (now) => {
-      const p = Math.min((now - start) / duration, 1);
-      setProgress(p);
-      if (p < 1) raf = requestAnimationFrame(tick);
-      else {
+
+    let repeatVisit = false;
+    try {
+      repeatVisit = sessionStorage.getItem(SESSION_KEY) === '1';
+      sessionStorage.setItem(SESSION_KEY, '1');
+    } catch {
+      // Private mode / storage disabled: treat as a first visit.
+    }
+
+    const complete = () => {
+      if (settled) return;
+      settled = true;
+      cancelAnimationFrame(raf);
+      const elapsed = performance.now() - start;
+      const hold = repeatVisit ? 0 : Math.max(MIN_DISPLAY_MS - elapsed, 0);
+      setTimeout(() => {
+        setProgress(1);
         setDone(true);
-        setTimeout(() => onDone?.(), 700);
-      }
+        setTimeout(() => onDoneRef.current?.(), repeatVisit ? 0 : 700);
+      }, hold);
+    };
+
+    // Readiness = fonts settled (the heaviest render-blocking asset) plus two
+    // painted frames, bounded by the ceiling so a hanging font can't trap
+    // anyone behind the veil.
+    const ready = Promise.all([
+      document.fonts?.ready ?? Promise.resolve(),
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve))
+      ),
+    ]);
+    const ceiling = setTimeout(complete, MAX_WAIT_MS);
+    ready.then(complete);
+
+    const tick = (now) => {
+      // Ease toward 90% while waiting; the last 10% lands on completion.
+      setProgress(Math.min(0.9, ((now - start) / MAX_WAIT_MS) * 0.9));
+      if (!settled) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [duration, onDone]);
+
+    return () => {
+      settled = true;
+      cancelAnimationFrame(raf);
+      clearTimeout(ceiling);
+    };
+  }, []);
 
   const step = Math.min(STEPS.length - 1, Math.floor(progress * STEPS.length));
 
