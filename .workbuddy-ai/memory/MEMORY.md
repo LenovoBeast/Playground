@@ -70,6 +70,17 @@ Deployed under base `/Playground/` (`vite.config.js`, `basename="/Playground"` i
   reads it to prove the player actually moves; canvas pixel hashes are unreliable there.
 - Perf invariants: the game cabinet must NOT use backdrop-blur (measured 11 vs 24 fps), and
   `World` receives `paused` while a cabinet is open so the 3D backdrop stops competing.
+- **Shared kit: `src/games/gameKit.js` — all six engines use it and must keep doing so.**
+  `createClock` (real dt — never integrate a hard-coded 1/60), `substeps` (anti-tunneling),
+  `formatScore`, `readBest`/`writeBest` (keys `game-best-*`), `isRestartKey`/`isPauseKey`,
+  `createKeyState` (held keys → time-based movement, never per-keydown), `mirrorState`
+  (`canvas.dataset.gameState` = `score|progress|phase`, read by the smoke check),
+  `withHints`, `createPauseState`. `test/games.test.js` enforces this (imports, no fixed
+  timestep, 3-field mirror, best score, shared pause key, and no kit helper used unimported).
+- Every game must be provably completable: `test/gameLogic.test.js` runs full-game
+  simulations (a tracking paddle wins Breakout; Launch finishes inside its shot budget).
+  Add one of these when adding a game — Breakout shipped unwinnable because its top brick
+  rows sat above the ceiling bounce, which no single-function test would have caught.
 
 ## Build & tooling (post-migration)
 - Tailwind v4 via `@tailwindcss/postcss` (no autoprefixer); tailwind.css uses
