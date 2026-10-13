@@ -31,8 +31,6 @@ export default function Preloader({ onDone }) {
   useEffect(() => {
     const start = performance.now();
     let raf = 0;
-    let readyAt = 0; // 0 = readiness still pending
-    let finished = false;
 
     let repeatVisit = false;
     try {
