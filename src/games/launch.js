@@ -21,6 +21,13 @@ import {
   isRestartKey,
   isConfirmKey,
 } from './gameKit.js'
+import {
+  createHudLayer,
+  drawInnerFrame,
+  drawPanel,
+  drawVignette,
+  roundRect,
+} from './gameArt.js'
 import { playBeep } from './sound.js'
 
 const GAME_NAME = 'launch'
@@ -30,6 +37,18 @@ export function createLaunch(canvas, scoreEl, statusEl) {
   if (!context) throw new Error('This browser cannot create a 2D game canvas.')
   const clock = createClock()
   const pause = createPauseState()
+
+  // Built in start(): start() calls stop() first for cleanup.
+  let hudLayer = { set() {}, destroy() {} }
+
+  function buildHud() {
+    return createHudLayer(canvas, [
+      { key: 'score', label: 'score', align: 'left', initial: '000000' },
+      { key: 'shots', label: 'shots', align: 'left', initial: '8' },
+      { key: 'targets', label: 'targets', align: 'right', initial: '3' },
+      { key: 'best', label: 'best', align: 'right', initial: '000000' },
+    ])
+  }
 
   let state = createLaunchState()
   let best = 0
@@ -201,8 +220,52 @@ export function createLaunch(canvas, scoreEl, statusEl) {
       block.addColorStop(0, '#ffe9b0')
       block.addColorStop(1, '#cc741f')
       context.fillStyle = block
-      context.fillRect(target.x - target.radius, target.y - target.radius, target.radius * 2, target.radius * 2)
+      roundRect(context, target.x - target.radius, target.y - target.radius, target.radius * 2, target.radius * 2, target.radius * 0.35)
+      context.fill()
+      context.lineWidth = 0.03
+      context.strokeStyle = 'rgba(255,255,255,0.45)'
+      context.stroke()
       circle(target.x, target.y, target.radius * 0.62, '#ff6bcf')
+      circle(target.x - target.radius * 0.2, target.y - target.radius * 0.24, target.radius * 0.16, '#ffffff')
+    }
+
+    // Aim gauge: angle arc at the slingshot plus a power bar in the corner, so
+    // the shot can be read without looking away from the trajectory guide.
+    if (!state.projectile && state.alive && !state.won) {
+      const originX = 1.35
+      const originY = 4.65
+      const radius = 1.15
+      context.strokeStyle = 'rgba(255,240,107,0.85)'
+      context.lineWidth = 0.05
+      context.beginPath()
+      context.moveTo(originX, originY)
+      context.lineTo(originX + Math.cos(state.angle) * radius, originY - Math.sin(state.angle) * radius)
+      context.stroke()
+      context.beginPath()
+      context.arc(originX, originY, radius * 0.42, -state.angle, 0)
+      context.strokeStyle = 'rgba(255,240,107,0.35)'
+      context.lineWidth = 0.03
+      context.stroke()
+
+      drawPanel(context, 0.3, 0.35, 2.5, 1.05, { radius: 0.16, accent: 'rgba(79,223,255,0.7)' })
+      context.fillStyle = 'rgba(161,161,170,1)'
+      context.font = '600 0.17px ui-monospace, monospace'
+      context.textAlign = 'left'
+      context.textBaseline = 'middle'
+      context.fillText('ANGLE', 0.5, 0.68)
+      context.fillText('POWER', 0.5, 1.06)
+      context.fillStyle = '#ffffff'
+      context.textAlign = 'right'
+      context.fillText(`${Math.round((state.angle * 180) / Math.PI)}°`, 2.6, 0.68)
+      roundRect(context, 0.5, 1.18, 1.9, 0.14, 0.07)
+      context.fillStyle = 'rgba(255,255,255,0.14)'
+      context.fill()
+      const bar = context.createLinearGradient(0.5, 0, 2.4, 0)
+      bar.addColorStop(0, '#4fdfff')
+      bar.addColorStop(1, '#ff6bcf')
+      roundRect(context, 0.5, 1.18, 1.9 * Math.max(0.05, state.power), 0.14, 0.07)
+      context.fillStyle = bar
+      context.fill()
     }
     context.restore()
 
@@ -216,6 +279,14 @@ export function createLaunch(canvas, scoreEl, statusEl) {
       context.fillText('PAUSED', width / 2, height / 2)
     }
 
+    hudLayer.set({
+      score: String(state.score).padStart(6, '0'),
+      shots: String(shotsLeft(state)),
+      targets: String(state.targets.filter((target) => target.alive).length),
+      best: String(Math.max(best, state.score)).padStart(6, '0'),
+    })
+    drawVignette(context, width, height, 0.45)
+    drawInnerFrame(context, width, height, { radius: 14 })
     mirrorState(canvas, [
       state.score,
       shotsLeft(state),
@@ -263,6 +334,7 @@ export function createLaunch(canvas, scoreEl, statusEl) {
     stop()
     best = readBest(GAME_NAME)
     reset()
+    hudLayer = buildHud()
     resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(canvas)
     resize()
@@ -274,6 +346,8 @@ export function createLaunch(canvas, scoreEl, statusEl) {
 
   function stop() {
     cancelAnimationFrame(frame)
+    hudLayer.destroy()
+    hudLayer = { set() {}, destroy() {} }
     resizeObserver?.disconnect()
     window.removeEventListener('keydown', onKey)
     canvas.removeEventListener('pointermove', onPointerMove)

@@ -21,9 +21,21 @@ import {
   isRestartKey,
   isConfirmKey,
 } from './gameKit.js'
+import { createHudLayer, makeCircuitTexture, makeOrbTexture } from './gameArt.js'
 import { playBeep } from './sound.js'
 
 const GAME_NAME = 'snake'
+
+// Generated textures: the orbs carry a holographic band pattern instead of a
+// flat colour, which is what makes them read as spheres under the scene lights.
+function orbTexture(THREE, options) {
+  const canvas = makeOrbTexture(options)
+  if (!canvas) return null
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 4
+  return texture
+}
 
 export function createSnake(canvas, scoreEl, statusEl) {
   const scene = new THREE.Scene()
@@ -38,6 +50,18 @@ export function createSnake(canvas, scoreEl, statusEl) {
   const GRID = SNAKE_GRID
   const clock = createClock()
   const pause = createPauseState()
+
+  // Built in start(): start() calls stop() first for cleanup.
+  let hudLayer = { set() {}, destroy() {} }
+
+  function buildHud() {
+    return createHudLayer(canvas, [
+      { key: 'score', label: 'score', align: 'left', initial: '000000' },
+      { key: 'length', label: 'length', align: 'left', initial: '3' },
+      { key: 'speed', label: 'speed', align: 'center', initial: '7.1/s' },
+      { key: 'best', label: 'best', align: 'right', initial: '000000' },
+    ])
+  }
 
   let snake, dir, food, score, best, alive, won, frame, accumulator = 0
   let stepMs = 140
@@ -56,14 +80,35 @@ export function createSnake(canvas, scoreEl, statusEl) {
 
   const headGeometry = new THREE.SphereGeometry(0.45, 24, 24)
   const bodyGeometry = new THREE.SphereGeometry(0.38, 20, 20)
-  const headMaterial = new THREE.MeshStandardMaterial({ color: 0xc47fff, emissive: 0x7842cc, emissiveIntensity: 0.6, roughness: 0.2, metalness: 0.45 })
-  const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x4fdfff, emissive: 0x138aa3, emissiveIntensity: 0.6, roughness: 0.2, metalness: 0.45 })
+  const headTexture = orbTexture(THREE, { core: '#d9a6ff', glow: '#6b34c9' })
+  const bodyTexture = orbTexture(THREE, { core: '#8ff0ff', glow: '#0d6f88' })
+  const foodTexture = orbTexture(THREE, { core: '#ffa8dd', glow: '#a3186e' })
+  const headMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, map: headTexture, emissive: 0x7842cc, emissiveIntensity: 0.5, roughness: 0.25, metalness: 0.4 })
+  const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, map: bodyTexture, emissive: 0x138aa3, emissiveIntensity: 0.5, roughness: 0.25, metalness: 0.4 })
   const trail = [] // { mesh }
   const foodMesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.35, 16, 16),
-    new THREE.MeshStandardMaterial({ color: 0xff6bcf, emissive: 0xff6bcf, emissiveIntensity: 0.7 })
+    new THREE.MeshStandardMaterial({ color: 0xffffff, map: foodTexture, emissive: 0xff6bcf, emissiveIntensity: 0.6 })
   )
   scene.add(foodMesh)
+
+  // A board floor under the grid: the circuit texture gives the play area a
+  // surface to sit on instead of floating in the void.
+  const floorTextureCanvas = makeCircuitTexture({ size: 256, base: '#0d1526', trace: 'rgba(79,223,255,0.10)' })
+  if (floorTextureCanvas) {
+    const floorTexture = new THREE.CanvasTexture(floorTextureCanvas)
+    floorTexture.colorSpace = THREE.SRGBColorSpace
+    floorTexture.wrapS = THREE.RepeatWrapping
+    floorTexture.wrapT = THREE.RepeatWrapping
+    floorTexture.repeat.set(GRID / 2, GRID / 2)
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(GRID, GRID),
+      new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.85, metalness: 0.1 })
+    )
+    floor.rotation.x = -Math.PI / 2
+    floor.position.y = -0.04
+    scene.add(floor)
+  }
 
   const glow = new THREE.PointLight(0xc47fff, 0.5, 6)
   scene.add(glow)
@@ -163,6 +208,12 @@ export function createSnake(canvas, scoreEl, statusEl) {
     // progress = head cell, so the mirror changes as the snake moves (its length
     // only changes when it eats, which a smoke test can't rely on).
     const head = snake[0]
+    hudLayer.set({
+      score: String(score).padStart(6, '0'),
+      length: String(snake.length),
+      speed: `${(1000 / stepMs).toFixed(1)}/s`,
+      best: String(Math.max(best, score)).padStart(6, '0'),
+    })
     mirrorState(canvas, [score, head.x + head.y * GRID, pause.paused ? 'paused' : won ? 'won' : alive ? 'playing' : 'dead'])
     renderer.render(scene, camera)
     frame = requestAnimationFrame(render)
@@ -177,6 +228,7 @@ export function createSnake(canvas, scoreEl, statusEl) {
     stop()
     best = readBest(GAME_NAME)
     reset()
+    hudLayer = buildHud()
     ro = new ResizeObserver(resize)
     ro.observe(canvas)
     resize()
@@ -186,6 +238,8 @@ export function createSnake(canvas, scoreEl, statusEl) {
 
   function stop() {
     cancelAnimationFrame(frame)
+    hudLayer.destroy()
+    hudLayer = { set() {}, destroy() {} }
     ro?.disconnect()
     window.removeEventListener('keydown', onKey)
   }

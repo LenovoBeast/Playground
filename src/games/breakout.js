@@ -22,11 +22,29 @@ import {
   isRestartKey,
   isConfirmKey,
 } from './gameKit.js'
+import { createHudLayer, makeBrickTexture } from './gameArt.js'
 import { playBeep } from './sound.js'
 
 const GAME_NAME = 'breakout'
 const BRICK_ROWS = 5
 const BRICK_COLS = 10
+const BRICK_COLORS = ['#c47fff', '#ff6bcf', '#4fdfff', '#ffaa44', '#88ff66']
+const BRICK_ACCENTS = ['#e6ccff', '#ffc2e6', '#bff2ff', '#ffdca8', '#d6ffc2']
+
+// Each row gets a generated crystal face: flat colour boxes read as rectangles
+// no matter how the lights hit them.
+function brickTexture(THREE, row) {
+  const canvas = makeBrickTexture({
+    color: BRICK_COLORS[row],
+    accent: BRICK_ACCENTS[row],
+    seed: row,
+  })
+  if (!canvas) return null
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 4
+  return texture
+}
 
 export function createBreakout(canvas, scoreEl, statusEl) {
   const scene = new THREE.Scene()
@@ -44,6 +62,18 @@ export function createBreakout(canvas, scoreEl, statusEl) {
   const W = 12, H = 8
   const clock = createClock()
   const pause = createPauseState()
+
+  // Built in start(): start() calls stop() first for cleanup.
+  let hudLayer = { set() {}, destroy() {} }
+
+  function buildHud() {
+    return createHudLayer(canvas, [
+      { key: 'score', label: 'score', align: 'left', initial: '000000' },
+      { key: 'lives', label: 'lives', align: 'left', initial: '●●●' },
+      { key: 'bricks', label: 'bricks', align: 'center', initial: '50' },
+      { key: 'best', label: 'best', align: 'right', initial: '000000' },
+    ])
+  }
   const keys = createKeyState({
     ArrowLeft: true, ArrowRight: true, a: true, d: true, A: true, D: true,
   })
@@ -83,12 +113,20 @@ export function createBreakout(canvas, scoreEl, statusEl) {
       bricks.forEach(brick => { brick.alive = true; scene.add(brick.mesh) })
       return
     }
-    const colors = [0xc47fff, 0xff6bcf, 0x4fdfff, 0xffaa44, 0x88ff66]
+    const colors = BRICK_COLORS
     for (let row = 0; row < BRICK_ROWS; row++) {
+      const texture = brickTexture(THREE, row)
       for (let col = 0; col < BRICK_COLS; col++) {
         const m = new THREE.Mesh(
           new THREE.BoxGeometry(1.1, 0.4, 0.6),
-          new THREE.MeshStandardMaterial({ color: colors[row], emissive: colors[row], emissiveIntensity: 0.4, roughness: 0.3, metalness: 0.2 })
+          new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            map: texture,
+            emissive: colors[row],
+            emissiveIntensity: 0.35,
+            roughness: 0.28,
+            metalness: 0.35,
+          })
         )
         m.position.set(-W / 2 + 0.7 + col * 1.15, H / 2 - 1 - row * 0.5, 0)
         scene.add(m)
@@ -162,6 +200,12 @@ export function createBreakout(canvas, scoreEl, statusEl) {
     trail[0].position.copy(ball.position)
     point.position.copy(ball.position)
 
+    hudLayer.set({
+      score: String(state.score).padStart(6, '0'),
+      lives: '●'.repeat(Math.max(0, state.lives)) + '○'.repeat(Math.max(0, BREAKOUT_LIVES - state.lives)),
+      bricks: String(bricks.filter((brick) => brick.alive).length),
+      best: String(Math.max(best, state.score)).padStart(6, '0'),
+    })
     mirrorState(canvas, [
       state.score,
       // progress = ball x, which moves continuously, so the mirror proves the
@@ -211,6 +255,7 @@ export function createBreakout(canvas, scoreEl, statusEl) {
     stop()
     best = readBest(GAME_NAME)
     reset()
+    hudLayer = buildHud()
     ro = new ResizeObserver(resize); ro.observe(canvas)
     resize()
     canvas.addEventListener('pointermove', onMove)
@@ -221,6 +266,8 @@ export function createBreakout(canvas, scoreEl, statusEl) {
 
   function stop() {
     cancelAnimationFrame(frame)
+    hudLayer.destroy()
+    hudLayer = { set() {}, destroy() {} }
     ro?.disconnect()
     canvas.removeEventListener('pointermove', onMove)
     window.removeEventListener('keydown', onKey)

@@ -13,10 +13,23 @@ import {
   isPauseKey,
   isRestartKey,
 } from './gameKit.js'
+import { createHudLayer, makeTrackTexture } from './gameArt.js'
 import { playBeep } from './sound.js'
 
 const GAME_NAME = 'racer-bestlap'
 const cameraTarget = new THREE.Vector3()
+
+// Generated lane markings: a plain emissive tube gave no sense of speed.
+function trackTexture(THREE) {
+  const canvas = makeTrackTexture({ size: 128 })
+  if (!canvas) return null
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  texture.repeat.set(1, 60)
+  return texture
+}
 
 export function createRacer(canvas, scoreEl, statusEl) {
   const scene = new THREE.Scene()
@@ -35,6 +48,18 @@ export function createRacer(canvas, scoreEl, statusEl) {
 
   const clock = createClock()
   const pause = createPauseState()
+
+  // Built in start(): start() calls stop() first for cleanup.
+  let hudLayer = { set() {}, destroy() {} }
+
+  function buildHud() {
+    return createHudLayer(canvas, [
+      { key: 'lap', label: 'lap', align: 'left', initial: '0/3' },
+      { key: 'time', label: 'lap time', align: 'left', initial: '00:00.00' },
+      { key: 'speed', label: 'speed', align: 'center', initial: '0%' },
+      { key: 'best', label: 'best lap', align: 'right', initial: '--:--' },
+    ])
+  }
   // Left/right never did anything (the car follows the track), so they are gone
   // rather than advertised as controls.
   const keys = createKeyState({ ArrowUp: true, ArrowDown: true, w: true, s: true, W: true, S: true })
@@ -54,7 +79,14 @@ export function createRacer(canvas, scoreEl, statusEl) {
 
   const trackMesh = new THREE.Mesh(
     new THREE.TubeGeometry(curve, 200, 0.08, 8, true),
-    new THREE.MeshStandardMaterial({ color: 0x4fdfff, emissive: 0x4fdfff, emissiveIntensity: 0.6 })
+    new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      map: trackTexture(THREE),
+      emissive: 0x2a7f9c,
+      emissiveIntensity: 0.45,
+      roughness: 0.4,
+      metalness: 0.3,
+    })
   )
   scene.add(trackMesh)
   const sleeperGeometry = new THREE.BoxGeometry(0.5, 0.035, 0.16)
@@ -106,6 +138,19 @@ export function createRacer(canvas, scoreEl, statusEl) {
     car.add(wheel)
     wheels.push(wheel)
   }
+  // Headlights so the car has a front, plus a dark windscreen.
+  const headlightMaterial = new THREE.MeshBasicMaterial({ color: 0xfff6c9 })
+  for (const z of [-0.05, 0.05]) {
+    const light = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), headlightMaterial)
+    light.position.set(0.16, 0.01, z)
+    car.add(light)
+  }
+  const screen = new THREE.Mesh(
+    new THREE.BoxGeometry(0.05, 0.05, 0.13),
+    new THREE.MeshStandardMaterial({ color: 0x0a1424, metalness: 0.6, roughness: 0.15 })
+  )
+  screen.position.set(0.06, 0.09, 0)
+  car.add(screen)
   scene.add(car)
 
   let state = createRacerState()
@@ -162,6 +207,12 @@ export function createRacer(canvas, scoreEl, statusEl) {
     const dt = clock.tick(performance.now())
     if (!pause.paused) update(dt)
     syncHud()
+    hudLayer.set({
+      lap: `${Math.min(state.lap, RACER_LAPS)}/${RACER_LAPS}`,
+      time: formatLapTime(racerLapTime(state)),
+      speed: `${Math.round(Math.min(1, Math.abs(state.speed) / 0.3) * 100)}%`,
+      best: formatLapTime(bestLap || null),
+    })
     mirrorState(canvas, [Math.round(state.t * 100), state.lap, pause.paused ? 'paused' : state.finished ? 'finished' : 'racing'])
     renderer.render(scene, camera)
     frame = requestAnimationFrame(loop)
@@ -199,6 +250,7 @@ export function createRacer(canvas, scoreEl, statusEl) {
     keys.clear()
     const stored = readBest(GAME_NAME)
     bestLap = stored ? stored / 1000 : 0
+    hudLayer = buildHud()
     statusEl.textContent = withHints(
       `Hold ↑ or W to drive · ${RACER_LAPS} laps${bestLap ? ` · best ${formatLapTime(bestLap)}` : ''}`
     )
@@ -212,6 +264,8 @@ export function createRacer(canvas, scoreEl, statusEl) {
 
   function stop() {
     cancelAnimationFrame(frame)
+    hudLayer.destroy()
+    hudLayer = { set() {}, destroy() {} }
     ro?.disconnect()
     window.removeEventListener('keydown', onKey)
     window.removeEventListener('keyup', onKeyUp)

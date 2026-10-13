@@ -24,6 +24,16 @@ import {
   isPauseKey,
   isRestartKey,
 } from './gameKit.js'
+import {
+  createHudLayer,
+  drawGroundShadow,
+  drawInnerFrame,
+  drawPanel,
+  drawVignette,
+  makeCircuitTexture,
+  makeStarTexture,
+  roundRect,
+} from './gameArt.js'
 import { playBeep } from './sound.js'
 
 const PALETTE = {
@@ -58,6 +68,21 @@ export function createBytefall(canvas, scoreEl, statusEl) {
   let frame = 0
   let resizeObserver = null
   const clock = createClock({ maxStep: 0.032 })
+  // HUD chips live in the DOM above the canvas: crisp text, one visual language
+  // across all six games, and no per-frame text layout on the canvas.
+  // Built in start() (not here): start() calls stop() first for cleanup, which
+  // would destroy a layer created at construction time.
+  let hudLayer = { set() {}, destroy() {} }
+
+  function buildHud() {
+    return createHudLayer(canvas, [
+      { key: 'score', label: 'score', align: 'left', initial: '000000' },
+      { key: 'lives', label: 'bit', align: 'left', initial: '●●●' },
+      { key: 'world', label: 'world', align: 'center', initial: '1-1' },
+      { key: 'time', label: 'time', align: 'right', initial: '100' },
+      { key: 'packets', label: 'packets', align: 'right', initial: '0' },
+    ])
+  }
   const pause = createPauseState()
   let best = 0
   let touchMode = false
@@ -151,6 +176,7 @@ export function createBytefall(canvas, scoreEl, statusEl) {
     canvas.height = Math.max(canvas.clientHeight, 1) * pixelRatio
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
     buildSkyCache()
+    buildArtCaches()
   }
 
   // The parallax skyline is static art: baking it once per resize turns ~1200
@@ -242,13 +268,40 @@ export function createBytefall(canvas, scoreEl, statusEl) {
     }
   }
 
+  // ---------------------------------------------------------------- art caches
+  // Textures are generated once (and on resize) rather than per frame: a
+  // repeating circuit pattern for the ground, a starfield, and a soft glow.
+  let groundPattern = null
+  let starTile = null
+  let starOffset = 0
+
+  function buildArtCaches() {
+    const circuit = makeCircuitTexture({ size: 128 })
+    if (circuit) {
+      const pattern = context.createPattern(circuit, 'repeat')
+      groundPattern = pattern
+    }
+    starTile = makeStarTexture({ size: 512, count: 110 })
+  }
+
   // ---------------------------------------------------------------- drawing
   function drawBackground(v) {
     const gradient = context.createLinearGradient(0, 0, 0, v.height)
     gradient.addColorStop(0, PALETTE.skyTop)
+    gradient.addColorStop(0.65, '#070c1c')
     gradient.addColorStop(1, PALETTE.skyBottom)
     context.fillStyle = gradient
     context.fillRect(0, 0, v.width, v.height)
+
+    // starfield: drifts very slowly with the camera so the sky has depth
+    if (starTile) {
+      starOffset = -((state.camera.x * v.scale * 0.06) % 512)
+      context.globalAlpha = 0.7
+      for (let x = starOffset - 512; x < v.width; x += 512) {
+        context.drawImage(starTile, x, 0)
+      }
+      context.globalAlpha = 1
+    }
 
     // parallax skyline from the cached tiles (rebuilt on resize)
     if (skyCache) {
@@ -261,18 +314,22 @@ export function createBytefall(canvas, scoreEl, statusEl) {
       }
     }
 
-    // circuit grid
-    context.strokeStyle = PALETTE.grid
-    context.lineWidth = 1
+    // circuit grid: brighter near the ground so the play space reads as a board
     const step = v.scale
     const gridOffset = -((state.camera.x * v.scale) % step)
     for (let x = gridOffset; x < v.width; x += step) {
+      const column = context.createLinearGradient(0, 0, 0, v.groundY)
+      column.addColorStop(0, 'rgba(79,223,255,0.02)')
+      column.addColorStop(1, 'rgba(79,223,255,0.10)')
+      context.strokeStyle = column
+      context.lineWidth = 1
       context.beginPath()
       context.moveTo(x, 0)
       context.lineTo(x, v.groundY)
       context.stroke()
     }
     for (let y = v.groundY; y > 0; y -= step) {
+      context.strokeStyle = PALETTE.grid
       context.beginPath()
       context.moveTo(0, y)
       context.lineTo(v.width, y)
@@ -292,39 +349,77 @@ export function createBytefall(canvas, scoreEl, statusEl) {
         const x = Math.round(c * s - camPx)
         const y = Math.round(v.groundY - (parsed.rows - r) * s)
         if (code === T.GROUND) {
-          context.fillStyle = PALETTE.ground
-          context.fillRect(x, y, s + 1, s + 1)
-          // inner circuit hatch so the ground slab isn't a flat block
-          context.strokeStyle = 'rgba(79,223,255,0.09)'
-          context.lineWidth = 1
-          context.beginPath()
-          context.moveTo(x + s * 0.5, y)
-          context.lineTo(x + s * 0.5, y + s)
-          context.moveTo(x, y + s * 0.5)
-          context.lineTo(x + s, y + s * 0.5)
-          context.stroke()
-          context.fillStyle = PALETTE.groundEdge
-          context.globalAlpha = r === parsed.rows - 3 ? 0.5 : 0.12
-          context.fillRect(x, y, s + 1, 2)
-          context.globalAlpha = 1
+          if (groundPattern) {
+            context.fillStyle = groundPattern
+            context.fillRect(x, y, s + 1, s + 1)
+          } else {
+            context.fillStyle = PALETTE.ground
+            context.fillRect(x, y, s + 1, s + 1)
+          }
+          // lit edge only where the surface is exposed to the sky
+          const exposed = r === 0 || parsed.tiles[r - 1][c] === T.EMPTY
+          if (exposed) {
+            const lip = context.createLinearGradient(0, y, 0, y + s * 0.5)
+            lip.addColorStop(0, 'rgba(79,223,255,0.55)')
+            lip.addColorStop(1, 'rgba(79,223,255,0)')
+            context.fillStyle = lip
+            context.fillRect(x, y, s + 1, Math.max(3, s * 0.5))
+            context.fillStyle = PALETTE.groundEdge
+            context.fillRect(x, y, s + 1, 2)
+          }
         } else if (code === T.BLOCK) {
-          context.fillStyle = PALETTE.block
-          context.fillRect(x + 1, y + 1, s - 2, s - 2)
+          // cache chip: bevelled amber with a data glyph and a drop shadow
+          context.fillStyle = 'rgba(0,0,0,0.35)'
+          context.fillRect(x + 2, y + 3, s - 2, s - 2)
+          const face = context.createLinearGradient(x, y, x, y + s)
+          face.addColorStop(0, '#ffc46b')
+          face.addColorStop(0.5, PALETTE.block)
+          face.addColorStop(1, '#b9701a')
+          roundRect(context, x + 1, y + 1, s - 2, s - 2, Math.max(2, s * 0.12))
+          context.fillStyle = face
+          context.fill()
+          roundRect(context, x + 1, y + 1, s - 2, s - 2, Math.max(2, s * 0.12))
+          context.lineWidth = 1
+          context.strokeStyle = 'rgba(255,255,255,0.34)'
+          context.stroke()
+          // two solder pads so it reads as a chip, not a crate
+          context.fillStyle = 'rgba(255,255,255,0.32)'
+          const pad = Math.max(1.5, s * 0.06)
+          context.fillRect(x + s * 0.22, y + s * 0.24, pad, pad)
+          context.fillRect(x + s * 0.72 - pad, y + s * 0.24, pad, pad)
+          context.fillRect(x + s * 0.22, y + s * 0.72 - pad, pad, pad)
+          context.fillRect(x + s * 0.72 - pad, y + s * 0.72 - pad, pad, pad)
           context.fillStyle = PALETTE.blockDark
-          context.fillRect(x + 1, y + s * 0.62, s - 2, 3)
-          context.fillStyle = 'rgba(255,255,255,0.25)'
-          context.fillRect(x + 4, y + 4, 3, 3)
+          context.fillRect(x + s * 0.28, y + s * 0.46, s * 0.44, Math.max(2, s * 0.08))
         } else if (code === T.POWER) {
-          context.fillStyle = PALETTE.power
-          context.fillRect(x + 1, y + 1, s - 2, s - 2)
+          // power chip: pulses so it reads as interactive
+          const pulse = 0.5 + Math.sin(performance.now() * 0.006) * 0.5
+          context.save()
+          context.shadowColor = 'rgba(34,211,238,0.8)'
+          context.shadowBlur = 8 + pulse * 10
+          roundRect(context, x + 1, y + 1, s - 2, s - 2, Math.max(2, s * 0.12))
+          const face = context.createLinearGradient(x, y, x, y + s)
+          face.addColorStop(0, '#7ff0ff')
+          face.addColorStop(1, '#0e7490')
+          context.fillStyle = face
+          context.fill()
+          context.restore()
+          roundRect(context, x + 1, y + 1, s - 2, s - 2, Math.max(2, s * 0.12))
+          context.lineWidth = 1
+          context.strokeStyle = 'rgba(255,255,255,0.5)'
+          context.stroke()
           context.fillStyle = '#04222b'
           context.font = `700 ${Math.round(s * 0.62)}px ui-monospace, monospace`
           context.textAlign = 'center'
           context.textBaseline = 'middle'
           context.fillText('?', x + s / 2, y + s / 2 + 1)
         } else if (code === T.ONEWAY) {
-          context.fillStyle = PALETTE.oneway
-          context.fillRect(x, y + 2, s + 1, 5)
+          const bar = context.createLinearGradient(0, y, 0, y + 7)
+          bar.addColorStop(0, 'rgba(190,210,255,0.95)')
+          bar.addColorStop(1, PALETTE.oneway)
+          context.fillStyle = bar
+          roundRect(context, x, y + 2, s + 1, 6, 3)
+          context.fill()
         }
       }
     }
@@ -351,11 +446,27 @@ export function createBytefall(canvas, scoreEl, statusEl) {
       if (packet.taken) continue
       const x = packet.x * s - camPx
       const y = v.groundY - (parsed.rows - packet.y) * s + Math.sin(t + packet.x) * 2
+
+      // glow so a dropped packet is easy to spot
+      const glow = context.createRadialGradient(x, y, 0, x, y, s * 0.55)
+      glow.addColorStop(0, 'rgba(239,201,76,0.5)')
+      glow.addColorStop(1, 'rgba(239,201,76,0)')
+      context.fillStyle = glow
+      context.fillRect(x - s * 0.55, y - s * 0.55, s * 1.1, s * 1.1)
+
       context.save()
       context.translate(x, y)
-      context.rotate(Math.PI / 4)
-      context.fillStyle = PALETTE.packet
-      context.fillRect(-s * 0.18, -s * 0.18, s * 0.36, s * 0.36)
+      context.rotate(Math.PI / 4 + t * 0.6)
+      const size = s * 0.2
+      const face = context.createLinearGradient(-size, -size, size, size)
+      face.addColorStop(0, '#fff4c2')
+      face.addColorStop(1, '#d99a12')
+      context.fillStyle = face
+      roundRect(context, -size, -size, size * 2, size * 2, size * 0.3)
+      context.fill()
+      context.lineWidth = 1
+      context.strokeStyle = 'rgba(255,255,255,0.6)'
+      context.stroke()
       context.restore()
     }
   }
@@ -366,17 +477,48 @@ export function createBytefall(canvas, scoreEl, statusEl) {
     for (const mite of parsed.mites) {
       if (!mite.alive) continue
       const w = s * 0.78
-      const h = s * 0.6
+      const h = s * 0.62
       const x = mite.x * s - camPx - w / 2
       const y = v.groundY - (parsed.rows - mite.y) * s - h / 2
-      context.fillStyle = PALETTE.miteDark
-      context.fillRect(x, y + h * 0.45, w, h * 0.55)
-      context.fillStyle = PALETTE.mite
-      context.fillRect(x, y, w, h * 0.62)
+      const bob = Math.sin(performance.now() * 0.008 + mite.x) * s * 0.03
+
+      drawGroundShadow(context, x + w / 2, y + h + s * 0.06, w * 0.55, w * 0.18, 0.32)
+
+      // legs
+      context.strokeStyle = PALETTE.miteDark
+      context.lineWidth = Math.max(1.5, s * 0.07)
+      const legPhase = Math.sin(performance.now() * 0.012 + mite.x) * s * 0.06
+      for (const side of [-1, 1]) {
+        context.beginPath()
+        context.moveTo(x + w * 0.3, y + h * 0.7)
+        context.lineTo(x + w * 0.18 + side * legPhase, y + h + s * 0.1)
+        context.moveTo(x + w * 0.7, y + h * 0.7)
+        context.lineTo(x + w * 0.82 - side * legPhase, y + h + s * 0.1)
+        context.stroke()
+      }
+
+      // body with a glitchy shell
+      const shell = context.createLinearGradient(x, y + bob, x, y + h + bob)
+      shell.addColorStop(0, '#ff8fb8')
+      shell.addColorStop(0.5, PALETTE.mite)
+      shell.addColorStop(1, PALETTE.miteDark)
+      roundRect(context, x, y + bob, w, h, Math.max(2, w * 0.3))
+      context.fillStyle = shell
+      context.fill()
+      roundRect(context, x, y + bob, w, h, Math.max(2, w * 0.3))
+      context.lineWidth = 1
+      context.strokeStyle = 'rgba(255,255,255,0.35)'
+      context.stroke()
+
+      // two bright eyes, offset in the direction of travel
+      const eye = Math.max(2, s * 0.1)
+      const eyeY = y + bob + h * 0.28
       context.fillStyle = '#ffffff'
-      const eye = Math.max(2, s * 0.09)
-      context.fillRect(x + w * 0.24, y + h * 0.2, eye, eye)
-      context.fillRect(x + w * 0.62, y + h * 0.2, eye, eye)
+      context.fillRect(x + w * 0.22 + mite.dir * s * 0.04, eyeY, eye, eye)
+      context.fillRect(x + w * 0.6 + mite.dir * s * 0.04, eyeY, eye, eye)
+      context.fillStyle = '#3b0d20'
+      context.fillRect(x + w * 0.22 + mite.dir * s * 0.04, eyeY + eye * 0.5, eye, eye * 0.5)
+      context.fillRect(x + w * 0.6 + mite.dir * s * 0.04, eyeY + eye * 0.5, eye, eye * 0.5)
     }
   }
 
@@ -389,25 +531,67 @@ export function createBytefall(canvas, scoreEl, statusEl) {
     const x = p.x * s - camPx - w / 2
     const y = v.groundY - (state.parsed.rows - p.y) * s - h / 2
     const blink = p.invuln > 0 && Math.floor(p.invuln * 12) % 2 === 0
+    // squash on landing, stretch while rising — small thing, big feel difference
+    const squash = p.onGround ? 1 : p.vy < 0 ? 0.94 : 1.04
+    const drawH = h * squash
+    const drawW = w * (2 - squash)
+    const dx = x + (w - drawW) / 2
+    const dy = y + (h - drawH)
 
-    context.globalAlpha = blink ? 0.4 : 1
+    // shadow on the floor surface (ground top row), so Bit reads as grounded
+    drawGroundShadow(context, x + w / 2, v.groundY - 3 * s + 2, w * 0.62, w * 0.2, 0.35)
+
+    context.globalAlpha = blink ? 0.45 : 1
     if (p.turbo) {
-      context.fillStyle = 'rgba(34,211,238,0.28)'
-      context.fillRect(x - 3, y - 3, w + 6, h + 6)
+      const aura = context.createRadialGradient(dx + drawW / 2, dy + drawH / 2, drawW * 0.2, dx + drawW / 2, dy + drawH / 2, drawW * 1.5)
+      aura.addColorStop(0, 'rgba(34,211,238,0.45)')
+      aura.addColorStop(1, 'rgba(34,211,238,0)')
+      context.fillStyle = aura
+      context.fillRect(dx - drawW, dy - drawH, drawW * 3, drawH * 3)
     }
-    context.fillStyle = PALETTE.bit
-    context.fillRect(x, y, w, h)
-    context.fillStyle = PALETTE.bitLight
-    context.fillRect(x, y, w, Math.max(2, h * 0.18))
-    context.fillStyle = '#ffffff'
-    const eye = Math.max(2, s * 0.12)
-    const eyeX = p.facing > 0 ? x + w * 0.55 : x + w * 0.2
-    context.fillRect(eyeX, y + h * 0.34, eye, eye)
-    // feet: little animated treads
-    context.fillStyle = PALETTE.bitLight
-    const stride = Math.sin(p.walkCycle * 3) * (p.onGround ? s * 0.06 : 0)
-    context.fillRect(x + stride, y + h, w * 0.38, 3)
-    context.fillRect(x + w * 0.62 - stride, y + h, w * 0.38, 3)
+
+    // body: rounded cube-bot with a gradient shell and a rim light
+    const shell = context.createLinearGradient(dx, dy, dx, dy + drawH)
+    shell.addColorStop(0, '#8fc6ff')
+    shell.addColorStop(0.45, PALETTE.bit)
+    shell.addColorStop(1, '#1d4f8f')
+    roundRect(context, dx, dy, drawW, drawH, Math.max(2, drawW * 0.22))
+    context.fillStyle = shell
+    context.fill()
+    roundRect(context, dx, dy, drawW, drawH, Math.max(2, drawW * 0.22))
+    context.lineWidth = 1
+    context.strokeStyle = 'rgba(255,255,255,0.45)'
+    context.stroke()
+
+    // visor
+    const visorW = drawW * 0.62
+    const visorH = Math.max(2, drawH * 0.2)
+    const visorX = p.facing > 0 ? dx + drawW * 0.3 : dx + drawW * 0.08
+    roundRect(context, visorX, dy + drawH * 0.26, visorW, visorH, visorH / 2)
+    context.fillStyle = 'rgba(4,16,32,0.85)'
+    context.fill()
+    context.fillStyle = '#7df9ff'
+    const eye = Math.max(1.5, visorH * 0.5)
+    context.fillRect(visorX + (p.facing > 0 ? visorW * 0.55 : visorW * 0.25), dy + drawH * 0.26 + visorH * 0.25, eye, eye)
+
+    // treads, animated by distance travelled
+    const stride = Math.sin(p.walkCycle * 3) * (p.onGround ? drawW * 0.14 : 0)
+    context.fillStyle = '#123a63'
+    roundRect(context, dx + stride, dy + drawH, drawW * 0.4, Math.max(2, drawH * 0.12), 2)
+    context.fill()
+    roundRect(context, dx + drawW * 0.6 - stride, dy + drawH, drawW * 0.4, Math.max(2, drawH * 0.12), 2)
+    context.fill()
+
+    // turbo trail
+    if (p.turbo && Math.abs(p.vx) > 1) {
+      context.globalAlpha = 0.4
+      for (let i = 1; i <= 3; i++) {
+        context.fillStyle = i % 2 ? '#22d3ee' : '#378add'
+        roundRect(context, dx - i * drawW * 0.35 * Math.sign(p.facing || 1), dy + drawH * 0.3, drawW * 0.3, drawH * 0.4, 3)
+        context.fill()
+      }
+      context.globalAlpha = 1
+    }
     context.globalAlpha = 1
   }
 
@@ -416,16 +600,43 @@ export function createBytefall(canvas, scoreEl, statusEl) {
     const camPx = state.camera.x * s
     const x = parsed.flag.x * s - camPx
     const baseY = v.groundY - (parsed.rows - parsed.flag.y) * s + s * 0.5
-    context.fillStyle = PALETTE.pole
-    context.fillRect(x - 2, baseY - s * 2.4, 4, s * 2.4)
-    const wave = Math.sin(performance.now() * 0.006) * s * 0.08
-    context.fillStyle = PALETTE.flag
-    context.beginPath()
-    context.moveTo(x + 2, baseY - s * 2.4)
-    context.lineTo(x + 2 + s * 0.95, baseY - s * 2.15 + wave)
-    context.lineTo(x + 2, baseY - s * 1.9)
-    context.closePath()
+    const poleH = s * 2.6
+
+    // base plinth
+    roundRect(context, x - s * 0.42, baseY - s * 0.16, s * 0.84, s * 0.3, s * 0.08)
+    context.fillStyle = '#2b3556'
     context.fill()
+
+    // light beam marking the goal
+    const beam = context.createLinearGradient(x, baseY - poleH, x, baseY)
+    beam.addColorStop(0, 'rgba(226,75,74,0)')
+    beam.addColorStop(1, 'rgba(226,75,74,0.16)')
+    context.fillStyle = beam
+    context.fillRect(x - s * 0.5, baseY - poleH, s, poleH)
+
+    context.fillStyle = PALETTE.pole
+    roundRect(context, x - 2, baseY - poleH, 4, poleH, 2)
+    context.fill()
+
+    // pennant, waving
+    const wave = Math.sin(performance.now() * 0.006) * s * 0.1
+    context.beginPath()
+    context.moveTo(x + 2, baseY - poleH)
+    context.quadraticCurveTo(x + s * 0.5, baseY - poleH + s * 0.2 + wave, x + s * 0.98, baseY - poleH + s * 0.32)
+    context.lineTo(x + 2, baseY - poleH + s * 0.62)
+    context.closePath()
+    const flagFill = context.createLinearGradient(x, baseY - poleH, x + s, baseY - poleH + s * 0.6)
+    flagFill.addColorStop(0, '#ff7a72')
+    flagFill.addColorStop(1, PALETTE.flag)
+    context.fillStyle = flagFill
+    context.fill()
+
+    // terminal prompt glyph on the pennant
+    context.fillStyle = 'rgba(255,255,255,0.9)'
+    context.font = `700 ${Math.round(s * 0.28)}px ui-monospace, monospace`
+    context.textAlign = 'left'
+    context.textBaseline = 'middle'
+    context.fillText('>_', x + s * 0.14, baseY - poleH + s * 0.34)
   }
 
   function drawTouchPad(v) {
@@ -461,35 +672,47 @@ export function createBytefall(canvas, scoreEl, statusEl) {
 
   function drawOverlayText(v) {
     const messages = {
-      dead: 'LIFE LOST',
-      clear: 'LEVEL CLEAR',
-      gameover: 'GAME OVER · R TO RETRY',
-      won: 'ALL LEVELS CLEARED',
+      dead: ['LIFE LOST', 'Bit respawns at the start of the level'],
+      clear: ['LEVEL CLEAR', 'Time bonus banked — next level loading'],
+      gameover: ['GAME OVER', 'Press R to run it again'],
+      won: ['ALL LEVELS CLEARED', 'Press R to run it again'],
     }
-    const text = pause.paused ? 'PAUSED' : messages[state.phase]
-    if (!text) return
-    context.fillStyle = 'rgba(3,7,18,0.66)'
-    context.fillRect(0, v.groundY - v.scale * 3.2, v.width, v.scale * 3.2)
-    context.fillStyle = state.phase === 'gameover' ? PALETTE.mite : '#e8f1ff'
-    context.font = `700 ${Math.round(Math.min(v.width * 0.055, 30))}px ui-monospace, monospace`
+    const entry = pause.paused ? ['PAUSED', 'Press P to resume'] : messages[state.phase]
+    if (!entry) return
+
+    const [title, subtitle] = entry
+    const panelW = Math.min(v.width * 0.72, 420)
+    const panelH = Math.max(64, v.scale * 2.1)
+    const px = (v.width - panelW) / 2
+    const py = v.groundY - v.scale * 4.2
+
+    context.fillStyle = 'rgba(3,7,18,0.55)'
+    context.fillRect(0, 0, v.width, v.height)
+    drawPanel(context, px, py, panelW, panelH, {
+      radius: 12,
+      accent: state.phase === 'gameover' ? PALETTE.mite : '#22d3ee',
+    })
+
     context.textAlign = 'center'
     context.textBaseline = 'middle'
-    context.fillText(text, v.width / 2, v.groundY - v.scale * 1.6)
+    context.fillStyle = state.phase === 'gameover' ? '#ff9db5' : '#e8f1ff'
+    context.font = `700 ${Math.round(Math.min(v.width * 0.045, 24))}px ui-monospace, monospace`
+    context.fillText(title, v.width / 2, py + panelH * 0.4)
+    context.fillStyle = 'rgba(161,161,170,1)'
+    context.font = `500 ${Math.round(Math.min(v.width * 0.026, 13))}px ui-monospace, monospace`
+    context.fillText(subtitle, v.width / 2, py + panelH * 0.72)
   }
 
-  function drawHud(v) {
-    context.font = `600 ${Math.round(Math.min(v.width * 0.026, 14))}px ui-monospace, monospace`
-    context.textAlign = 'left'
-    context.textBaseline = 'top'
-    context.fillStyle = '#85b7eb'
-    const bits = '■'.repeat(Math.max(0, state.player.lives))
-    context.fillText(`BIT ${bits}`, 12, 10)
-    context.textAlign = 'center'
-    context.fillStyle = '#a1a1aa'
-    context.fillText(`WORLD 1-${state.levelIndex + 1}`, v.width / 2, 10)
-    context.textAlign = 'right'
-    context.fillStyle = state.time < 20 ? PALETTE.mite : '#a1a1aa'
-    context.fillText(`TIME ${String(Math.ceil(state.time)).padStart(3, '0')}`, v.width - 12, 10)
+  function drawHud() {
+    // The HUD is a DOM layer (gameArt.createHudLayer) so its text is crisp and
+    // identical across all six games; only the touch pad is drawn on canvas.
+    hudLayer.set({
+      score: String(state.score).padStart(6, '0'),
+      lives: '●'.repeat(Math.max(0, state.player.lives)) + '○'.repeat(Math.max(0, MAX_LIVES - state.player.lives)),
+      world: `1-${state.levelIndex + 1}`,
+      time: String(Math.ceil(state.time)).padStart(3, '0'),
+      packets: String(state.packets),
+    })
   }
 
   function draw() {
@@ -501,7 +724,9 @@ export function createBytefall(canvas, scoreEl, statusEl) {
     drawFlag(v, state.parsed)
     drawMites(v, state.parsed)
     drawPlayer(v)
-    drawHud(v)
+    drawHud()
+    drawVignette(context, v.width, v.height, 0.45)
+    drawInnerFrame(context, v.width, v.height, { radius: 14, color: 'rgba(255,255,255,0.09)' })
     drawTouchPad(v)
     drawOverlayText(v)
   }
@@ -545,6 +770,7 @@ export function createBytefall(canvas, scoreEl, statusEl) {
     held.right = false
     held.jump = false
     hud = { score: -1, lives: -1, level: -1, time: -1 }
+    hudLayer = buildHud()
     resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(canvas)
     resize()
@@ -568,6 +794,9 @@ export function createBytefall(canvas, scoreEl, statusEl) {
     canvas.removeEventListener('pointerup', onPointerUp)
     canvas.removeEventListener('pointercancel', onPointerUp)
     pointers.clear()
+    // The HUD is a DOM layer: remove it or it stacks up on every restart.
+    hudLayer.destroy()
+    hudLayer = { set() {}, destroy() {} }
   }
 
   return { start, stop }

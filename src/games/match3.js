@@ -16,6 +16,7 @@ import {
   isRestartKey,
   isConfirmKey,
 } from './gameKit.js'
+import { CANDY_SHAPES, createHudLayer, drawCandyShape, drawInnerFrame, drawPanel, drawVignette } from './gameArt.js'
 import { playBeep } from './sound.js'
 
 const GAME_NAME = 'match3'
@@ -25,6 +26,19 @@ export function createMatch3(canvas, scoreEl, statusEl) {
   const context = canvas.getContext('2d')
   if (!context) throw new Error('This browser cannot create a 2D game canvas.')
   const pause = createPauseState()
+
+  // Built in start(): start() calls stop() first for cleanup, which would
+  // otherwise destroy a layer created here.
+  let hudLayer = { set() {}, destroy() {} }
+
+  function buildHud() {
+    return createHudLayer(canvas, [
+      { key: 'score', label: 'score', align: 'left', initial: '000000' },
+      { key: 'moves', label: 'moves', align: 'left', initial: '30' },
+      { key: 'target', label: 'target', align: 'right', initial: '300' },
+      { key: 'best', label: 'best', align: 'right', initial: '000000' },
+    ])
+  }
 
   let state = createMatch3State()
   let best = 0
@@ -169,22 +183,29 @@ export function createMatch3(canvas, scoreEl, statusEl) {
   function drawCandy(row, col, value, cell, left, top) {
     const x = left + col * cell + cell / 2
     const y = top + row * cell + cell / 2
-    const radius = cell * 0.31 * (1 + flash * 0.04)
+    const radius = cell * 0.34 * (1 + flash * 0.05)
+    const shape = CANDY_SHAPES[value % CANDY_SHAPES.length]
+
     context.save()
     context.shadowColor = candyColors[value]
-    context.shadowBlur = 14 + flash * 10
+    context.shadowBlur = 12 + flash * 12
     const gloss = context.createRadialGradient(x - radius * 0.35, y - radius * 0.4, radius * 0.08, x, y, radius)
     gloss.addColorStop(0, '#ffffff')
-    gloss.addColorStop(0.35, candyColors[value])
-    gloss.addColorStop(1, '#23304d')
+    gloss.addColorStop(0.4, candyColors[value])
+    gloss.addColorStop(1, '#1b2440')
+    drawCandyShape(context, shape, x, y, radius)
     context.fillStyle = gloss
-    context.beginPath()
-    context.arc(x, y, radius, 0, Math.PI * 2)
     context.fill()
     context.shadowBlur = 0
-    context.fillStyle = 'rgba(255,255,255,0.6)'
+
+    // rim + specular so each shape reads at a glance
+    drawCandyShape(context, shape, x, y, radius)
+    context.lineWidth = 1.5
+    context.strokeStyle = 'rgba(255,255,255,0.45)'
+    context.stroke()
     context.beginPath()
-    context.arc(x - radius * 0.3, y - radius * 0.35, radius * 0.2, 0, Math.PI * 2)
+    context.ellipse(x - radius * 0.3, y - radius * 0.36, radius * 0.2, radius * 0.14, -0.5, 0, Math.PI * 2)
+    context.fillStyle = 'rgba(255,255,255,0.75)'
     context.fill()
     context.restore()
   }
@@ -199,9 +220,13 @@ export function createMatch3(canvas, scoreEl, statusEl) {
     background.addColorStop(1, '#080d1c')
     context.fillStyle = background
     context.fillRect(0, 0, width, height)
-    context.strokeStyle = 'rgba(196, 127, 255, 0.2)'
-    context.lineWidth = 1
-    context.strokeRect(left - 4, top - 4, cell * MATCH3_SIZE + 8, cell * MATCH3_SIZE + 8)
+    // Board panel: a real frame instead of a hairline rectangle.
+    drawPanel(context, left - 10, top - 10, cell * MATCH3_SIZE + 20, cell * MATCH3_SIZE + 20, {
+      radius: 14,
+      fill: 'rgba(8,13,28,0.55)',
+      stroke: 'rgba(196,127,255,0.28)',
+      accent: 'rgba(196,127,255,0.55)',
+    })
 
     for (let row = 0; row < MATCH3_SIZE; row++) {
       for (let col = 0; col < MATCH3_SIZE; col++) {
@@ -237,6 +262,14 @@ export function createMatch3(canvas, scoreEl, statusEl) {
     }
 
     flash = Math.max(0, flash - 0.06)
+    hudLayer.set({
+      score: String(state.score).padStart(6, '0'),
+      moves: String(Math.max(0, state.moves)),
+      target: '300',
+      best: String(Math.max(best, state.score)).padStart(6, '0'),
+    })
+    drawVignette(context, width, height, 0.4)
+    drawInnerFrame(context, width, height, { radius: 14 })
     mirrorState(canvas, [
       state.score,
       Math.max(0, state.moves),
@@ -249,6 +282,7 @@ export function createMatch3(canvas, scoreEl, statusEl) {
     stop()
     best = readBest(GAME_NAME)
     reset()
+    hudLayer = buildHud()
     resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(canvas)
     resize()
@@ -259,6 +293,8 @@ export function createMatch3(canvas, scoreEl, statusEl) {
 
   function stop() {
     cancelAnimationFrame(frame)
+    hudLayer.destroy()
+    hudLayer = { set() {}, destroy() {} }
     resizeObserver?.disconnect()
     window.removeEventListener('keydown', onKey)
     canvas.removeEventListener('pointerdown', onPointerDown)
