@@ -1,0 +1,9 @@
+# Normalize line endings to LF on every platform.
+#
+# The CSP in index.html whitelists its inline JSON-LD blocks by sha256 of their
+# exact bytes. With core.autocrlf=true and no rule here, a Windows checkout
+# rewrites index.html to CRLF — changing those bytes and silently invalidating
+# the hashes (the CSP then blocks its own structured data). test/csp.test.js
+# guards against the same drift, but this file makes the bytes identical
+# everywhere: dev machines, CI, and the GitHub Pages artifact.
+* text=auto eol=lf

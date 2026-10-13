@@ -98,7 +98,7 @@ function App() {
             </>
           }
         />
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<main id="main-content"><NotFound /></main>} />
       </Routes>
     </div>
   );

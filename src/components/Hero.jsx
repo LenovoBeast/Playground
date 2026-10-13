@@ -115,7 +115,7 @@ export default function Hero() {
         <span className="text-2xl font-black leading-none tracking-tight md:text-3xl tabular-nums">
           {value}
         </span>
-        <span className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+        <span className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">
           {label}
         </span>
       </span>
@@ -136,7 +136,7 @@ export default function Hero() {
           <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
           <div className="h-3 w-3 rounded-full bg-green-500/80" />
         </div>
-        <div className="flex-1 text-center font-mono text-xs text-zinc-500">
+        <div className="flex-1 text-center font-mono text-xs text-zinc-400">
           main.tsx
         </div>
         <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-400/80 sm:inline">
@@ -178,7 +178,7 @@ export default function Hero() {
           <CodeLine
             prefix="// "
             content="Engine initialized — ready to build"
-            className="italic text-zinc-500"
+            className="italic text-zinc-400"
           />
           <CodeLine prefix="▌" content="" className="text-blue-400" />
         </div>
@@ -188,7 +188,7 @@ export default function Hero() {
 
   const CodeLine = ({ prefix, content, className = "" }) => (
     <div className={`flex gap-2 ${className}`}>
-      <span className="whitespace-nowrap text-zinc-500">{prefix}</span>
+      <span className="whitespace-nowrap text-zinc-400">{prefix}</span>
       <span className="break-all">{content}</span>
     </div>
   );

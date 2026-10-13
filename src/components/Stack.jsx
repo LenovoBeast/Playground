@@ -81,6 +81,25 @@ export default function Stack() {
 
   const category = categories.find((c) => c.id === activeTab) ?? categories[0];
 
+  // WAI-ARIA tabs pattern: arrows move between tabs, Home/End jump to the ends.
+  const onTabKeyDown = (e) => {
+    if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+    e.preventDefault();
+    const i = categories.findIndex((c) => c.id === activeTab);
+    const last = categories.length - 1;
+    let next = i;
+    if (e.key === 'ArrowRight') next = i >= last ? 0 : i + 1;
+    if (e.key === 'ArrowLeft') next = i <= 0 ? last : i - 1;
+    if (e.key === 'Home') next = 0;
+    if (e.key === 'End') next = last;
+    const cat = categories[next];
+    setActiveTab(cat.id);
+    setSelected(0);
+    requestAnimationFrame(() => {
+      tabsRef.current?.querySelector(`#tab-${cat.id}`)?.focus();
+    });
+  };
+
   useEffect(() => {
     if (reducedMotion) return;
     const ctx = gsap.context(() => {
@@ -97,7 +116,7 @@ export default function Stack() {
   }, [reducedMotion]);
 
   return (
-    <section ref={sectionRef} id="stack" className="section-gap relative px-6" data-tracking="stack-section">
+    <section ref={sectionRef} id="stack" className="section-gap relative px-6" data-tracking="stack-section" aria-labelledby="stack-title">
       <div className="pointer-events-none absolute inset-0">
         <div className="aurora aurora-c left-1/2 top-[12%] h-[460px] w-[460px] -translate-x-1/2 bg-blue-600/12" />
       </div>
@@ -105,12 +124,18 @@ export default function Stack() {
 
       <div className="section-container relative z-10">
         <div ref={headerRef} className="mb-14">
-          <h2 className="text-display-2 italic leading-[1.02]">
+          <h2 id="stack-title" className="text-display-2 italic leading-[1.02]">
             Engineered with <span className="gradient-text">Precision</span>
           </h2>
         </div>
 
-        <div ref={tabsRef} className="mb-12 flex flex-wrap gap-3" role="tablist" aria-label="Tech categories">
+        <div
+          ref={tabsRef}
+          className="mb-12 flex flex-wrap gap-3"
+          role="tablist"
+          aria-label="Tech categories"
+          onKeyDown={onTabKeyDown}
+        >
           {categories.map((cat) => {
             const isActive = activeTab === cat.id;
             return (
@@ -120,6 +145,7 @@ export default function Stack() {
                 aria-selected={isActive}
                 aria-controls={`panel-${cat.id}`}
                 id={`tab-${cat.id}`}
+                tabIndex={isActive ? 0 : -1}
                 onClick={() => { setActiveTab(cat.id); setSelected(0); }}
                 className={`relative flex items-center gap-3 rounded-2xl px-5 py-4 text-sm font-semibold transition-all duration-300 active-press ${
                   isActive ? 'text-white' : 'text-zinc-400 hover:text-white'
@@ -186,7 +212,7 @@ export default function Stack() {
                     <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${category.color} transition-transform duration-300 group-hover:scale-110`}>
                       <Check size={16} weight="bold" className="text-white" />
                     </span>
-                    <h4 className="text-base font-bold tracking-tight">{item.name}</h4>
+                    <h3 className="text-base font-bold tracking-tight">{item.name}</h3>
                   </div>
                   <p className="mt-3 text-sm leading-relaxed text-zinc-400">{item.desc}</p>
                   <span className={`absolute bottom-4 right-4 transition-opacity duration-300 ${selected === i ? 'opacity-100' : 'opacity-0'}`}>
@@ -301,10 +327,10 @@ function OrbitRing({ items, glow, selected, onSelect, reducedMotion }) {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.25 }}
               >
-                <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+                <p className="text-xs uppercase tracking-[0.24em] text-zinc-400">
                   {String(focusIndex + 1).padStart(2, '0')} / {String(items.length).padStart(2, '0')}
                 </p>
-                <h4 className="mt-2 text-2xl font-black tracking-tight">{focus?.name}</h4>
+                <h3 className="mt-2 text-2xl font-black tracking-tight">{focus?.name}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">{focus?.desc}</p>
               </motion.div>
             </AnimatePresence>
@@ -339,7 +365,7 @@ function OrbitRing({ items, glow, selected, onSelect, reducedMotion }) {
           ))}
         </div>
 
-        <span className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-600">
+        <span className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-400">
           drag to rotate
         </span>
       </div>

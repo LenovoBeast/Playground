@@ -13,8 +13,8 @@ const GAMES = [
   { name: 'snake', title: 'Snake', desc: 'A 3D snake on a holographic grid. Arrow keys or WASD.', accent: 'from-emerald-500 to-teal-500', tint: 'rgba(52,211,153,0.18)' },
   { name: 'breakout', title: 'Breakout', desc: 'Bounce the ball against the brick wall. Move the paddle with arrows.', accent: 'from-rose-500 to-pink-500', tint: 'rgba(244,114,182,0.18)' },
   { name: 'racer', title: 'Racer', desc: 'Ride the neon loop. Hold Up or W to drive; Down or S to reverse.', accent: 'from-cyan-500 to-blue-500', tint: 'rgba(34,211,238,0.18)' },
-  { name: 'match3', title: 'Match 3', desc: 'Swap adjacent orbs to line up three. Click to select, click again to swap.', accent: 'from-fuchsia-500 to-purple-500', tint: 'rgba(217,70,239,0.18)' },
-  { name: 'launch', title: 'Launch', desc: 'Aim and fire at the target. Click-drag to set angle and power.', accent: 'from-amber-500 to-orange-500', tint: 'rgba(251,146,60,0.18)' },
+  { name: 'match3', title: 'Match 3', desc: 'Swap adjacent orbs to line up three. Arrow keys move, Enter selects; or click two neighbors.', accent: 'from-fuchsia-500 to-purple-500', tint: 'rgba(217,70,239,0.18)' },
+  { name: 'launch', title: 'Launch', desc: 'Aim and fire at the target. Arrows set angle and power, Space fires; or click-drag.', accent: 'from-amber-500 to-orange-500', tint: 'rgba(251,146,60,0.18)' },
 ];
 
 function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
@@ -93,11 +93,11 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
         />
 
         <div className="mt-4 flex items-center justify-between font-mono text-sm">
-          <span className="text-zinc-500">Score</span>
+          <span className="text-zinc-400">Score</span>
           <span id={`${name}Score`} className="tabular-nums text-white" />
         </div>
         <div className="mt-2 flex items-center justify-between font-mono text-sm">
-          <span className="text-zinc-500">Status</span>
+          <span className="text-zinc-400">Status</span>
           <span id={`${name}Status`} className="text-zinc-400" />
         </div>
 
@@ -135,7 +135,7 @@ function GameOverlay({ name, title, desc, accent, open, onClose, onPlay }) {
           </p>
         )}
 
-        <p className="mt-6 text-xs text-zinc-600">
+        <p className="mt-6 text-xs text-zinc-400">
           Press <kbd className="rounded bg-white/5 px-1.5 py-0.5">Esc</kbd> to exit.
         </p>
       </div>
@@ -154,7 +154,7 @@ function GameCard({ game, index, isHero, onOpen }) {
         onPointerLeave={tilt.onPointerLeave}
       >
         <div ref={tilt.ref} className="tilt-body h-full">
-          <article
+          <div
             className="panel corner-frame group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden p-7 md:p-8"
             data-game={game.name}
             onClick={() => onOpen(game)}
@@ -171,10 +171,10 @@ function GameCard({ game, index, isHero, onOpen }) {
             <div className="tilt-sheen" />
 
             <div className="relative flex items-center justify-between" style={{ transform: 'translateZ(26px)' }}>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
                 {String(index + 1).padStart(2, '0')} · {game.name}
               </span>
-              <span className="grid h-9 w-9 place-items-center rounded-full border border-white/8 bg-white/[0.04] text-zinc-500 transition-all duration-300 group-hover:scale-110 group-hover:border-white/20 group-hover:text-white">
+              <span className="grid h-9 w-9 place-items-center rounded-full border border-white/8 bg-white/[0.04] text-zinc-400 transition-all duration-300 group-hover:scale-110 group-hover:border-white/20 group-hover:text-white">
                 <Play size={14} weight="bold" />
               </span>
             </div>
@@ -184,7 +184,7 @@ function GameCard({ game, index, isHero, onOpen }) {
               <p className="line-clamp-3 text-body-sm text-zinc-400">{game.desc}</p>
               <div className={`mt-5 h-[3px] w-full rounded-full bg-gradient-to-r ${game.accent} opacity-40 transition-opacity duration-500 group-hover:opacity-100`} />
             </div>
-          </article>
+          </div>
         </div>
       </div>
     );
@@ -197,7 +197,7 @@ function GameCard({ game, index, isHero, onOpen }) {
       onPointerLeave={tilt.onPointerLeave}
     >
       <div ref={tilt.ref} className="tilt-body h-full">
-        <article
+        <div
           className="panel corner-frame group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden p-7"
           data-game={game.name}
           onClick={() => onOpen(game)}
@@ -214,10 +214,10 @@ function GameCard({ game, index, isHero, onOpen }) {
           <div className="tilt-sheen" />
 
           <div className="relative flex items-center justify-between" style={{ transform: 'translateZ(26px)' }}>
-            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
               {String(index + 1).padStart(2, '0')} · {game.name}
             </span>
-            <span className="grid h-9 w-9 place-items-center rounded-full border border-white/8 bg-white/[0.04] text-zinc-500 transition-all duration-300 group-hover:scale-110 group-hover:border-white/20 group-hover:text-white">
+            <span className="grid h-9 w-9 place-items-center rounded-full border border-white/8 bg-white/[0.04] text-zinc-400 transition-all duration-300 group-hover:scale-110 group-hover:border-white/20 group-hover:text-white">
               <Play size={14} weight="bold" />
             </span>
           </div>
@@ -227,7 +227,7 @@ function GameCard({ game, index, isHero, onOpen }) {
             <p className="line-clamp-3 text-body-sm text-zinc-400">{game.desc}</p>
             <div className={`mt-5 h-[3px] w-full rounded-full bg-gradient-to-r ${game.accent} opacity-40 transition-opacity duration-500 group-hover:opacity-100`} />
           </div>
-        </article>
+        </div>
       </div>
     </div>
   );
@@ -364,11 +364,11 @@ function Playroom({ onOpen }) {
           <Planet size={13} weight="bold" className="text-blue-400" />
           playroom · drag to orbit
         </div>
-        <div className="pointer-events-none absolute bottom-4 left-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+        <div className="pointer-events-none absolute bottom-4 left-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
           <span className={`h-1.5 w-1.5 rounded-full ${live ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
           {live ? 'engine live' : 'engine idle'}
         </div>
-        <div className="pointer-events-none absolute bottom-4 right-4 hidden items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500 md:flex">
+        <div className="pointer-events-none absolute bottom-4 right-4 hidden items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400 md:flex">
           <SquareLogo size={12} weight="bold" /> click an artifact to play
         </div>
       </div>
@@ -404,7 +404,7 @@ export default function Games() {
   }, [openGame]);
 
   return (
-    <section id="games" className="section-gap relative px-6">
+    <section id="games" className="section-gap relative px-6" aria-labelledby="games-title">
       <div className="pointer-events-none absolute inset-0">
         <div className="aurora aurora-b right-[-6%] top-[16%] h-[400px] w-[400px] bg-rose-500/12" />
       </div>
@@ -413,7 +413,7 @@ export default function Games() {
       <div className="section-container relative z-10">
         <div className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-display-2 italic">
+            <h2 id="games-title" className="text-display-2 italic">
               Playable <span className="gradient-text">Experiments</span>
             </h2>
           </div>

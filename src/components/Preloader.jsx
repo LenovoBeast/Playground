@@ -31,29 +31,39 @@ export default function Preloader({ onDone, duration = 1500 }) {
   const step = Math.min(STEPS.length - 1, Math.floor(progress * STEPS.length));
 
   return (
-    <div className={`boot-veil ${done ? 'is-done' : ''}`} role="status" aria-live="polite">
-      <div className="w-[min(420px,80vw)]">
-        <div className="mb-6 flex items-end justify-between">
-          <span className="text-3xl font-black tracking-tighter">
-            LB<span className="text-blue-500">.</span>
-          </span>
-          <span className="font-mono text-xs tabular-nums text-zinc-500">
-            {String(Math.round(progress * 100)).padStart(3, '0')}%
-          </span>
-        </div>
+    <>
+      {/* Decorative boot sequence. The veil re-renders every frame, so it is
+          hidden from assistive tech; a single sr-only announcement fires once
+          when loading completes (see below). */}
+      <div className={`boot-veil ${done ? 'is-done' : ''}`} aria-hidden="true">
+        <div className="w-[min(420px,80vw)]">
+          <div className="mb-6 flex items-end justify-between">
+            <span className="text-3xl font-black tracking-tighter">
+              LB<span className="text-blue-500">.</span>
+            </span>
+            <span className="font-mono text-xs tabular-nums text-zinc-400">
+              {String(Math.round(progress * 100)).padStart(3, '0')}%
+            </span>
+          </div>
 
-        <div className="h-[3px] w-full overflow-hidden rounded-full bg-white/8">
-          <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500"
-            style={{ width: `${progress * 100}%`, boxShadow: '0 0 12px rgba(59, 130, 246, 0.8)' }}
-          />
-        </div>
+          <div className="h-[3px] w-full overflow-hidden rounded-full bg-white/8">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500"
+              style={{ width: `${progress * 100}%`, boxShadow: '0 0 12px rgba(59, 130, 246, 0.8)' }}
+            />
+          </div>
 
-        <div className="mt-4 font-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">
-          {STEPS[step]}
-          <span className="ml-1 inline-block animate-pulse">_</span>
+          <div className="mt-4 font-mono text-[11px] uppercase tracking-[0.22em] text-zinc-400">
+            {STEPS[step]}
+            <span className="ml-1 inline-block animate-pulse">_</span>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* One announcement for the whole boot, not one per frame */}
+      <span role="status" className="sr-only">
+        {done ? 'Experience ready' : 'Loading experience'}
+      </span>
+    </>
   );
 }

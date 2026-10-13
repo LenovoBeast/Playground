@@ -66,6 +66,10 @@ export default function Contact() {
     subject: "",
     message: "",
   });
+  // Field-level validation messages (client-side only; a real endpoint must
+  // re-validate server-side before anything is trusted).
+  const [errors, setErrors] = useState({});
+  const [statusMessage, setStatusMessage] = useState("");
   const [focused, setFocused] = useState(null);
   const sectionRef = useRef(null);
   const headerRef = useRef(null);
@@ -106,37 +110,66 @@ export default function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const empty =
-      !formData.name.trim() ||
-      !formData.email.trim() ||
-      !formData.subject.trim() ||
-      !formData.message.trim();
-    const badEmail =
-      formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
-    if (empty) {
-      const first =
-        document.querySelector("input[name]:not([value])") || formRef.current;
-      first?.focus();
+    const nextErrors = {};
+    if (!formData.name.trim()) nextErrors.name = "Name is required.";
+    if (!formData.subject.trim()) nextErrors.subject = "Subject is required.";
+    if (!formData.message.trim()) nextErrors.message = "Message is required.";
+    if (!formData.email.trim()) {
+      nextErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      nextErrors.email = "Enter a valid email address.";
+    }
+    setErrors(nextErrors);
+
+    const messages = Object.values(nextErrors);
+    if (messages.length) {
+      setStatusMessage(`Please fix the form: ${messages.join(" ")}`);
+      const firstInvalid = Object.keys(nextErrors)[0];
+      formRef.current?.querySelector(`[name="${firstInvalid}"]`)?.focus();
       return;
     }
-    if (badEmail) {
-      const el = formRef.current?.querySelector('input[name="email"]');
-      el?.focus();
-      return;
-    }
+
+    // No backend, no third party: compose the message and hand it to the
+    // user's own mail client. Works on any static host, zero dependencies.
+    const body = `${formData.message.trim()}\n\n— ${formData.name.trim()}${
+      formData.email.trim() ? ` (${formData.email.trim()})` : ""
+    }`;
+    const mailto =
+      "mailto:lenovobeast@example.com" +
+      `?subject=${encodeURIComponent(formData.subject.trim())}` +
+      `&body=${encodeURIComponent(body)}`;
+
+    setStatusMessage("Opening your mail app…");
     setFormState("submitting");
+    // Give the "opening" state a beat to paint before the browser hands off.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // All state changes land BEFORE the navigation: handing off to an external
+    // protocol can unload this document, and anything queued after that may
+    // never run. In browsers where the page survives (the common case on
+    // desktop), the user returns to this success state.
+    setFormState("success");
+    setStatusMessage("Your mail app is open — just hit send.");
+    setFormData({ name: "", email: "", subject: "", message: "" });
+    setTimeout(() => setFormState("idle"), 6000);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      setFormState("success");
-      setFormData({ name: "", email: "", subject: "", message: "" });
-      setTimeout(() => setFormState("idle"), 4000);
-    } catch (err) {
+      window.location.href = mailto;
+    } catch {
       setFormState("error");
+      setStatusMessage(
+        "Your mail app could not be opened. Email lenovobeast@example.com directly."
+      );
     }
   };
 
   const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: e.target.value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   return (
@@ -145,6 +178,7 @@ export default function Contact() {
       id="contact"
       className="section-gap relative px-6"
       data-tracking="contact-section"
+      aria-labelledby="contact-title"
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="aurora aurora-a left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-blue-600/25 to-cyan-500/20" />
@@ -152,8 +186,8 @@ export default function Contact() {
       <div className="hairline absolute inset-x-0 top-0" />
       <div className="section-container relative z-10">
         <div ref={headerRef} className="mx-auto mb-16 max-w-2xl text-center">
-          <h2 className="mb-6 text-display-2 italic leading-[1.02]">
-            Let's Build <span className="gradient-text">Something</span>
+          <h2 id="contact-title" className="mb-6 text-display-2 italic leading-[1.02]">
+            Let&apos;s Build <span className="gradient-text">Something</span>
           </h2>
           <p className="text-body mx-auto">
             Open to freelance, consulting, and interesting collaborations. Drop
@@ -172,6 +206,10 @@ export default function Contact() {
               noValidate
               aria-describedby="form-status"
             >
+              {/* Single live region: announced once per state change, not on every keystroke */}
+              <p id="form-status" role="status" aria-live="polite" className="sr-only">
+                {statusMessage}
+              </p>
               <div className="grid gap-6 sm:grid-cols-2">
                 <Field
                   label="Name"
@@ -183,6 +221,8 @@ export default function Contact() {
                   focused={focused === "name"}
                   placeholder="Your name"
                   required
+                  maxLength={100}
+                  error={errors.name}
                   disabled={formState !== "idle"}
                   autoComplete="name"
                 />
@@ -197,6 +237,8 @@ export default function Contact() {
                   focused={focused === "email"}
                   placeholder="your@email.com"
                   required
+                  maxLength={254}
+                  error={errors.email}
                   disabled={formState !== "idle"}
                   autoComplete="email"
                 />
@@ -211,20 +253,27 @@ export default function Contact() {
                 focused={focused === "subject"}
                 placeholder="Project inquiry, collaboration, etc."
                 required
+                maxLength={150}
+                error={errors.subject}
                 disabled={formState !== "idle"}
               />
               <div>
+                <label htmlFor="message" className="sr-only">
+                  Message
+                </label>
                 <span
                   className={
                     "block font-mono text-[10px] uppercase tracking-[0.2em] transition-colors duration-300 " +
                     (focused === "message" || formData.message
                       ? "text-blue-400"
-                      : "text-zinc-500")
+                      : "text-zinc-400")
                   }
+                  aria-hidden="true"
                 >
                   Message <span className="text-blue-400">*</span>
                 </span>
                 <textarea
+                  id="message"
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
@@ -232,12 +281,20 @@ export default function Contact() {
                   onBlur={() => setFocused(null)}
                   placeholder="Tell me about your project..."
                   rows={6}
+                  maxLength={2000}
                   required
                   disabled={formState !== "idle"}
-                  className="mt-3 w-full resize-none rounded-xl border border-white/8 bg-white/[0.035] px-5 py-4 font-mono text-sm text-zinc-200 backdrop-blur-xl transition-all duration-300 placeholder:text-zinc-600 focus:border-blue-500/60 focus:outline-none focus:ring-1 focus:ring-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-invalid={errors.message ? true : undefined}
+                  aria-describedby={errors.message ? "message-error message-hint" : "message-hint"}
+                  className="mt-3 w-full resize-none rounded-xl border border-white/8 bg-white/[0.035] px-5 py-4 font-mono text-sm text-zinc-200 backdrop-blur-xl transition-all duration-300 placeholder:text-zinc-400 focus:border-blue-500/60 focus:outline-none focus:ring-1 focus:ring-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
                 />
-                <p className="mt-1.5 font-mono text-[10px] text-zinc-600">
-                  I'll respond within 24 hours
+                {errors.message && (
+                  <p id="message-error" className="mt-1.5 font-mono text-xs text-rose-400">
+                    {errors.message}
+                  </p>
+                )}
+                <p id="message-hint" className="mt-1.5 font-mono text-[10px] text-zinc-400">
+                  I&apos;ll respond within 24 hours
                 </p>
               </div>
               <button
@@ -249,7 +306,7 @@ export default function Contact() {
                 {formState === "submitting" && (
                   <>
                     <Spinner size={20} weight="bold" className="animate-spin" />
-                    Sending...
+                    Opening…
                   </>
                 )}
                 {formState === "success" && (
@@ -283,9 +340,10 @@ export default function Contact() {
               >
                 <CheckCircle size={22} weight="bold" />
                 <div>
-                  <p className="font-medium">Message sent!</p>
+                  <p className="font-medium">Ready to send!</p>
                   <p className="text-sm text-zinc-400">
-                    I'll get back to you within 24 hours.
+                    Your mail app is open with the message pre-filled — hit send there.
+                    I&apos;ll get back to you within 24 hours.
                   </p>
                 </div>
               </div>
@@ -332,7 +390,7 @@ export default function Contact() {
                         <Icon size={18} weight="bold" />
                       </span>
                       <span className="font-medium">{link.label}</span>
-                      <span className="ml-auto truncate pl-3 font-mono text-xs text-zinc-600 transition-colors group-hover:text-zinc-400">
+                      <span className="ml-auto truncate pl-3 font-mono text-xs text-zinc-400 transition-colors group-hover:text-zinc-400">
                         {link.href
                           .replace("https://", "")
                           .replace("mailto:", "")}
@@ -354,11 +412,11 @@ export default function Contact() {
                       <Icon
                         size={18}
                         weight="bold"
-                        className="text-zinc-500 transition-colors group-hover:text-white"
+                        className="text-zinc-400 transition-colors group-hover:text-white"
                       />
                     </span>
                     <div className="flex-1">
-                      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">
                         {label}
                       </p>
                       <p className="text-sm font-medium">{value}</p>
@@ -387,6 +445,8 @@ const Field = ({
   required,
   disabled,
   autoComplete,
+  maxLength,
+  error,
 }) => {
   const lifted = focused || Boolean(value);
   return (
@@ -397,8 +457,9 @@ const Field = ({
       <span
         className={
           "block font-mono text-[10px] uppercase tracking-[0.2em] transition-colors duration-300 " +
-          (lifted ? "text-blue-400" : "text-zinc-500")
+          (lifted ? "text-blue-400" : "text-zinc-400")
         }
+        aria-hidden="true"
       >
         {label}{" "}
         {required && (
@@ -419,8 +480,16 @@ const Field = ({
         required={required}
         disabled={disabled}
         autoComplete={autoComplete}
-        className="mt-3 w-full rounded-xl border border-white/8 bg-white/[0.035] px-5 py-4 font-mono text-sm text-zinc-200 backdrop-blur-xl transition-all duration-300 placeholder:text-zinc-600 focus:border-blue-500/60 focus:outline-none focus:ring-1 focus:ring-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+        maxLength={maxLength}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${name}-error` : undefined}
+        className="mt-3 w-full rounded-xl border border-white/8 bg-white/[0.035] px-5 py-4 font-mono text-sm text-zinc-200 backdrop-blur-xl transition-all duration-300 placeholder:text-zinc-400 focus:border-blue-500/60 focus:outline-none focus:ring-1 focus:ring-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
       />
+      {error && (
+        <p id={`${name}-error`} className="mt-1.5 font-mono text-xs text-rose-400">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

@@ -109,6 +109,7 @@ export default function About() {
       id="about"
       className="section-gap relative overflow-hidden px-6"
       data-tracking="about-section"
+      aria-labelledby="about-title"
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="aurora aurora-a left-[-10%] top-[8%] h-[420px] w-[420px] bg-blue-600/20" />
@@ -119,7 +120,7 @@ export default function About() {
         <div className="grid items-start gap-16 lg:grid-cols-2 lg:gap-24">
           <div ref={textRef} className="space-y-10">
             <span className="block text-label">About Me</span>
-            <h2 className="text-display-2 italic leading-[1.02]">
+            <h2 id="about-title" className="text-display-2 italic leading-[1.02]">
               Crafting <br />
               <span className="gradient-text">Digital Frontiers</span>
             </h2>
@@ -190,7 +191,7 @@ export default function About() {
                       className="relative text-blue-300/70"
                     />
                   </div>
-                  <span className="absolute bottom-4 left-4 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-500">
+                  <span className="absolute bottom-4 left-4 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-400">
                     operator // lb
                   </span>
                   <span className="absolute right-4 top-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-emerald-400/80">
@@ -218,7 +219,7 @@ export default function About() {
                   <div className="text-3xl font-black tracking-tight md:text-4xl">
                     <Counter value={stat.value} active={statsInView} />
                   </div>
-                  <div className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+                  <div className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">
                     {stat.label}
                   </div>
                 </div>
@@ -241,9 +242,9 @@ export default function About() {
                   </span>
                   <span className="absolute left-[31px] top-1/2 hidden h-px w-8 bg-gradient-to-r from-blue-500/40 to-transparent md:block" />
                   <div className="panel p-6 transition-colors group-hover:border-white/18">
-                    <h4 className="mb-2 text-xl font-black uppercase italic tracking-tight">
+                    <h3 className="mb-2 text-xl font-black uppercase italic tracking-tight">
                       {item.title}
-                    </h4>
+                    </h3>
                     <p className="mb-3 font-mono text-sm text-cyan-400">
                       {item.company}
                     </p>

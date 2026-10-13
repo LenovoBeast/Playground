@@ -13,10 +13,24 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    X-Frame-Options = "DENY"
+    # Content-Security-Policy
+    # - script-src: self + sha256 hashes of the two inline JSON-LD blocks in
+    #   index.html (regenerate with `node scripts/csp-hashes.mjs` after any
+    #   JSON-LD edit, and re-check after `vite build` in case the build starts
+    #   emitting inline scripts).
+    # - style-src needs 'unsafe-inline' because React inline style attributes
+    #   cannot be hashed. Fonts and thumbnails are self-hosted, so no external
+    #   style/font/image origins are needed.
+    # - img-src allows data: URIs (noise texture).
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-fQTvSrsvyCZPMXAxH4RM2OxXNpJZWWDjD37lPi+5Ygc=' 'sha256-H7xrnPiBmLS3cm2PrPLtzioPPste+fpGXAOl+j3JIuM='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self' mailto:; object-src 'none'; manifest-src 'self'; upgrade-insecure-requests"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Resource-Policy = "same-origin"
+    X-Permitted-Cross-Domain-Policies = "none"
 
 # Cache static assets aggressively
 [[headers]]
@@ -68,7 +82,7 @@
 
 # Build environment
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
 
 # Functions (if needed later)
 # [functions]

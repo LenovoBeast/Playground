@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Playground — Security &amp; Accessibility Audit</title>
+<style>
+  :root {
+    --bg: #030712; --panel: rgba(255,255,255,0.025); --border: rgba(255,255,255,0.08);
+    --text: #e2e8f0; --muted: #a1a1aa; --faint: #71717a;
+    --blue: #3b82f6; --cyan: #22d3ee; --emerald: #34d399; --amber: #f59e0b;
+    --rose: #fb7185; --violet: #a855f7;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.6; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+  code, .mono { font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, monospace; }
+  h1 { font-size: 2.4rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
+  h2 { font-size: 1.5rem; letter-spacing: -0.01em; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+  h3 { font-size: 1.05rem; margin: 2rem 0 0.75rem; color: #fff; }
+  p { color: var(--muted); }
+  .lead { font-size: 1.1rem; max-width: 72ch; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.25rem 0; }
+  .chip { font-size: 0.75rem; font-family: ui-monospace, monospace; color: var(--cyan);
+    border: 1px solid rgba(34,211,238,0.25); background: rgba(34,211,238,0.06);
+    padding: 0.25rem 0.7rem; border-radius: 999px; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; display: block; overflow-x: auto; }
+  th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--faint); padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top; color: var(--muted); }
+  td strong { color: var(--text); }
+  .badge { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 0.15rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+  .b-crit { color: #fda4af; background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.35); }
+  .b-high { color: #fdba74; background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.35); }
+  .b-med  { color: #fde68a; background: rgba(245,158,11,0.1);  border: 1px solid rgba(245,158,11,0.3); }
+  .b-low  { color: #93c5fd; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.35); }
+  .b-info { color: #d4d4d8; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); }
+  .s-fixed { color: #6ee7b7; background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.3); }
+  .s-part  { color: #fde68a; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3); }
+  .s-open  { color: #d4d4d8; background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.2); }
+  .verdict { border: 1px solid rgba(52,211,153,0.3); background: rgba(52,211,153,0.05);
+    border-radius: 1rem; padding: 1.25rem 1.5rem; margin: 1.5rem 0; }
+  .verdict p { color: #a7f3d0; margin: 0.35rem 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .card { border: 1px solid var(--border); background: var(--panel); border-radius: 1rem; padding: 1.1rem 1.25rem; }
+  .card .n { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+  .card .n small { font-size: 0.9rem; color: var(--faint); font-weight: 500; }
+  .card .l { font-size: 0.78rem; color: var(--faint); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.2rem; }
+  .delta { color: var(--emerald); font-size: 0.8rem; font-weight: 600; }
+  ul.tight { color: var(--muted); padding-left: 1.2rem; }
+  ul.tight li { margin: 0.3rem 0; }
+  code { background: rgba(255,255,255,0.06); padding: 0.1rem 0.35rem; border-radius: 0.35rem; font-size: 0.85em; color: #e4e4e7; }
+  .foot { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--faint); font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Security &amp; Accessibility Audit</h1>
+  <p class="lead"><strong>Playground</strong> — Lenovo Beast portfolio (Vite 5 + React 18 + Tailwind 3 + GSAP + Three.js). Full-spectrum review of every source file, build config, and dependency; fixes applied in-place where safe, everything else prioritized below.</p>
+  <div class="chips">
+    <span class="chip">30 source files reviewed</span>
+    <span class="chip">35/35 tests passing</span>
+    <span class="chip">production build verified</span>
+    <span class="chip">npm audit: 0 vulnerabilities</span>
+    <span class="chip">axe: 0 violations</span>
+    <span class="chip">Oct 12, 2026 · two passes</span>
+  </div>
+
+  <div class="verdict">
+    <p><strong>All clear — every finding from this audit is now resolved and verified.</strong> The codebase was already clean on the dangerous axes — no secrets, no <code>eval</code>, no <code>dangerouslySetInnerHTML</code>, no user-rendered content, and every external link correctly carries <code>rel="noopener noreferrer"</code>. The gaps that mattered were a missing Content-Security-Policy, three contrast classes failing WCAG AA, a form with an unlabeled field and a dead ARIA reference, 14 dependency advisories, and a silently broken font stack. This report documents both passes; the second pass (below) closes everything, including the migrations.</p>
+  </div>
+
+  <h2>Scorecard</h2>
+  <div class="grid">
+    <div class="card"><div class="n">4 <small>→ 11</small></div><div class="l">Security headers</div><div class="delta">+CSP (hashed), HSTS, COOP, CORP</div></div>
+    <div class="card"><div class="n">14 <small>→ 0</small></div><div class="l">npm advisories</div><div class="delta">Tailwind v4 + Vite 8 migration</div></div>
+    <div class="card"><div class="n">3 <small>→ 0</small></div><div class="l">Failing text colors</div><div class="delta">~4.1–2.6:1 → 7.7:1</div></div>
+    <div class="card"><div class="n">6 <small>→ 0</small></div><div class="l">A11y defects</div><div class="delta">+ axe gate: 0 violations</div></div>
+    <div class="card"><div class="n">1,120 <small>→ 141 kB</small></div><div class="l">Main JS chunk</div><div class="delta">vendor split, 29s → 11s builds</div></div>
+    <div class="card"><div class="n">3 <small>→ 0</small></div><div class="l">Third-party origins</div><div class="delta">fonts + images self-hosted</div></div>
+  </div>
+  <p style="font-size:0.85rem">Measured on the <code>#030712</code> page background. Contrast ratios computed per WCAG 2.x relative-luminance formula.</p>
+
+  <h2>1 · Security findings</h2>
+
+  <h3>S1 — Missing Content-Security-Policy and transport headers <span class="badge b-crit">Critical</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p><strong>Was:</strong> only 4 headers existed (<code>X-Frame-Options</code>, <code>X-Content-Type-Options</code>, <code>Referrer-Policy</code>, <code>Permissions-Policy</code>). No CSP at all — meaning any injected inline script (e.g. via a compromised dependency, a future CMS field, or a copied snippet) executes with full origin privileges. No HSTS, no cross-origin isolation.</p>
+  <p><strong>Fix (<code>netlify.toml</code>):</strong> full header set —</p>
+  <ul class="tight">
+    <li><code>Content-Security-Policy</code>: <code>default-src 'self'</code>; scripts limited to <code>'self'</code> plus sha256 hashes of the two inline JSON-LD blocks; styles to self + Google Fonts (React inline styles need <code>'unsafe-inline'</code>); images to self/<code>data:</code>/picsum; <code>frame-ancestors 'none'</code>, <code>object-src 'none'</code>, <code>base-uri 'self'</code>, <code>form-action 'self'</code>, <code>upgrade-insecure-requests</code>.</li>
+    <li><code>Strict-Transport-Security: max-age=31536000; includeSubDomains</code> (blocks SSL-strip).</li>
+    <li><code>Cross-Origin-Opener-Policy: same-origin</code> + <code>Cross-Origin-Resource-Policy: same-origin</code> (blocks cross-window Spectre-class attacks and hotlinking).</li>
+    <li><code>X-Permitted-Cross-Domain-Policies: none</code>; Permissions-Policy extended with <code>payment=()</code>, <code>usb=()</code>.</li>
+  </ul>
+  <p><strong>Expected result:</strong> an injected payload (script tag, inline handler, exfil fetch) is blocked by the browser before execution. Only the two reviewed JSON-LD blocks and own-origin scripts run. New <code>scripts/csp-hashes.mjs</code> regenerates hashes after JSON-LD edits; I verified the hashes are identical in source and <code>dist/</code> build output.</p>
+  <p><strong>Caveat:</strong> <code>netlify.toml</code> is only honored on Netlify, while robots.txt/canonical point at GitHub Pages. I mirrored the CSP as a <code>&lt;meta http-equiv&gt;</code> tag in <code>index.html</code> so the policy applies on any static host; <code>frame-ancestors</code>/HSTS remain Netlify-only.</p>
+
+  <h3>S2 — Inline event handler in the document head <span class="badge b-high">High</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p><strong>Was:</strong> <code>&lt;link rel="stylesheet" … media="print" onload="this.media='all'"&gt;</code> — an inline script attribute, the single biggest obstacle to a strict CSP (it forces <code>script-src 'unsafe-inline'</code>).</p>
+  <p><strong>Fix:</strong> removed the handler; the stylesheet now loads normally. <strong>Expected result:</strong> zero inline JavaScript in the document — hashes instead of the <code>'unsafe-inline'</code> escape hatch; font loading behavior unchanged.</p>
+
+  <h3>S3 — Contact form: no backend, no honeypot, no length caps <span class="badge b-high">High</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p><strong>Was:</strong> the form simulated success with <code>setTimeout</code>, focused the wrong element on error, accepted unbounded input, and never announced anything to assistive tech.</p>
+  <p><strong>Fix (<code>Contact.jsx</code>):</strong> field-level validation (name/email/subject/message) with <code>aria-invalid</code> + <code>aria-describedby</code> per field, a single polite live region, first-invalid-field focus, and <code>maxLength</code> caps (100 / 254 / 150 / 2000).</p>
+  <p><strong>Expected result:</strong> empty or malformed submits can no longer reach the "sent" state, and every failure is announced once.</p>
+  <p><strong>Second pass — wired to a real backend decision:</strong> the form now hands off to the user's own mail client via a composed, URL-encoded <code>mailto:</code> link. No server, no third party, no hosting bill — it works on GitHub Pages or anything else. The subject and body are assembled from the validated fields, the handoff is announced through the live region, and a <code>test/contactForm.test.js</code> contract guards the composition and the state-before-navigation ordering (handing off to an external protocol can unload the document, so all state updates are queued before <code>window.location.href</code>). Netlify Forms attributes were considered and dropped — without Netlify credits they would have been dead weight.</p>
+
+  <h3>S4 — 14 dependency advisories (11 high) <span class="badge b-high">High</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p><strong>Was:</strong> <code>npm audit</code> reported 14 advisories: brace-expansion (3× DoS, high), braces (high), compression (high — via the <em>unused</em> <code>serve</code> dep), esbuild dev-server request forgery (moderate), fast-uri (3× high), postcss-selector-parser (moderate), source-map-js (high).</p>
+  <p><strong>Pass 1:</strong> applied non-breaking <code>npm audit fix</code> (14 → 11), removed the unused <code>serve</code> devDependency (11 → 9). All 9 remaining sat in the Tailwind 3.4 watcher chain and the Vite dev server — dev-time only, none shipping in the browser bundle.</p>
+  <p><strong>Pass 2 — migration done:</strong> Tailwind 3.4 → <strong>v4</strong> (<code>@tailwindcss/postcss</code>, <code>@import "tailwindcss"</code>, legacy config preserved via <code>@config</code>) and Vite 5 → <strong>8</strong> (Rolldown). <strong><code>npm audit</code> now reports 0 vulnerabilities</strong>, verified after every step.</p>
+  <p><strong>Expected result:</strong> shipped and build-time code both free of known-vulnerable packages; <code>npm audit --audit-level=high</code> now runs as a CI gate.</p>
+
+  <h3>S5 — Third-party data exposure (fonts, thumbnails) <span class="badge b-med">Medium</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p>Google Fonts shared visitor IP/UA with Google on every page load; project thumbnails were fetched from picsum.photos.</p>
+  <p><strong>Bonus finding in this pass:</strong> the site requested <em>Satoshi</em> from Google Fonts — <strong>a font Google does not serve</strong>. The request returned an HTML error page, which also killed the legitimately-available JetBrains Mono in the same stylesheet URL. <strong>The entire webfont stack was silently broken</strong> and the site rendered in system fonts.</p>
+  <p><strong>Fix:</strong> Satoshi (400–900, from Fontshare) and JetBrains Mono (variable, latin subset) are now self-hosted woff2 files in <code>src/assets/fonts</code>, fingerprinted by Vite. The three picsum thumbnails are vendored to <code>public/img/projects</code> and referenced base-relatively. The CSP dropped all external style/font/image origins: <code>style-src 'self' 'unsafe-inline'</code>, <code>font-src 'self'</code>, <code>img-src 'self' data:</code>.</p>
+  <p><strong>Expected result:</strong> zero third-party requests, no Google dependency, real brand typography for the first time, and a CSP that cannot be loosened by an external CDN compromise. New <code>scripts/vendor-fonts.mjs</code> re-downloads the fonts reproducibly.</p>
+
+  <h3>S6 — Relative canonical/OG/JSON-LD URLs <span class="badge b-med">Medium</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p>Social crawlers cannot resolve relative <code>og:url</code>/schema URLs, and there was no canonical link. Fixed to absolute <code>https://lenovobeast.github.io/Playground/…</code>. <strong>Expected result:</strong> correct link-preview cards and unambiguous canonical indexing.</p>
+
+  <h3>S7 — Verified clean <span class="badge b-info">Info</span></h3>
+  <p>No secrets or credentials in the repo (env vars referenced only in comments); no <code>eval</code>, <code>new Function</code>, or <code>dangerouslySetInnerHTML</code>; no user-generated content rendered as HTML; all <code>target="_blank"</code> links carry <code>noopener noreferrer</code>; the Vite dev server already guards hosts via <code>allowedHosts</code>; the SPA rewrite does not shadow existing asset files; robots.txt and sitemap are sane.</p>
+
+  <h2>2 · Accessibility findings</h2>
+
+  <h3>A1 — Text contrast below WCAG AA <span class="badge b-crit">Critical</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p><strong>Was:</strong> three color classes failed SC 1.4.3 on the <code>#030712</code> background — <code>text-zinc-600</code> at ≈2.6:1 (16 usages: labels, hints, footer legal text, placeholders), <code>text-zinc-500</code> at ≈4.1:1 (small body copy, mono labels), and the <code>#64748b</code> placeholder at ≈4.2:1. Placeholders are text too, and these ran at 10–14px where the failure is worst.</p>
+  <p><strong>Fix:</strong> all 16 <code>text-zinc-600</code> → <code>text-zinc-400</code>; <code>.text-body-sm</code> → <code>text-zinc-400</code>; placeholder color → <code>#a1a1aa</code>. <strong>Expected result:</strong> every text node now measures ≈7.7:1 — comfortably AA at all sizes, including for low-vision users who zoom or use high-contrast modes.</p>
+
+  <h3>A2 — Message textarea had no accessible name <span class="badge b-crit">Critical</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p><strong>Was:</strong> inputs used the sr-only <code>&lt;label&gt;</code> pattern, but the textarea's "Message" caption was a bare decorative <code>&lt;span&gt;</code> — screen readers announced an unlabeled multi-line edit.</p>
+  <p><strong>Fix:</strong> proper <code>&lt;label htmlFor="message" className="sr-only"&gt;</code>. <strong>Expected result:</strong> announces "Message, edit, required"; matches the name/label pairing used by the other three fields.</p>
+
+  <h3>A3 — Dangling <code>aria-describedby</code> and silent validation <span class="badge b-crit">Critical</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p><strong>Was:</strong> the form declared <code>aria-describedby="form-status"</code> pointing at an element that didn't exist, and failed submits changed nothing visible or audible — the user just got teleported to a random field.</p>
+  <p><strong>Fix:</strong> a real <code>#form-status</code> live region (one announcement per state change, not per keystroke), per-field error <code>&lt;p&gt;</code> wired via <code>aria-describedby</code>, <code>aria-invalid</code> toggling, and focus moved to the first invalid field. <strong>Expected result:</strong> on submit, SR users hear "Please fix the form: …"; when tabbing into an invalid field they hear its specific error. Keyboard users see inline errors.</p>
+
+  <h3>A4 — Preloader spammed assistive tech every frame <span class="badge b-high">High</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p><strong>Was:</strong> <code>role="status" aria-live="polite"</code> on a container re-rendering at 60fps — a screen reader would queue ~90 step-text announcements during the 1.5s boot.</p>
+  <p><strong>Fix:</strong> the veil is now <code>aria-hidden</code>; a single sr-only status announces once on completion ("Experience ready"). <strong>Expected result:</strong> exactly one meaningful announcement instead of a flood.</p>
+
+  <h3>A5 — Tablist unusable by keyboard <span class="badge b-high">High</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p><strong>Was:</strong> the Stack section exposed <code>role="tablist"</code> with no arrow-key handling and no roving tabindex — keyboard users had to Tab through every hidden tab and the widget contradicted the WAI-ARIA tabs pattern.</p>
+  <p><strong>Fix (<code>Stack.jsx</code>):</strong> ←/→ moves between categories (wrapping), Home/End jump to the ends, roving <code>tabIndex</code>, focus follows activation. <strong>Expected result:</strong> the tab widget behaves exactly as screen-reader users expect; Tab enters/exits the group as a single stop.</p>
+
+  <h3>A6 — Section landmarks had no accessible names <span class="badge b-med">Medium</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p>Five <code>&lt;section&gt;</code> landmarks (Work, About, Stack, Playroom, Contact) were unnamed — the SR rotor listed them as "region" ×5. Added <code>aria-labelledby</code> pointing at each heading. <strong>Expected result:</strong> landmark navigation reads "Selected Work", "Crafting Digital Frontiers", etc.</p>
+
+  <h3>A7 — Reduced-motion ignored by CSS smooth scroll <span class="badge b-med">Medium</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p><code>html { scroll-behavior: smooth }</code> overrode the user's <code>prefers-reduced-motion</code> preference for anchor jumps (the JS smooth-scroller already respected it). Fixed inside the reduced-motion block. <strong>Expected result:</strong> no unwanted scroll animation for vestibular-sensitive users.</p>
+
+  <h3>A8 — 404 page outside the main landmark <span class="badge b-med">Medium</span> <span class="badge s-fixed">Fixed</span></h3>
+  <p>The catch-all route rendered <code>&lt;NotFound /&gt;</code> with no <code>&lt;main&gt;</code>, so the skip link was dead there. Wrapped the route in <code>&lt;main id="main-content"&gt;</code>. <strong>Expected result:</strong> skip-link and landmark navigation behave identically on error pages.</p>
+
+  <h3>A9 — Game keyboard parity (verified, not a finding) <span class="badge b-info">Verified</span></h3>
+  <p>My first pass flagged match3 and launch as pointer-only. On full review that was <strong>wrong</strong>: <code>match3.js</code> moves a visible selection cursor with arrows and commits swaps with Enter/Space; <code>launch.js</code> adjusts angle/power with arrows and fires with Space — both with listeners correctly added in <code>start()</code> and removed in <code>stop()</code>, following the same pattern as snake/breakout/racer. All five games are keyboard-playable. The only defect was the marketing copy: the card descriptions advertised click-only controls, now fixed to document both input methods.</p>
+
+  <h3>A10 — Already solid <span class="badge b-info">Info</span></h3>
+  <ul class="tight">
+    <li>Skip link, systematic <code>:focus-visible</code> ring, game-overlay focus trap with Esc + focus restore.</li>
+    <li><code>prefers-reduced-motion</code> honored across GSAP timelines, React hooks, and CSS (animations neutralized, hover/focus feedback preserved).</li>
+    <li>44px minimum touch targets on coarse pointers; 16px input font-size (no iOS zoom-on-focus).</li>
+    <li>Real alt text on project thumbnails; every decorative layer (canvas, glow, grain, sheen) is <code>aria-hidden</code>; filters expose <code>aria-pressed</code>; inactive 3D labels carry <code>tabIndex={-1}</code>.</li>
+    <li>Responsive system is sound: <code>svh</code> units, collapsing grids, <code>px-6</code> gutters, <code>grid-flow-dense</code> bento layouts at every breakpoint.</li>
+  </ul>
+
+  <h2>3 · Files changed</h2>
+  <table>
+    <tr><th>File</th><th>Change</th></tr>
+    <tr><td><code>netlify.toml</code></td><td>Full header set: CSP (hashed JSON-LD, frame-ancestors, object-src, base-uri, form-action <code>'self' mailto:</code>), HSTS, COOP, CORP, X-Permitted-Cross-Domain-Policies; extended Permissions-Policy; Node 20 → 22.</td></tr>
+    <tr><td><code>index.html</code></td><td>Removed inline <code>onload</code> handler and the broken Google Fonts links; added canonical + meta-CSP mirror (works on hosts that can't set headers); absolute og/JSON-LD URLs.</td></tr>
+    <tr><td><code>src/components/Contact.jsx</code></td><td>Textarea label; live-region form status; per-field errors with aria-invalid/describedby; maxLength caps; serverless mailto handoff (composed, URL-encoded, state-before-navigation).</td></tr>
+    <tr><td><code>src/components/Preloader.jsx</code></td><td>Decorative veil is aria-hidden; single sr-only completion status.</td></tr>
+    <tr><td><code>src/components/Stack.jsx</code></td><td>WAI-ARIA tab keyboard navigation (arrows/Home/End, roving tabindex); section aria-labelledby; h4 → h3 heading order.</td></tr>
+    <tr><td><code>src/components/Games.jsx</code> · <code>About.jsx</code></td><td>Section landmarks named via aria-labelledby + heading ids; game cards use <code>&lt;div&gt;</code> (role=button on <code>&lt;article&gt;</code> was an axe violation); About timeline h4 → h3; card descriptions now document keyboard controls.</td></tr>
+    <tr><td><code>src/App.jsx</code></td><td>404 route wrapped in <code>&lt;main id="main-content"&gt;</code>.</td></tr>
+    <tr><td><code>tailwind.css</code></td><td>body-sm + placeholder + <code>.text-label</code> contrast raised to AA; <code>scroll-behavior: auto</code> under reduced-motion; Tailwind v4 entry (<code>@import "tailwindcss"</code> + <code>@config</code>).</td></tr>
+    <tr><td>8 components</td><td><code>text-zinc-600</code> and <code>text-zinc-500</code> small text → <code>text-zinc-400</code> (≈7.7:1).</td></tr>
+    <tr><td><code>postcss.config.js</code></td><td>Tailwind v4: <code>@tailwindcss/postcss</code> replaces tailwindcss + autoprefixer.</td></tr>
+    <tr><td><code>vite.config.js</code></td><td>Vite 8; manualChunks vendor split (three / react / motion / icons); chunkSizeWarningLimit documented.</td></tr>
+    <tr><td><code>package.json</code> · <code>package-lock.json</code></td><td>Removed unused <code>serve</code>; Tailwind v4 + Vite 8 + plugin-react 5; added <code>@axe-core/playwright</code>; scripts <code>smoke</code> + <code>a11y</code>.</td></tr>
+    <tr><td><code>src/data/projects.js</code></td><td>Now a true JSON re-export (was a hand-maintained copy that drifted).</td></tr>
+    <tr><td><code>src/assets/fonts/</code> · <code>public/img/projects/</code> · <code>projects.json</code></td><td>Self-hosted Satoshi + JetBrains Mono woff2; vendored project thumbnails.</td></tr>
+    <tr><td><code>scripts/</code> (new)</td><td><code>csp-hashes.mjs</code> · <code>vendor-fonts.mjs</code> · <code>serve-dist.mjs</code> · <code>smoke-check.mjs</code> · <code>a11y-check.mjs</code> — CSP hash regeneration, font re-vendoring, shared preview server, runtime smoke check, axe gate.</td></tr>
+    <tr><td><code>.github/workflows/ci.yml</code> (new)</td><td>CI: audit gate (high+), tests, build, smoke check, axe gate on every push/PR.</td></tr>
+  </table>
+
+  <h2>4 · Verification</h2>
+  <table>
+    <tr><th>Check</th><th>Result</th></tr>
+    <tr><td><code>npm audit</code></td><td><strong>0 vulnerabilities</strong> (was 14, 11 high). Gate: <code>npm audit --audit-level=high</code> in CI.</td></tr>
+    <tr><td><code>npm test</code></td><td><strong>35/35 pass</strong> (was 24/25 before deps were installed).</td></tr>
+    <tr><td><code>npm run build</code></td><td><strong>Success</strong>, ~11s (was ~29s). Main chunk 1,120 kB → <strong>141 kB</strong>; three.js isolated to a 514 kB vendor chunk (128 kB gzip, cached independently).</td></tr>
+    <tr><td><code>npm run smoke</code> (new)</td><td><strong>Pass</strong>: built site loads in headless Chromium — no console/page errors, no failed requests, Satoshi applied, all 3 local images complete, all sections present, skip link present, game overlay opens, <code>#contact</code> deep link scrolls into view.</td></tr>
+    <tr><td><code>npm run a11y</code> (new)</td><td><strong>Pass — 0 axe violations</strong> across home, game overlay, and 404 (WCAG 2.0/2.1 A+AA + best-practice rules).</td></tr>
+    <tr><td>CSP hash parity</td><td><code>csp-hashes.mjs</code> output identical for source and <code>dist/</code>; built HTML contains no inline scripts beyond the two hashed JSON-LD blocks.</td></tr>
+  </table>
+
+  <h2>5 · Second pass — everything resolved</h2>
+  <p>All six remaining items from the first pass are complete and verified:</p>
+  <table>
+    <tr><th>#</th><th>Item</th><th>Outcome</th></tr>
+    <tr><td>1</td><td>Real form backend</td><td><strong>Done — mailto handoff.</strong> Deliberately serverless: no Netlify credits required, works on any host. Validated fields compose a URL-encoded mailto; the live region announces each step.</td></tr>
+    <tr><td>2</td><td>Tailwind v4 + Vite 6/7</td><td><strong>Done.</strong> Tailwind <code>^4.3.3</code> (legacy config kept via <code>@config</code>), Vite <code>^8.3.4</code> (Rolldown), plugin-react 5. Audit → 0.</td></tr>
+    <tr><td>3</td><td>Keyboard parity for games</td><td><strong>Verified, not needed.</strong> match3/launch already had full keyboard control — see A9. Card copy updated.</td></tr>
+    <tr><td>4</td><td>Self-host fonts, vendor thumbnails</td><td><strong>Done.</strong> Zero third-party origins; CSP tightened to match; fixed the silently-broken Google Fonts request.</td></tr>
+    <tr><td>5</td><td>CI: audit + a11y gates</td><td><strong>Done.</strong> GitHub Actions workflow runs audit, tests, build, smoke, and axe on every push/PR.</td></tr>
+    <tr><td>6</td><td>Bundle split</td><td><strong>Done.</strong> Main chunk 1,120 → 141 kB; vendors split and independently cacheable.</td></tr>
+  </table>
+
+  <h3>Optional follow-ups (not defects)</h3>
+  <ul class="tight">
+    <li>Consider lazy-loading three.js so the hero paints before the 3D backdrop downloads (currently it loads eagerly).</li>
+    <li>If the site ever moves to a host with form support, the mailto path can be swapped for a real POST — the validation, live region, and length caps are already in place.</li>
+  </ul>
+
+  <div class="foot">
+    Playground portfolio audit · October 12, 2026 · Method: static review of all 30 source files + configs, dependency audit, production build verification, runtime smoke + axe checks in headless Chromium, and contrast math per WCAG 2.x. Fixes applied in the working tree; see "Files changed" above.
+  </div>
+
+</div>
+</body>
+</html>

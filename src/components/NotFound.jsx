@@ -77,19 +77,19 @@ export default function NotFound() {
         </motion.div>
 
         <motion.div
-          className="mt-16 flex items-center justify-center gap-8 opacity-60"
+          className="mt-16 flex items-center justify-center gap-8"
           variants={itemVariants}
           initial="hidden"
           animate="visible"
           transition={{ delay: 0.4 }}
         >
-          <Link to="/" className="flex items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-white">
+          <Link to="/" className="flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-white">
             <Compass size={16} weight="bold" /> Explore
           </Link>
-          <Link to="/#projects" className="flex items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-white">
+          <Link to="/#projects" className="flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-white">
             <Sparkle size={16} weight="bold" /> Projects
           </Link>
-          <Link to="/#contact" className="flex items-center gap-2 text-sm text-zinc-500 transition-colors hover:text-white">
+          <Link to="/#contact" className="flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-white">
             <MagnifyingGlass size={16} weight="bold" /> Contact
           </Link>
         </motion.div>

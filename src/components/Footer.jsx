@@ -42,7 +42,7 @@ export default function Footer() {
                   key={`${pass}-${item}`}
                   className="flex items-center gap-10"
                 >
-                  <span className="font-mono text-xs uppercase tracking-[0.28em] text-zinc-600">
+                  <span className="font-mono text-xs uppercase tracking-[0.28em] text-zinc-400">
                     {item}
                   </span>
                   <span className="h-1 w-1 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" />
@@ -64,12 +64,12 @@ export default function Footer() {
                 <span className="text-lg font-black tracking-tight">
                   Lenovo Beast
                 </span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+                <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
                   Senior Game Dev & Web Engineer
                 </span>
               </span>
             </div>
-            <p className="max-w-md text-sm leading-relaxed text-zinc-500">
+            <p className="max-w-md text-sm leading-relaxed text-zinc-400">
               Architecting high-performance engines, immersive web experiences,
               and developer tooling that makes building complex things feel
               simple.
@@ -86,7 +86,7 @@ export default function Footer() {
 
           <div className="grid grid-cols-2 gap-8">
             <div>
-              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-600">
+              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
                 Navigate
               </p>
               <ul className="space-y-2.5">
@@ -111,7 +111,7 @@ export default function Footer() {
             </div>
 
             <div>
-              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-600">
+              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
                 Elsewhere
               </p>
               <ul className="space-y-2.5">
@@ -142,7 +142,7 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col gap-6 border-t border-white/8 py-8 md:flex-row md:items-center md:justify-between">
-          <p className="font-mono text-xs text-zinc-600">
+          <p className="font-mono text-xs text-zinc-400">
             © {currentYear} Lenovo Beast. Built with React, GSAP, and precision.
           </p>
 
@@ -197,7 +197,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-white/5 py-6 text-center text-xs text-zinc-600 md:flex-row md:justify-between md:text-left">
+        <div className="flex flex-col gap-3 border-t border-white/5 py-6 text-center text-xs text-zinc-400 md:flex-row md:justify-between md:text-left">
           <p>
             <a
               href="#main-content"

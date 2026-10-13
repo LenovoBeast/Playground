@@ -82,7 +82,7 @@ export default function Nav({ active }) {
             </span>
             <span className="hidden flex-col leading-none sm:flex">
               <span className="text-sm font-black tracking-tight">Lenovo Beast</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500">Game Dev & Web Engineer</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">Game Dev & Web Engineer</span>
             </span>
           </button>
 
@@ -177,10 +177,10 @@ export default function Nav({ active }) {
                       }`}
                     >
                       <span className="flex items-baseline gap-3">
-                        <span className="font-mono text-[10px] text-zinc-600">{section.index}</span>
+                        <span className="font-mono text-[10px] text-zinc-400">{section.index}</span>
                         <span className="text-lg font-bold tracking-tight">{section.label}</span>
                       </span>
-                      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">
                         {section.blurb}
                       </span>
                     </button>

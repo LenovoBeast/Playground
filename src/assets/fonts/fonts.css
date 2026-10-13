@@ -1,0 +1,45 @@
+/* Self-hosted fonts. Downloaded by scripts/vendor-fonts.mjs — rerun it if the
+   files need refreshing. Vite fingerprints these into /assets at build time,
+   so no runtime third-party requests are made. */
+
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./satoshi-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./satoshi-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./satoshi-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('./satoshi-900.woff2') format('woff2');
+}
+
+/* Google serves JetBrains Mono as a single variable-font file covering the
+   whole weight axis — one @font-face with a range replaces three. */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('./jetbrains-mono.woff2') format('woff2');
+}
