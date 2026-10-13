@@ -81,6 +81,14 @@ Deployed under base `/Playground/` (`vite.config.js`, `basename="/Playground"` i
   simulations (a tracking paddle wins Breakout; Launch finishes inside its shot budget).
   Add one of these when adding a game — Breakout shipped unwinnable because its top brick
   rows sat above the ceiling bounce, which no single-function test would have caught.
+- **In-game presentation: `src/games/gameArt.js`.** `createHudLayer` gives every game the same
+  chip HUD over its canvas (build it in `start()`, NOT at construction — `start()` calls `stop()`
+  for cleanup, which would destroy it). Textures are GENERATED to offscreen canvases (the CSP
+  forbids remote images and there are no binary assets); the 3D games wrap them in
+  `THREE.CanvasTexture` with `colorSpace = SRGBColorSpace`. Match-3 candies must keep one unique
+  SHAPE per colour (colour-blind readability) — `test/gameKit.test.js` enforces it.
+- This repo's files are CRLF: multi-line `sed`/node string replacement silently fails to match.
+  Use the Edit tool for multi-line changes.
 
 ## Build & tooling (post-migration)
 - Tailwind v4 via `@tailwindcss/postcss` (no autoprefixer); tailwind.css uses
