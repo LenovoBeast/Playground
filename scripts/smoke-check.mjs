@@ -19,6 +19,13 @@ try {
   await page.goto(base, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1200);
 
+  // The boot veil must lift on its own. It used to depend on setTimeout, which
+  // the 3D engine booting behind it could starve for seconds — leaving the
+  // shell inert and the visitor locked out.
+  await page
+    .waitForFunction(() => !document.querySelector('.boot-veil'), null, { timeout: 4000 })
+    .catch(() => problems.push('boot veil did not unmount within 4s'));
+
   const checks = await page.evaluate(() => ({
     title: document.title,
     h1: document.querySelector('h1')?.textContent?.trim() ?? null,
@@ -28,14 +35,21 @@ try {
     skipLink: Boolean(document.querySelector('.skip-link')),
   }));
 
-  // Deep-link check (SPA rewrite + scroll-to-section path). App.jsx waits ~900ms
-  // after boot before scrolling, so allow well over that.
+  // Deep-link check (SPA rewrite + scroll-to-section path). The app scrolls
+  // ~900 ms after the veil lifts and animates there, so wait for the outcome
+  // instead of a fixed sleep — a starved timer made the fixed wait flaky.
   await page.goto(`${base}#contact`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(2500);
-  const contactVisible = await page.evaluate(() => {
-    const el = document.getElementById('contact');
-    return el ? el.getBoundingClientRect().top < window.innerHeight : false;
-  });
+  const contactVisible = await page
+    .waitForFunction(
+      () => {
+        const el = document.getElementById('contact');
+        return el ? el.getBoundingClientRect().top < window.innerHeight : false;
+      },
+      null,
+      { timeout: 6000 }
+    )
+    .then(() => true)
+    .catch(() => false);
 
   // Contact form: validation gates, then the mailto handoff. Headless Chromium
   // has no mail handler, so the handoff destroys the execution context — we

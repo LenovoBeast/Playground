@@ -29,8 +29,9 @@ export default function Preloader({ onDone }) {
 
   useEffect(() => {
     const start = performance.now();
-    let settled = false;
     let raf = 0;
+    let readyAt = 0; // 0 = readiness still pending
+    let finished = false;
 
     let repeatVisit = false;
     try {
@@ -40,40 +41,49 @@ export default function Preloader({ onDone }) {
       // Private mode / storage disabled: treat as a first visit.
     }
 
-    const complete = () => {
-      if (settled) return;
-      settled = true;
-      cancelAnimationFrame(raf);
-      const elapsed = performance.now() - start;
-      const hold = repeatVisit ? 0 : Math.max(MIN_DISPLAY_MS - elapsed, 0);
-      setTimeout(() => {
-        setProgress(1);
-        setDone(true);
-        setTimeout(() => onDoneRef.current?.(), repeatVisit ? 0 : 700);
-      }, hold);
-    };
-
     // Readiness = fonts settled (the heaviest render-blocking asset) plus two
-    // painted frames, bounded by the ceiling so a hanging font can't trap
-    // anyone behind the veil.
+    // painted frames.
     const ready = Promise.all([
       document.fonts?.ready ?? Promise.resolve(),
       new Promise((resolve) =>
         requestAnimationFrame(() => requestAnimationFrame(resolve))
       ),
     ]);
-    const ceiling = setTimeout(complete, MAX_WAIT_MS);
-    ready.then(complete);
+    ready.then(() => {
+      if (!readyAt) readyAt = performance.now();
+    });
 
+    // Safety net only: if readiness never resolves (hung font), force the
+    // brand beat to end. Normal completion is driven by the rAF loop below,
+    // NOT by timers — the 3D engine booting behind this veil can starve
+    // setTimeout for seconds, which used to strand visitors behind the veil.
+    const ceiling = setTimeout(() => {
+      if (!readyAt) readyAt = performance.now();
+    }, MAX_WAIT_MS);
+
+    const beat = repeatVisit ? 0 : MIN_DISPLAY_MS;
     const tick = (now) => {
-      // Ease toward 90% while waiting; the last 10% lands on completion.
-      setProgress(Math.min(0.9, ((now - start) / MAX_WAIT_MS) * 0.9));
-      if (!settled) raf = requestAnimationFrame(tick);
+      const elapsed = now - start;
+      if (!readyAt) {
+        // Ease toward 90% while waiting; the last 10% lands on completion.
+        setProgress(Math.min(0.9, (elapsed / MAX_WAIT_MS) * 0.9));
+      } else {
+        const t = Math.min(1, (now - readyAt) / beat);
+        setProgress(0.9 + t * 0.1);
+        if (t >= 1 && !finished) {
+          finished = true;
+          setDone(true);
+          // Called straight from the frame callback: no trailing timer that
+          // main-thread contention could delay while the shell is inert.
+          onDoneRef.current?.();
+          return;
+        }
+      }
+      raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
 
     return () => {
-      settled = true;
       cancelAnimationFrame(raf);
       clearTimeout(ceiling);
     };

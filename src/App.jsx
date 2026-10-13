@@ -81,13 +81,15 @@ function App() {
   const [booting, setBooting] = useState(true);
   const { hash } = useLocation();
 
-  // Deep links like /#projects land on the right section after boot
+  // Deep links like /#projects land on the right section after boot. Wait for
+  // the veil to lift first: scrolling behind a full-screen overlay is wasted
+  // work, and the boot's frame loop was delaying the old eager timer.
   useEffect(() => {
-    if (!hash) return;
+    if (!hash || booting) return;
     const id = hash.replace('#', '');
     const t = setTimeout(() => scrollToSection(id), 900);
     return () => clearTimeout(t);
-  }, [hash]);
+  }, [hash, booting]);
 
   return (
     <div
@@ -102,9 +104,10 @@ function App() {
       <AnimatePresence>{booting && <Preloader onDone={() => setBooting(false)} />}</AnimatePresence>
 
       {/* Interactive 3D constellation behind every route. Isolated: a WebGL or
-          engine failure degrades to the static backdrop, never a white screen. */}
+          engine failure degrades to the static backdrop, never a white screen.
+          Boots only after the veil lifts so it can't starve first paint. */}
       <ErrorBoundary label="3D backdrop" fallback={<Quiet3DFallback />}>
-        <World activeId={active} />
+        <World activeId={active} enabled={!booting} />
       </ErrorBoundary>
       <div className="vignette" aria-hidden="true" />
       <CursorGlow />

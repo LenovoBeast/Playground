@@ -3,7 +3,7 @@ import { SECTIONS } from '../data/nav.js';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
 import { scrollToSection } from '../hooks/useActiveSection.js';
 
-export default function World({ activeId = '' }) {
+export default function World({ activeId = '', enabled = true }) {
   const canvasRef = useRef(null);
   const labelRefs = useRef({});
   const engineRef = useRef(null);
@@ -27,6 +27,9 @@ export default function World({ activeId = '' }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    // Wait for the boot veil to lift: three.js (514 kB) compiling shaders
+    // behind the veil starved the boot timers and delayed first interaction.
+    if (!enabled) return;
 
     // three.js is ~500 kB minified — the single heaviest dependency. It is
     // imported here instead of at module scope so it stays out of the entry
@@ -147,7 +150,7 @@ export default function World({ activeId = '' }) {
       engine?.dispose();
       engineRef.current = null;
     };
-  }, [nodes, reducedMotion]);
+  }, [nodes, reducedMotion, enabled]);
 
   useEffect(() => {
     engineRef.current?.setActive(activeId);
