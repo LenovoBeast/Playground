@@ -109,29 +109,26 @@ try {
   let bytefallStarted = false;
   let bytefallAnimated = false;
   let bytefallStatus = '';
+  let bytefallX = '';
   if (bytefallOpen) {
     bytefallStarted = await page
       .waitForFunction(() => /SCORE/.test(document.getElementById('bytefallScore')?.textContent ?? ''), null, { timeout: 8000 })
       .then(() => true)
       .catch(() => false);
 
-    const sample = () => page.evaluate(() => {
-      const canvas = document.getElementById('bytefallCanvas');
-      const ctx = canvas.getContext('2d');
-      const data = ctx.getImageData(0, 0, Math.min(canvas.width, 240), Math.min(canvas.height, 140)).data;
-      let hash = 0;
-      for (let i = 0; i < data.length; i += 61) hash = (hash * 31 + data[i]) >>> 0;
-      return hash;
-    });
-
-    const before = await sample();
+    // Assert the player actually advances: canvas pixels change for reasons
+    // other than input (resize, HUD clock), so read the engine's state mirror.
+    const readState = () => page.evaluate(() => document.getElementById('bytefallCanvas')?.dataset.bfState ?? '');
+    const before = await readState();
     await page.locator('#bytefallCanvas').focus();
     await page.keyboard.down('ArrowRight');
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(1400);
     await page.keyboard.up('ArrowRight');
-    const after = await sample();
-    bytefallAnimated = before !== after;
+    const after = await readState();
+    const xOf = (s) => Number((s.split('|')[3] ?? '0'));
+    bytefallAnimated = before !== '' && after !== '' && xOf(after) > xOf(before);
     bytefallStatus = (await page.locator('#bytefallStatus').textContent()) ?? '';
+    if (before) bytefallX = `${xOf(before).toFixed(2)} -> ${xOf(after).toFixed(2)}`;
   }
 
   await browser.close();
@@ -145,7 +142,7 @@ try {
   console.log('skip link:      ', checks.skipLink);
   console.log('game overlay:   ', overlayOpen ? 'opens' : 'FAILED');
   console.log('bytefall:       ', bytefallOpen
-    ? `opens · engine ${bytefallStarted ? 'started' : 'FAILED'} · ${bytefallAnimated ? 'animating on input' : 'FAILED to animate'}`
+    ? `opens · engine ${bytefallStarted ? 'started' : 'FAILED'} · ${bytefallAnimated ? `moves on input (x ${bytefallX})` : 'FAILED to move on input'}`
     : 'FAILED to open');
   console.log('#contact scroll:', contactVisible ? 'ok' : 'FAILED');
 
@@ -156,7 +153,7 @@ try {
   if (!overlayOpen) problems.push('game overlay did not open');
   if (!bytefallOpen) problems.push('bytefall overlay did not open');
   if (bytefallOpen && !bytefallStarted) problems.push('bytefall engine did not start on open');
-  if (bytefallOpen && !bytefallAnimated) problems.push('bytefall did not animate in response to input');
+  if (bytefallOpen && !bytefallAnimated) problems.push('bytefall player did not move when holding right');
   if (bytefallOpen && bytefallStatus.trim().length < 10) {
     problems.push(`bytefall status line looks empty: "${bytefallStatus}"`);
   }

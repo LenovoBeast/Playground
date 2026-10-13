@@ -143,6 +143,43 @@ export function createBytefall(canvas, scoreEl, statusEl) {
     canvas.width = Math.max(canvas.clientWidth, 1) * pixelRatio
     canvas.height = Math.max(canvas.clientHeight, 1) * pixelRatio
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+    buildSkyCache()
+  }
+
+  // The parallax skyline is static art: baking it once per resize turns ~1200
+  // fillRect calls per frame into two drawImage tiles.
+  const SKY_TILE = 1600
+  let skyCache = null
+
+  function buildSkyCache() {
+    if (typeof document === 'undefined') return
+    const height = Math.max(canvas.clientHeight, 1)
+    const make = (layer) => {
+      const tile = document.createElement('canvas')
+      tile.width = SKY_TILE
+      tile.height = height
+      const g = tile.getContext('2d')
+      const base = height - 34 - 6 + layer * 8
+      g.fillStyle = layer ? PALETTE.cityNear : PALETTE.cityFar
+      for (let i = 0; i * 58 < SKY_TILE; i++) {
+        const seed = Math.sin(i * 12.9898 + layer * 78.233) * 43758.5453
+        const h = 26 + (Math.abs(seed) % 1) * 64
+        const w = 26 + (Math.abs(seed * 1.7) % 1) * 34
+        const x = i * 58
+        g.fillRect(x, base - h, w, h)
+        if (layer) {
+          g.fillStyle = 'rgba(79,223,255,0.16)'
+          for (let wy = base - h + 8; wy < base - 6; wy += 12) {
+            for (let wx = x + 5; wx < x + w - 6; wx += 11) {
+              if (Math.abs(Math.sin(wx * 3.1 + wy * 1.7)) > 0.62) g.fillRect(wx, wy, 3, 4)
+            }
+          }
+          g.fillStyle = PALETTE.cityNear
+        }
+      }
+      return tile
+    }
+    skyCache = { far: make(0), near: make(1) }
   }
 
   function view() {
@@ -178,6 +215,15 @@ export function createBytefall(canvas, scoreEl, statusEl) {
   }
 
   function syncHud() {
+    // Compact state mirror for the smoke check and for debugging: the canvas
+    // pixels alone can't prove the player is actually moving.
+    canvas.dataset.bfState = [
+      state.score,
+      state.player.lives,
+      state.levelIndex + 1,
+      state.player.x.toFixed(2),
+      state.phase,
+    ].join('|')
     if (hud.score !== state.score) {
       hud.score = state.score
       scoreEl.textContent = `SCORE ${String(state.score).padStart(6, '0')} · BEST ${String(
@@ -204,29 +250,13 @@ export function createBytefall(canvas, scoreEl, statusEl) {
     context.fillStyle = gradient
     context.fillRect(0, 0, v.width, v.height)
 
-    // parallax skyline: two layers, offset by camera depth
-    const camX = state.camera.x
-    for (let layer = 0; layer < 2; layer++) {
-      const factor = layer ? 0.18 : 0.34
-      const offset = -camX * v.scale * factor
-      context.fillStyle = layer ? PALETTE.cityNear : PALETTE.cityFar
-      const base = v.groundY - 6 + layer * 8
-      for (let i = 0; i < 60; i++) {
-        const seed = Math.sin(i * 12.9898 + layer * 78.233) * 43758.5453
-        const h = 26 + (Math.abs(seed) % 1) * 64
-        const w = 26 + (Math.abs(seed * 1.7) % 1) * 34
-        const x = offset + i * 58
-        if (x > v.width || x + w < 0) continue
-        context.fillRect(x, base - h, w, h)
-        // lit windows give the silhouette some life
-        if (layer) {
-          context.fillStyle = 'rgba(79,223,255,0.16)'
-          for (let wy = base - h + 8; wy < base - 6; wy += 12) {
-            for (let wx = x + 5; wx < x + w - 6; wx += 11) {
-              if (Math.abs(Math.sin(wx * 3.1 + wy * 1.7)) > 0.62) context.fillRect(wx, wy, 3, 4)
-            }
-          }
-          context.fillStyle = PALETTE.cityNear
+    // parallax skyline from the cached tiles (rebuilt on resize)
+    if (skyCache) {
+      const camPx = state.camera.x * v.scale
+      for (const [layer, factor] of [[skyCache.far, 0.18], [skyCache.near, 0.34]]) {
+        const offset = -((camPx * factor) % SKY_TILE)
+        for (let x = offset - SKY_TILE; x < v.width; x += SKY_TILE) {
+          context.drawImage(layer, x, 0)
         }
       }
     }
@@ -235,7 +265,7 @@ export function createBytefall(canvas, scoreEl, statusEl) {
     context.strokeStyle = PALETTE.grid
     context.lineWidth = 1
     const step = v.scale
-    const gridOffset = -(camX * v.scale) % step
+    const gridOffset = -((state.camera.x * v.scale) % step)
     for (let x = gridOffset; x < v.width; x += step) {
       context.beginPath()
       context.moveTo(x, 0)

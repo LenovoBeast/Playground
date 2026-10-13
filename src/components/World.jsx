@@ -3,7 +3,7 @@ import { SECTIONS } from '../data/nav.js';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
 import { scrollToSection } from '../hooks/useActiveSection.js';
 
-export default function World({ activeId = '', enabled = true }) {
+export default function World({ activeId = '', enabled = true, paused = false }) {
   const canvasRef = useRef(null);
   const labelRefs = useRef({});
   const engineRef = useRef(null);
@@ -11,6 +11,9 @@ export default function World({ activeId = '', enabled = true }) {
   // paintLabels reads this inside a rAF loop; a ref keeps the loop stable
   // without re-creating the engine when interactivity toggles on scroll.
   const interactiveRef = useRef(true);
+  // Paused while a game overlay is open: the constellation is invisible behind
+  // the modal, and letting it render costs the game most of the frame budget.
+  const pausedRef = useRef(paused);
   const [hovered, setHovered] = useState(null);
   const [ready, setReady] = useState(false);
   const reducedMotion = useReducedMotion();
@@ -18,6 +21,10 @@ export default function World({ activeId = '', enabled = true }) {
   useEffect(() => {
     interactiveRef.current = interactive;
   }, [interactive]);
+
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
 
   const nodes = useMemo(
     () => SECTIONS.map((s) => ({ id: s.id, color: s.color })),
@@ -80,6 +87,12 @@ export default function World({ activeId = '', enabled = true }) {
 
       const frame = (now) => {
         if (!running) return;
+        if (pausedRef.current) {
+          // Yield the frame entirely — no simulation, no label writes.
+          last = now;
+          raf = requestAnimationFrame(frame);
+          return;
+        }
         const dt = Math.min((now - last) / 1000, 0.05);
         last = now;
         const doc = document.documentElement;

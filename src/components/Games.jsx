@@ -70,7 +70,10 @@ function GameOverlay({ name, title, desc, accent, controls, open, status, error,
       role="dialog"
       aria-modal="true"
       aria-label={`${title} game overlay`}
-      className={`game-overlay fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-md ${open ? 'active' : ''}`}
+      // No backdrop-blur here on purpose: blurring the full viewport behind the
+      // cabinet measured 3x slower frames (8fps vs 23fps under software
+      // rendering) and the games need that budget. A heavier dim reads the same.
+      className={`game-overlay fixed inset-0 z-50 hidden items-center justify-center bg-black/88 ${open ? 'active' : ''}`}
       onKeyDown={handleKeyDown}
     >
       {/* Scrollable on short screens: the cabinet is taller than a phone
@@ -378,7 +381,7 @@ function Playroom({ onOpen }) {
   );
 }
 
-export default function Games() {
+export default function Games({ onOverlayChange }) {
   const [openGame, setOpenGame] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | loading | playing | error
   const [error, setError] = useState(null);
@@ -440,6 +443,11 @@ export default function Games() {
   }, []);
 
   useEffect(() => () => session.current.close(), []);
+  // Tell the app when a cabinet is open so the 3D backdrop can stand down and
+  // give the game the whole frame budget.
+  useEffect(() => {
+    onOverlayChange?.(Boolean(openGame));
+  }, [openGame, onOverlayChange]);
   useEffect(() => {
     if (!openGame) return;
     const previous = document.body.style.overflow;

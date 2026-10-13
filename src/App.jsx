@@ -79,6 +79,7 @@ function CursorGlow() {
 function App() {
   const [active] = useActiveSection(SECTION_IDS);
   const [booting, setBooting] = useState(true);
+  const [gameOpen, setGameOpen] = useState(false);
   const { hash } = useLocation();
 
   // Deep links like /#projects land on the right section after boot. Wait for
@@ -107,7 +108,7 @@ function App() {
           engine failure degrades to the static backdrop, never a white screen.
           Boots only after the veil lifts so it can't starve first paint. */}
       <ErrorBoundary label="3D backdrop" fallback={<Quiet3DFallback />}>
-        <World activeId={active} enabled={!booting} />
+        <World activeId={active} enabled={!booting} paused={gameOpen} />
       </ErrorBoundary>
       <div className="vignette" aria-hidden="true" />
       <CursorGlow />
@@ -124,11 +125,11 @@ function App() {
               <>
                 <Hero />
                 <main id="main-content">
-                  <ProjectGrid />
-                  <About />
-                  <Stack />
-                  <Games />
-                  <Contact />
+                <ProjectGrid />
+                <About />
+                <Stack />
+                <Games onOverlayChange={setGameOpen} />
+                <Contact />
                 </main>
                 <Footer />
               </>
