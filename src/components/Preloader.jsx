@@ -10,9 +10,10 @@ const STEPS = [
 
 // The veil used to be a fixed 1500 ms + 700 ms timer — a hard tax on every
 // visit regardless of whether the app was ready in 300 ms. Now it tracks real
-// readiness (fonts + a painted frame), holds a short brand beat, and skips
-// itself entirely for repeat visits within the same session.
+// readiness, holds a short brand beat, and skips itself entirely for repeat
+// visits within the same session.
 const MIN_DISPLAY_MS = 400;
+const FONT_PATIENCE_MS = 600;
 const MAX_WAIT_MS = 2000;
 const SESSION_KEY = 'boot-veil-shown';
 
@@ -41,33 +42,28 @@ export default function Preloader({ onDone }) {
       // Private mode / storage disabled: treat as a first visit.
     }
 
-    // Readiness = fonts settled (the heaviest render-blocking asset) plus two
-    // painted frames.
-    const ready = Promise.all([
-      document.fonts?.ready ?? Promise.resolve(),
-      new Promise((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(resolve))
-      ),
-    ]);
-    ready.then(() => {
-      if (!readyAt) readyAt = performance.now();
+    // Readiness = page load + a painted frame. Fonts are waited for only
+    // briefly: `font-display: swap` means text paints immediately in the
+    // fallback face and swaps when the woff2 lands, and on a cold cache the
+    // full font wait held the veil for ~3 s. Everything runs on frames, not
+    // timers — the 3D engine booting behind the veil starved setTimeout badly
+    // enough to strand visitors behind the inert shell.
+    let fontsReady = false;
+    document.fonts?.ready.then(() => {
+      fontsReady = true;
     });
 
-    // Safety net only: if readiness never resolves (hung font), force the
-    // brand beat to end. Normal completion is driven by the rAF loop below,
-    // NOT by timers — the 3D engine booting behind this veil can starve
-    // setTimeout for seconds, which used to strand visitors behind the veil.
-    const ceiling = setTimeout(() => {
-      if (!readyAt) readyAt = performance.now();
-    }, MAX_WAIT_MS);
+    let readyAt = 0; // frame at which readiness was established
+    let finished = false;
 
     const beat = repeatVisit ? 0 : MIN_DISPLAY_MS;
     const tick = (now) => {
       const elapsed = now - start;
-      if (!readyAt) {
+      if (!fontsReady && elapsed < FONT_PATIENCE_MS) {
         // Ease toward 90% while waiting; the last 10% lands on completion.
         setProgress(Math.min(0.9, (elapsed / MAX_WAIT_MS) * 0.9));
       } else {
+        if (!readyAt) readyAt = now;
         const t = Math.min(1, (now - readyAt) / beat);
         setProgress(0.9 + t * 0.1);
         if (t >= 1 && !finished) {
@@ -85,7 +81,6 @@ export default function Preloader({ onDone }) {
 
     return () => {
       cancelAnimationFrame(raf);
-      clearTimeout(ceiling);
     };
   }, []);
 
