@@ -116,7 +116,6 @@ export default function Hero() {
   const subtitleRef = useRef(null);
   const ctaRef = useRef(null);
   const visualRef = useRef(null);
-  const badgeRefs = useRef([]);
   const reducedMotion = useReducedMotion();
   const tilt = useTilt({ max: 9, scale: 1.02, lift: 24 });
 
@@ -141,11 +140,6 @@ export default function Hero() {
           visualRef.current,
           { y: 80, opacity: 0, rotateY: -12, duration: 1.3 },
           "-=1.1",
-        )
-        .from(
-          badgeRefs.current,
-          { y: 40, opacity: 0, scale: 0.9, stagger: 0.08, duration: 0.7 },
-          "-=0.8",
         );
 
       gsap.to([line1Ref.current, line2Ref.current], {
@@ -286,33 +280,6 @@ export default function Hero() {
                   <TerminalWindow3D />
                 </div>
                 <div className="tilt-sheen rounded-[1.5rem]" />
-                <div
-                  ref={(el) => {
-                    badgeRefs.current[0] = el;
-                  }}
-                  className="tilt-layer absolute -bottom-6 -right-4 grid h-24 w-24 place-items-center rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-2xl shadow-blue-500/30 md:h-28 md:w-28"
-                  style={{ transform: "translateZ(60px)" }}
-                >
-                  <span className="text-2xl font-black md:text-3xl">8+</span>
-                </div>
-                <div
-                  ref={(el) => {
-                    badgeRefs.current[1] = el;
-                  }}
-                  className="tilt-layer absolute -left-4 -top-6 grid h-20 w-20 place-items-center rounded-3xl bg-gradient-to-br from-cyan-500 to-blue-500 shadow-2xl shadow-cyan-500/30 md:h-24 md:w-24"
-                  style={{ transform: "translateZ(80px)" }}
-                >
-                  <span className="text-xl font-black md:text-2xl">47</span>
-                </div>
-                <div
-                  ref={(el) => {
-                    badgeRefs.current[2] = el;
-                  }}
-                  className="tilt-layer absolute -right-2 top-1/2 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-xl shadow-emerald-500/30"
-                  style={{ transform: "translateZ(45px)" }}
-                >
-                  <span className="text-sm font-black tracking-widest">AI</span>
-                </div>
               </div>
             </div>
           </div>
