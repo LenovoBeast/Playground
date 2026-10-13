@@ -70,7 +70,7 @@
 <h2>Implementation status</h2>
 <table>
   <tr><th>Item</th><th>Status</th><th>Evidence</th></tr>
-  <tr><td><strong>P0.1</strong> Contact email centralized</td><td><strong>Done</strong></td><td><code>src/data/contact.js</code>; 3 call sites converted; <code>test/contactData.test.js</code> blocks re-hardcoding</td></tr>
+  <tr><td><strong>P0.1</strong> Contact email centralized</td><td><strong>Done</strong></td><td><code>src/data/contact.js</code>; 3 call sites converted; <code>test/contactData.test.js</code> blocks re-hardcoding. The RFC-2606 placeholder value is retained by the owner's explicit decision (documented in the module header) — the centralization makes swapping it a one-line change whenever wanted.</td></tr>
   <tr><td><strong>P0.2</strong> Error boundaries</td><td><strong>Done</strong></td><td><code>ErrorBoundary.jsx</code> wraps routes + World (static aurora fallback) + Playroom (cards-below fallback)</td></tr>
   <tr><td><strong>P0.3</strong> three.js deferred</td><td><strong>Done</strong></td><td>Dynamic imports in World + Playroom; <code>gameSession.js</code> split out (three-free); vendor-three out of entry preloads; main chunk 141 → 130 kB</td></tr>
   <tr><td><strong>P0.4</strong> Readiness-gated preloader</td><td><strong>Done</strong></td><td>fonts.ready + 2 frames, 400 ms floor, 2 s ceiling, session skip, app shell <code>inert</code> while up</td></tr>

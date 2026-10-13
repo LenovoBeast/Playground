@@ -48,7 +48,8 @@ Deployed under base `/Playground/` (`vite.config.js`, `basename="/Playground"` i
   `mailto:lenovobeast@example.com` link; ALL state updates are queued BEFORE
   `window.location.href = mailto` because the external-protocol handoff can unload the
   document. `test/contactForm.test.js` guards composition, encoding, and that ordering.
-  Headless tests can't observe the mailto URL itself (no CDP visibility, context destroyed).
+  **The placeholder address is retained by owner's explicit choice (2026-10-13) — do not
+  invent a replacement.** Single constant in `src/data/contact.js`.
 - Text contrast: site-wide AA baseline is zinc-400 (#a1a1aa ≈ 7.7:1 on #030712). Do not
   reintroduce text-zinc-600 (≈2.6:1) or zinc-500 for small text (≈4.1:1). Placeholders are
   #a1a1aa. An axe gate (`npm run a11y`) enforces 0 violations.
