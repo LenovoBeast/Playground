@@ -54,6 +54,23 @@ Deployed under base `/Playground/` (`vite.config.js`, `basename="/Playground"` i
   reintroduce text-zinc-600 (≈2.6:1) or zinc-500 for small text (≈4.1:1). Placeholders are
   #a1a1aa. An axe gate (`npm run a11y`) enforces 0 violations.
 
+## Games (src/components/Games.jsx + src/games/)
+- Six games. **Bytefall** is the flagship: original platformer (Bit the cube-bot vs
+  glitch-mites) — pure rules in `bytefallLogic.js`, canvas engine in `bytefall.js`. It is an
+  ORIGINAL work in the platformer genre; do NOT add third-party characters/art/music (the
+  owner asked for "Super Mario" and was offered this instead — Nintendo IP is off limits).
+- Contract for every game: `createX(canvas, scoreEl, statusEl) → { start, stop }`, lazy-loaded
+  via a loader entry in `src/games/gameSession.js` whose element ids must match the overlay's
+  template ids (`${name}Canvas|Score|Status`). `test/games.test.js` parses the catalogue from
+  source and cross-checks all of this — add the catalogue entry and the loader together.
+- The catalogue entry carries `span` (bento width), `badge`, and `controls`; one `GameCard`
+  renders them all. Opening a card AUTO-STARTS the engine (no second click) and the Play button
+  becomes Restart. The status line is a `role="status"` live region.
+- Engines may expose `canvas.dataset.bfState` (score|lives|level|x|phase) — the smoke check
+  reads it to prove the player actually moves; canvas pixel hashes are unreliable there.
+- Perf invariants: the game cabinet must NOT use backdrop-blur (measured 11 vs 24 fps), and
+  `World` receives `paused` while a cabinet is open so the 3D backdrop stops competing.
+
 ## Build & tooling (post-migration)
 - Tailwind v4 via `@tailwindcss/postcss` (no autoprefixer); tailwind.css uses
   `@import "tailwindcss"; @config "./tailwind.config.js"` — legacy config still drives fontFamily
