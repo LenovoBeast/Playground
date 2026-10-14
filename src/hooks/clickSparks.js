@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 // Decorative only, so it is skipped entirely for reduced motion and on
 // hover-less (touch) devices. The layer is created on demand and removed on
 // cleanup, which keeps it out of the React tree and out of the SSR path.
-const SPARK_COUNT = 6;
+const SPARK_COUNT = 8;
 
 export function useClickSparks() {
   useEffect(() => {
@@ -22,7 +22,7 @@ export function useClickSparks() {
         const spark = document.createElement('span');
         spark.className = 'click-spark';
         const angle = (Math.PI * 2 * i) / SPARK_COUNT + Math.random() * 0.6;
-        const distance = 18 + Math.random() * 16;
+        const distance = 14 + Math.random() * 16;
         spark.style.left = `${e.clientX}px`;
         spark.style.top = `${e.clientY}px`;
         spark.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);

@@ -227,9 +227,9 @@ export default function Hero() {
       // `transform` (and pins `translate: none`) on these buttons for the
       // entrance animation, so a CSS-class transform would be overwritten.
       // quickTo reuses one tween per axis, which keeps pointermove cheap.
-      const xTo = gsap.quickTo(el, "x", { duration: 0.4, ease: "power3.out" });
-      const yTo = gsap.quickTo(el, "y", { duration: 0.4, ease: "power3.out" });
-      const clamp = gsap.utils.clamp(-5, 5);
+      const xTo = gsap.quickTo(el, "x", { duration: 0.3, ease: "power2.out" });
+      const yTo = gsap.quickTo(el, "y", { duration: 0.3, ease: "power2.out" });
+      const clamp = gsap.utils.clamp(-7, 7);
 
       const onMove = (e) => {
         const rect = el.getBoundingClientRect();
@@ -237,9 +237,10 @@ export default function Hero() {
         const y = e.clientY - rect.top - rect.height / 2;
         el.style.setProperty("--mx", x + "px");
         el.style.setProperty("--my", y + "px");
-        // Clamped hard so it reads as a nudge, not the button running away.
-        xTo(clamp(x * 0.16));
-        yTo(clamp(y * 0.16));
+        // A touch more travel than before so the pull reads as intentional,
+        // still clamped so it stays a nudge and never makes the button flee.
+        xTo(clamp(x * 0.2));
+        yTo(clamp(y * 0.2));
       };
       const onLeave = () => {
         xTo(0);

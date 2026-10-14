@@ -53,7 +53,7 @@ export function useSmoothScroll() {
 
     const lenis = new Lenis({
       autoRaf: false,
-      duration: 1,
+      duration: 1.1,
       smoothWheel: true,
     });
     instance = lenis;

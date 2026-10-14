@@ -471,7 +471,7 @@ body {
 .reveal-stagger > * {
   opacity: 0;
   transform: translateY(28px);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .reveal-stagger.revealed > * {
@@ -637,12 +637,12 @@ body {
 
 .click-spark {
   position: absolute;
-  width: 5px;
-  height: 5px;
-  margin: -2.5px 0 0 -2.5px;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
   border-radius: 9999px;
   background: linear-gradient(135deg, #60a5fa, #818cf8);
-  animation: click-spark 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: click-spark 480ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes click-spark {
