@@ -677,7 +677,7 @@ body {
     var(--focus-glow, rgba(59, 130, 246, 0.35)) 100%
   );
   filter: blur(50px);
-  animation: focusAmbientSpin 24s linear infinite;
+  animation: focusAmbientSpin 30s linear infinite, focusAmbientBreathe 6.5s ease-in-out infinite;
   opacity: 0.7;
   pointer-events: none;
   mask-image: radial-gradient(circle at center, #000 0%, transparent 65%);
@@ -686,6 +686,12 @@ body {
 
 @keyframes focusAmbientSpin {
   to { transform: rotate(360deg); }
+}
+
+/* Soft breathing pulse so the panel feels alive but calm. */
+@keyframes focusAmbientBreathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
 }
 
 .focus-sheen {
@@ -729,6 +735,7 @@ body {
 .focus-pill.is-active {
   color: #fff;
   border-color: transparent;
+  transform: scale(1.04);
 }
 
 .focus-pill-label {
