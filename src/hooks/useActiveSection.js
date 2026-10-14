@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { subscribeScroll } from './scrollSignal.js'
+import { getLenis } from './smoothScroll.js'
 
 // Returns the id of the section currently occupying the reader's attention.
 // Used by the sticky header for scroll-spy and by the 3D constellation to
@@ -36,10 +37,18 @@ export function useActiveSection(ids) {
 }
 
 // Smooth, easing-aware scroll that accounts for the sticky header height.
+// Prefers Lenis when it is running so in-page navigation matches the page's own
+// scroll feel; falls back to native scrolling otherwise (and under reduced
+// motion, where Lenis is never created).
 export function scrollToSection(id) {
   const el = document.getElementById(id)
   if (!el) return
   const offset = window.innerWidth < 768 ? 72 : 92
+  const lenis = getLenis()
+  if (lenis) {
+    lenis.scrollTo(el, { offset: -offset, duration: 1.1 })
+    return
+  }
   const top = el.getBoundingClientRect().top + window.scrollY - offset
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   window.scrollTo({ top: Math.max(top, 0), behavior: reduced ? 'auto' : 'smooth' })

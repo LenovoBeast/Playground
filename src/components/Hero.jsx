@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
 import {
   ArrowRight,
   GithubLogo,
@@ -13,7 +14,7 @@ import { useReducedMotion } from "../hooks/useReducedMotion.js";
 import { useTilt } from "../hooks/useTilt.js";
 import { scrollToSection } from "../hooks/useActiveSection.js";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
 const iconMap = {
   cpu: <Cpu size={18} weight="bold" />,
@@ -121,24 +122,66 @@ export default function Hero() {
 
   useEffect(() => {
     if (reducedMotion) return;
+    const splits = [];
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
+      // Headline line 1: per-character reveal (GSAP SplitText, free since 3.13).
+      // autoSplit re-splits once the self-hosted fonts swap in, so the stagger
+      // always matches the final metrics instead of the fallback font's.
+      // aria:"hidden" marks the split spans aria-hidden; the <h1> carries the
+      // accessible name (aria-label), which is what axe and screen readers use.
+      //
+      // Only the plain line is split: SplitText nests `position: relative`
+      // wrappers, which stops the gradient line's `background-clip: text` from
+      // reaching its glyphs (it renders as a blob). The gradient line is
+      // revealed whole instead, via a clip-path mask that leaves it untouched.
+      if (line1Ref.current) {
+        splits.push(
+          SplitText.create(line1Ref.current, {
+            type: "chars,words",
+            autoSplit: true,
+            aria: "hidden",
+            onSplit: (self) =>
+              gsap.from(self.chars, {
+                yPercent: 115,
+                opacity: 0,
+                duration: 0.8,
+                ease: "expo.out",
+                stagger: { each: 0.02, from: "start" },
+              }),
+          }),
+        );
+      }
 
-      tl.from(line1Ref.current, { y: 60, opacity: 0, duration: 1.1 })
-        .from(line2Ref.current, { y: 60, opacity: 0, duration: 1.1 }, "-=0.8")
-        .from(
-          subtitleRef.current,
-          { y: 30, opacity: 0, duration: 0.9 },
+      gsap.from(line2Ref.current, {
+        clipPath: "inset(0% 0% 100% 0%)",
+        yPercent: 26,
+        duration: 0.9,
+        ease: "expo.out",
+        delay: 0.1,
+      });
+
+      // The rest of the column follows the headline. fromTo (not from): the
+      // explicit end state means a tween can never inherit a stale "current"
+      // value as its destination if the effect re-runs mid-flight. Timings are
+      // deliberately tight so the hero is fully opaque inside ~1s — long fades
+      // leave the audit (and the reader) looking at half-transparent text.
+      const tl = gsap.timeline({ defaults: { ease: "expo.out" }, delay: 0.12 });
+
+      tl.fromTo(
+        subtitleRef.current,
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6 },
+      )
+        .fromTo(
+          ctaRef.current?.children || [],
+          { y: 28, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.6, stagger: 0.07 },
           "-=0.6",
         )
-        .from(
-          ctaRef.current?.children || [],
-          { y: 28, opacity: 0, duration: 0.8, stagger: 0.09 },
-          "-=0.5",
-        )
-        .from(
+        .fromTo(
           visualRef.current,
-          { y: 80, opacity: 0, rotateY: -12, duration: 1.3 },
+          { y: 80, opacity: 0, rotateY: -12 },
+          { y: 0, opacity: 1, rotateY: 0, duration: 0.9 },
           "-=1.1",
         );
 
@@ -167,23 +210,52 @@ export default function Hero() {
       });
     }, heroRef);
 
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      // SplitText mutates the DOM, which gsap.context does not undo.
+      splits.forEach((split) => split.revert());
+    };
   }, [reducedMotion]);
 
   useEffect(() => {
     if (reducedMotion) return;
-    const ctas = ctaRef.current?.querySelectorAll("button, a") ?? [];
+    const ctas = Array.from(ctaRef.current?.querySelectorAll("button, a") ?? []);
+    const handlers = [];
+
     ctas.forEach((el) => {
-      el.addEventListener("pointermove", (e) => {
+      // Magnetic pull, driven through GSAP rather than CSS: GSAP owns an inline
+      // `transform` (and pins `translate: none`) on these buttons for the
+      // entrance animation, so a CSS-class transform would be overwritten.
+      // quickTo reuses one tween per axis, which keeps pointermove cheap.
+      const xTo = gsap.quickTo(el, "x", { duration: 0.4, ease: "power3.out" });
+      const yTo = gsap.quickTo(el, "y", { duration: 0.4, ease: "power3.out" });
+      const clamp = gsap.utils.clamp(-5, 5);
+
+      const onMove = (e) => {
         const rect = el.getBoundingClientRect();
         const x = e.clientX - rect.left - rect.width / 2;
         const y = e.clientY - rect.top - rect.height / 2;
         el.style.setProperty("--mx", x + "px");
         el.style.setProperty("--my", y + "px");
-      });
+        // Clamped hard so it reads as a nudge, not the button running away.
+        xTo(clamp(x * 0.16));
+        yTo(clamp(y * 0.16));
+      };
+      const onLeave = () => {
+        xTo(0);
+        yTo(0);
+      };
+
+      el.addEventListener("pointermove", onMove);
+      el.addEventListener("pointerleave", onLeave);
+      handlers.push([el, onMove, onLeave]);
     });
+
     return () => {
-      ctas.forEach((el) => el.removeEventListener("pointermove", () => {}));
+      handlers.forEach(([el, onMove, onLeave]) => {
+        el.removeEventListener("pointermove", onMove);
+        el.removeEventListener("pointerleave", onLeave);
+      });
     };
   }, [reducedMotion]);
 
@@ -194,13 +266,17 @@ export default function Hero() {
       id="hero"
       className="relative flex min-h-screen items-center px-6 pb-24 pt-32 md:pb-28"
       style={{ minHeight: "100svh" }}
-      aria-labelledby="hero-title"
+      // Named explicitly rather than via the h1: the About section's heading
+      // repeats the same tagline, and two regions sharing a name fails
+      // `landmark-unique`. "Introduction" also reads better in a landmark list.
+      aria-label="Introduction"
     >
       <div className="relative z-10 mx-auto w-full max-w-[1400px]">
         <div className="grid items-center gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
           <div className="space-y-10 lg:pt-8">
             <h1
               id="hero-title"
+              aria-label="Crafting Digital Frontiers"
               className="pointer-events-auto select-text space-y-4"
             >
               <span
@@ -244,7 +320,7 @@ export default function Hero() {
                 href="https://github.com/LenovoBeast"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="magnetic-btn active-press group pointer-events-auto flex items-center justify-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-8 py-4 text-lg font-bold backdrop-blur-xl transition-colors hover:bg-white/[0.07]"
+                className="magnetic-btn active-press group pointer-events-auto flex items-center justify-center gap-3 rounded-xl border border-white/8 bg-zinc-950/70 px-8 py-4 text-lg font-bold backdrop-blur-xl transition-colors hover:bg-white/[0.07]"
                 aria-label="View GitHub profile"
               >
                 <GithubLogo size={22} weight="bold" />

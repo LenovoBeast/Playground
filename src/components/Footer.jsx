@@ -7,6 +7,7 @@ import {
   ArrowUp,
 } from "@phosphor-icons/react";
 import { scrollToSection } from "../hooks/useActiveSection.js";
+import { scrollToTop } from "../hooks/smoothScroll.js";
 import { CONTACT_MAILTO } from "../data/contact.js";
 
 const MARQUEE = [
@@ -185,7 +186,7 @@ export default function Footer() {
 
             <button
               type="button"
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              onClick={scrollToTop}
               className="footer-icon group grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-white active-press"
               aria-label="Back to top"
             >

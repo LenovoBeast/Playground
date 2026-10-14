@@ -206,7 +206,7 @@ export default function Stack() {
                   type="button"
                   key={item.name}
                   onClick={() => setSelected(i)}
-                  className={`panel group relative p-5 text-left transition-all duration-300 hover:-translate-y-1 ${
+                  className={`panel spotlight group relative p-5 text-left transition-all duration-300 hover:-translate-y-1 ${
                     selected === i ? 'border-white/20' : ''
                   }`}
                   style={{ transitionDelay: `${i * 25}ms` }}
@@ -237,7 +237,7 @@ export default function Stack() {
                 href={`https://github.com/search?q=${tool}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-2 text-sm font-medium text-zinc-400 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:text-white active-press"
+                className="rounded-xl border border-white/8 bg-zinc-950/70 px-4 py-2 text-sm font-medium text-zinc-400 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:text-white active-press"
               >
                 {tool}
               </a>

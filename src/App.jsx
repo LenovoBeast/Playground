@@ -25,6 +25,9 @@ const Quiet3DFallback = () => (
 import { SECTION_IDS } from './data/nav.js';
 import { useActiveSection, scrollToSection } from './hooks/useActiveSection.js';
 import { useReducedMotion } from './hooks/useReducedMotion.js';
+import { useSpotlightTracking } from './hooks/spotlight.js';
+import { useClickSparks } from './hooks/clickSparks.js';
+import { useSmoothScroll } from './hooks/smoothScroll.js';
 import './index.css';
 
 // Pointer-tracking ambient light
@@ -81,6 +84,15 @@ function App() {
   const [booting, setBooting] = useState(true);
   const [gameOpen, setGameOpen] = useState(false);
   const { hash } = useLocation();
+
+  // Page-wide pointer effects: one delegated listener drives the spotlight on
+  // every `.spotlight` card, and clicks spawn a few sparks. Both are no-ops
+  // under reduced motion / on touch-only devices.
+  useSpotlightTracking();
+  useClickSparks();
+
+  // Lenis smooth scroll, bridged to ScrollTrigger. No-op under reduced motion.
+  useSmoothScroll();
 
   // Deep links like /#projects land on the right section after boot. Wait for
   // the veil to lift first: scrolling behind a full-screen overlay is wasted

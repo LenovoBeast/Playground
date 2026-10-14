@@ -5,6 +5,7 @@ import { SECTIONS } from '../data/nav.js';
 import { scrollToSection } from '../hooks/useActiveSection.js';
 import { subscribeScroll } from '../hooks/scrollSignal.js';
 import { useFocusTrap } from '../hooks/useFocusTrap.js';
+import { setScrollLocked, scrollToTop } from '../hooks/smoothScroll.js';
 
 export default function Nav({ active }) {
   const [open, setOpen] = useState(false);
@@ -38,7 +39,13 @@ export default function Nav({ active }) {
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    // Lenis scrolls the window directly, so the body lock alone would not stop
+    // the page scrolling behind the drawer.
+    setScrollLocked(open);
+    return () => {
+      document.body.style.overflow = '';
+      setScrollLocked(false);
+    };
   }, [open]);
 
   const go = (id) => {
@@ -59,7 +66,7 @@ export default function Nav({ active }) {
           {/* Monogram */}
           <button
             type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={scrollToTop}
             className="group flex items-center gap-3 active-press flex-shrink-0"
             aria-label="Back to top"
           >
@@ -83,7 +90,7 @@ export default function Nav({ active }) {
                   <button
                     type="button"
                     onClick={() => go(section.id)}
-                    data-active={active === section.id}
+                    data-active={active === section.id ? 'true' : undefined}
                     className="nav-link"
                   >
                     {section.label}
@@ -98,7 +105,7 @@ export default function Nav({ active }) {
               href="https://github.com/LenovoBeast"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-white active-press sm:flex"
+              className="hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-white active-press sm:flex"
               aria-label="GitHub profile"
             >
               <GithubLogo size={17} weight="bold" />
@@ -107,7 +114,7 @@ export default function Nav({ active }) {
             <button
               type="button"
               onClick={() => go('contact')}
-              className="magnetic-btn btn-sweep active-press relative hidden items-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500 sm:flex"
+              className="magnetic-btn btn-sweep active-press relative hidden items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500 sm:flex"
             >
               Start a project
               <ArrowUpRight size={16} weight="bold" />
@@ -116,7 +123,7 @@ export default function Nav({ active }) {
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-300 transition-colors hover:bg-white/[0.07] lg:hidden"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-zinc-300 transition-colors hover:bg-white/[0.07] lg:hidden"
               aria-expanded={open}
               aria-controls="mobile-drawer"
               aria-label={open ? 'Close menu' : 'Open menu'}
@@ -162,7 +169,7 @@ export default function Nav({ active }) {
                       data-active={active === section.id}
                       className={`flex w-full items-center justify-between rounded-xl px-4 py-4 text-left transition-colors ${
                         active === section.id
-                          ? 'bg-white/[0.07] text-white'
+                          ? 'bg-blue-500/15 text-white'
                           : 'text-zinc-400 hover:bg-white/[0.04] hover:text-white'
                       }`}
                     >
@@ -189,7 +196,7 @@ export default function Nav({ active }) {
                 <button
                   type="button"
                   onClick={() => go('hero')}
-                  className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-300 active-press"
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-zinc-300 active-press"
                   aria-label="Back to top"
                 >
                   <Compass size={18} weight="bold" />

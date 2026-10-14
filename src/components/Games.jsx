@@ -7,6 +7,7 @@ import { useReducedMotion } from '../hooks/useReducedMotion.js';
 // gameSession is three-free: keeping it out of the three import graph lets the
 // 514 kB vendor-three chunk load lazily with the 3D scenes that need it.
 import { createGameSession } from '../games/gameSession.js';
+import { setScrollLocked } from '../hooks/smoothScroll.js';
 import ErrorBoundary from './ErrorBoundary.jsx';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -78,7 +79,10 @@ function GameOverlay({ name, title, desc, accent, controls, open, status, error,
     >
       {/* Scrollable on short screens: the cabinet is taller than a phone
           viewport, and without this the Close button is unreachable. */}
-      <div className="panel relative mx-4 max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto p-6 md:p-8">
+      <div
+        className="panel relative mx-4 max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto p-6 md:p-8"
+        data-lenis-prevent
+      >
         <button
           onClick={onClose}
           className="close-btn absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
@@ -452,7 +456,13 @@ export default function Games({ onOverlayChange }) {
     if (!openGame) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previous; };
+    // Lenis scrolls the window directly, so the body lock alone would not stop
+    // it. Release the lock again when the cabinet closes.
+    setScrollLocked(true);
+    return () => {
+      document.body.style.overflow = previous;
+      setScrollLocked(false);
+    };
   }, [openGame]);
 
   return (

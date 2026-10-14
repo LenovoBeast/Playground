@@ -38,6 +38,27 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Lenis smooth scroll — the rules its docs require.
+   `scroll-behavior: auto` is essential: the html rule above would otherwise
+   fight Lenis' own interpolation. `[data-lenis-prevent]` marks nested scroll
+   areas (the game cabinet) that Lenis must not take over. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
 body {
   font-family: 'Satoshi', 'GT America', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--c-dark);
@@ -134,10 +155,15 @@ body {
    2. Surfaces
    ========================================================================== */
 
-/* Glass panel with proper fallbacks */
+/* Glass panel with proper fallbacks.
+   The dark scrim layer anchors text over the animated constellation canvas
+   (stars/nodes used to bleed through the 2.5% tint and wash out small text);
+   the faint white tint on top keeps the frosted read, blur() does the rest. */
 .panel {
   position: relative;
-  background: rgba(255, 255, 255, 0.025);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.025)),
+    linear-gradient(rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.72));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -253,52 +279,70 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  height: 4.5rem;
-  padding: 0 1.5rem;
+  height: 4.25rem;
+  padding: 0 1.25rem;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.03);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03)),
+    linear-gradient(rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.72));
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 40px -18px rgba(0, 0, 0, 0.6);
   transition: all 0.3s ease;
 }
 
 .nav-container:hover {
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 24px -16px rgba(59, 130, 246, 0.3);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 16px 48px -16px rgba(59, 130, 246, 0.35);
 }
 
 .nav-link {
   position: relative;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.9375rem;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: #94a3b8;
+  letter-spacing: 0.02em;
+  color: #a1a1aa;
   text-decoration: none;
+  white-space: nowrap;
   border-radius: 9999px;
   transition: color 0.2s ease;
 }
 
+/* Hover: a subtle glass lift. The gradient pill is reserved for the active
+   section so the current location always reads at a glance. */
 .nav-link::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  background: rgba(255, 255, 255, 0.07);
   opacity: 0;
   transition: opacity 0.2s ease;
   pointer-events: none;
   z-index: -1;
 }
 
-.nav-link:hover::after,
-.nav-link[data-active]::after {
+.nav-link:hover {
+  color: #ffffff;
+}
+
+.nav-link:hover::after {
   opacity: 1;
 }
 
-.nav-link[data-active] {
+/* React only emits the attribute for the active section; match the value so
+   inactive links never pick up the pill. */
+.nav-link[data-active='true'] {
   color: #ffffff;
+}
+
+.nav-link[data-active='true']::after {
+  background: linear-gradient(135deg, #3b82f6, #4f46e5);
+  opacity: 1;
+  box-shadow: 0 6px 18px -6px rgba(79, 70, 229, 0.55);
 }
 
 /* Scroll progress rail */
@@ -317,7 +361,7 @@ body {
   width: 100%;
   transform-origin: left center;
   transform: scaleX(0);
-  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  background: linear-gradient(90deg, #3b82f6, #4f46e5);
 }
 
 /* Mobile drawer */
@@ -345,7 +389,9 @@ body {
   max-width: 400px;
   width: 100%;
   padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
+    linear-gradient(rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.72));
   backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1rem;
@@ -527,19 +573,88 @@ body {
   transition: transform 0.08s linear;
 }
 
-/* Soft specular sheen that tracks the pointer via --mx/--my */
+/* Soft specular sheen that tracks the pointer via --mx/--my. Tinted into the
+   accent family (was pure white) so every card highlight reads as one system. */
 .tilt-sheen {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
-    rgba(255, 255, 255, 0.14) 0%, transparent 55%);
+    rgba(147, 197, 253, 0.22) 0%, transparent 58%);
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
 }
 .tilt-scene:hover .tilt-sheen,
 .group:hover .tilt-sheen { opacity: 1; }
+
+/* ==========================================================================
+   7. Pointer effects — spotlight cards + click sparks
+   ========================================================================== */
+
+/* Pointer-tracked spotlight for the flat (non-tilt) cards, React-Bits style.
+   A single delegated listener (hooks/spotlight.js) writes --spot-x/--spot-y on
+   the hovered card; the gradient below does the rest. Cards that already carry
+   a `.tilt-sheen` keep that instead, so the two never double up. */
+.spotlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    340px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(59, 130, 246, 0.16),
+    transparent 62%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.spotlight:hover::after { opacity: 1; }
+
+/* Contact accent — a lazy-mounted WebGL glow (three/shaderAccent.js). Sits
+   behind the section content and fades out towards the bottom so it reads as
+   light in the room rather than as another panel. */
+.shader-accent {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 58%;
+  width: 100%;
+  opacity: 0.5;
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 94%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 94%);
+}
+
+/* Click sparks — decorative feedback layer (hooks/clickSparks.js) */
+.click-spark-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.click-spark {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #60a5fa, #818cf8);
+  animation: click-spark 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes click-spark {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.95;
+  }
+  to {
+    transform: translate3d(var(--dx, 0), var(--dy, 0), 0) scale(0.2);
+    opacity: 0;
+  }
+}
 
 /* Layered absolutely-positioned element that sits at a fixed 3D depth */
 .tilt-layer {

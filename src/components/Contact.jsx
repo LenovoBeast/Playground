@@ -15,6 +15,7 @@ import {
   Cpu,
 } from "@phosphor-icons/react";
 import { useReducedMotion } from "../hooks/useReducedMotion.js";
+import { useShaderAccent } from "../hooks/useShaderAccent.js";
 import { CONTACT_EMAIL, CONTACT_MAILTO } from "../data/contact.js";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -77,6 +78,7 @@ export default function Contact() {
   const formRef = useRef(null);
   const asideRef = useRef(null);
   const reducedMotion = useReducedMotion();
+  const accentRef = useShaderAccent();
 
   useEffect(() => {
     if (reducedMotion) return;
@@ -183,6 +185,10 @@ export default function Contact() {
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="aurora aurora-a left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-blue-600/25 to-cyan-500/20" />
+        {/* Lazy WebGL accent (hooks/useShaderAccent): only alive while the
+            section is near the viewport, and a single still frame under
+            reduced motion. Decorative, so it is hidden from assistive tech. */}
+        <canvas ref={accentRef} className="shader-accent" aria-hidden="true" />
       </div>
       <div className="hairline absolute inset-x-0 top-0" />
       <div className="section-container relative z-10">
@@ -365,7 +371,7 @@ export default function Contact() {
             )}
           </div>
           <div ref={asideRef} className="space-y-6">
-            <div className="panel p-7">
+            <div className="panel spotlight p-7">
               <h3 className="mb-6 text-display-1 italic">
                 Other Ways to Connect
               </h3>
@@ -384,7 +390,7 @@ export default function Contact() {
                           ? undefined
                           : "noopener noreferrer"
                       }
-                      className={`group flex items-center gap-4 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-zinc-400 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:text-white active-press ${link.color}`}
+                      className={`group flex items-center gap-4 rounded-xl border border-white/8 bg-zinc-950/70 px-4 py-3 text-zinc-400 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:text-white active-press ${link.color}`}
                       aria-label={link.label + " profile"}
                     >
                       <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/5 transition-all duration-300 group-hover:scale-110 group-hover:bg-white/10">
@@ -401,7 +407,7 @@ export default function Contact() {
                 })}
               </div>
             </div>
-            <div className="panel p-7">
+            <div className="panel spotlight p-7">
               <h3 className="mb-6 text-display-1 italic">Availability</h3>
               <div className="space-y-3">
                 {availability.map(({ icon: Icon, label, value }) => (

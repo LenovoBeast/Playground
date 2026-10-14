@@ -156,7 +156,7 @@ export default function About() {
                         ? undefined
                         : "noopener noreferrer"
                     }
-                    className="group flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-zinc-300 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.07] hover:text-white active-press"
+                    className="group flex items-center gap-2 rounded-xl border border-white/8 bg-zinc-950/70 px-4 py-2.5 text-sm font-medium text-zinc-300 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.07] hover:text-white active-press"
                     aria-label={label + " profile"}
                   >
                     <Icon size={16} weight="bold" />
@@ -203,9 +203,6 @@ export default function About() {
               <div className="absolute -bottom-6 -right-5 grid h-24 w-24 place-items-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-2xl shadow-blue-500/30 md:h-28 md:w-28">
                 <span className="text-2xl font-black md:text-3xl">8+</span>
               </div>
-              <div className="absolute -left-5 -top-6 grid h-20 w-20 place-items-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 shadow-2xl shadow-cyan-500/30 md:h-24 md:w-24">
-                <span className="text-xl font-black md:text-2xl">47</span>
-              </div>
             </div>
             <div
               ref={statsRef}
@@ -214,7 +211,7 @@ export default function About() {
               {stats.map((stat) => (
                 <div
                   key={stat.label}
-                  className="panel group p-5 transition-colors hover:border-white/15"
+                  className="panel spotlight group p-5 transition-colors hover:border-white/15"
                 >
                   <div className="text-3xl font-black tracking-tight md:text-4xl">
                     <Counter value={stat.value} active={statsInView} />
@@ -241,7 +238,7 @@ export default function About() {
                     <span className="text-sm font-black">{item.year}</span>
                   </span>
                   <span className="absolute left-[31px] top-1/2 hidden h-px w-8 bg-gradient-to-r from-blue-500/40 to-transparent md:block" />
-                  <div className="panel p-6 transition-colors group-hover:border-white/18">
+                  <div className="panel spotlight p-6 transition-colors group-hover:border-white/18">
                     <h3 className="mb-2 text-xl font-black uppercase italic tracking-tight">
                       {item.title}
                     </h3>

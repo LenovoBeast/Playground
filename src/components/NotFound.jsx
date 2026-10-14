@@ -69,7 +69,7 @@ export default function NotFound() {
           <button
             type="button"
             onClick={() => window.history.back()}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/8 bg-white/[0.03] px-8 py-4 font-bold backdrop-blur-xl transition-all hover:bg-white/[0.07] active-press sm:w-auto"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/8 bg-zinc-950/70 px-8 py-4 font-bold backdrop-blur-xl transition-all hover:bg-white/[0.07] active-press sm:w-auto"
           >
             <ArrowULeftDown size={18} weight="bold" />
             Go Back
