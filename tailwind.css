@@ -656,6 +656,86 @@ body {
   }
 }
 
+/* ==========================================================================
+   FocusPanel — Stack section
+   Replaces the 3D orbit ring (which projected tokens into the right-hand
+   card grid). The ambient glow and the pointer sheen are clipped to the
+   panel rectangle by its own overflow-hidden, so nothing can overlap the
+   cards next to it. The glow color follows the active category via the
+   --focus-glow custom property set inline from `category.glow`.
+   ========================================================================== */
+
+.focus-ambient {
+  position: absolute;
+  inset: -30%;
+  background: conic-gradient(
+    from 0deg,
+    var(--focus-glow, rgba(59, 130, 246, 0.35)) 0%,
+    transparent 30%,
+    var(--focus-glow, rgba(59, 130, 246, 0.35)) 60%,
+    transparent 90%,
+    var(--focus-glow, rgba(59, 130, 246, 0.35)) 100%
+  );
+  filter: blur(50px);
+  animation: focusAmbientSpin 24s linear infinite;
+  opacity: 0.7;
+  pointer-events: none;
+  mask-image: radial-gradient(circle at center, #000 0%, transparent 65%);
+  -webkit-mask-image: radial-gradient(circle at center, #000 0%, transparent 65%);
+}
+
+@keyframes focusAmbientSpin {
+  to { transform: rotate(360deg); }
+}
+
+.focus-sheen {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    360px circle at var(--fx, 50%) var(--fy, 50%),
+    rgba(255, 255, 255, 0.06),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.focus-panel:hover .focus-sheen {
+  opacity: 1;
+}
+
+.focus-pill {
+  position: relative;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(9, 9, 14, 0.55);
+  color: rgba(228, 228, 231, 0.72);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  transition: transform 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
+
+.focus-pill:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.focus-pill.is-active {
+  color: #fff;
+  border-color: transparent;
+}
+
+.focus-pill-label {
+  position: relative;
+  z-index: 1;
+}
+
 /* Layered absolutely-positioned element that sits at a fixed 3D depth */
 .tilt-layer {
   position: absolute;

@@ -70,8 +70,6 @@ const categories = [
   },
 ];
 
-const RADIUS = 175;
-
 export default function Stack() {
   const [activeTab, setActiveTab] = useState('frontend');
   const [selected, setSelected] = useState(0);
@@ -181,14 +179,15 @@ export default function Stack() {
           aria-labelledby={`tab-${activeTab}`}
           className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12"
         >
-          {/* Interactive 3D orbit */}
-          <OrbitRing
+          {/* Focus spotlight — preview of the active tech. Contained inside
+              the panel so nothing can overlap the card grid on the right. */}
+          <FocusPanel
             key={category.id}
             items={category.items}
+            color={category.color}
             glow={category.glow}
             selected={selected}
             onSelect={setSelected}
-            reducedMotion={reducedMotion}
           />
 
           {/* Detail grid */}
@@ -249,128 +248,81 @@ export default function Stack() {
   );
 }
 
-function OrbitRing({ items, glow, selected, onSelect, reducedMotion }) {
-  const ringRef = useRef(null);
-  const tokenRefs = useRef([]);
-  const spin = useRef(0);
-  const velocity = useRef(0.18);
-  const dragging = useRef(false);
-  const lastX = useRef(0);
-  const [hovered, setHovered] = useState(null);
+function FocusPanel({ items, color, glow, selected, onSelect }) {
+  const panelRef = useRef(null);
+  const focus = items[selected] ?? items[0];
+  const indexLabel = `${String(selected + 1).padStart(2, '0')} / ${String(items.length).padStart(2, '0')}`;
 
-  useEffect(() => {
-    tokenRefs.current = tokenRefs.current.slice(0, items.length);
-    let raf = 0;
-    let last = performance.now();
-
-    const render = (now) => {
-      const dt = Math.min((now - last) / 1000, 0.05);
-      last = now;
-      if (!dragging.current) {
-        velocity.current += (0.18 - velocity.current) * Math.min(1, dt * 1.6);
-      }
-      spin.current += velocity.current * (reducedMotion ? 0 : dt * 60);
-      if (ringRef.current) {
-        ringRef.current.style.transform = `rotateX(-12deg) rotateY(${spin.current.toFixed(2)}deg)`;
-      }
-      tokenRefs.current.forEach((el, i) => {
-        if (!el) return;
-        const angle = (i / items.length) * 360;
-        el.style.transform = `rotateY(${angle}deg) translateZ(${RADIUS}px) rotateY(${(-angle - spin.current).toFixed(2)}deg)`;
-      });
-      raf = requestAnimationFrame(render);
-    };
-
-    raf = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(raf);
-  }, [items.length, reducedMotion]);
-
-  const onPointerDown = (e) => {
-    dragging.current = true;
-    lastX.current = e.clientX;
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-  };
+  // Pointer-tracked sheen position, written as CSS vars on the panel.
+  // Everything stays inside the panel rectangle (overflow-hidden on the
+  // panel) so nothing projects into the right-hand card grid.
   const onPointerMove = (e) => {
-    if (!dragging.current) return;
-    const dx = e.clientX - lastX.current;
-    lastX.current = e.clientX;
-    velocity.current = dx * 0.35;
-    spin.current += dx * 0.35;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    panel.style.setProperty('--fx', `${((e.clientX - rect.left) / rect.width) * 100}%`);
+    panel.style.setProperty('--fy', `${((e.clientY - rect.top) / rect.height) * 100}%`);
   };
-  const stop = (e) => {
-    dragging.current = false;
-    e?.currentTarget?.releasePointerCapture?.(e.pointerId);
-  };
-
-  const focusIndex = hovered ?? selected;
-  const focus = items[focusIndex] ?? items[0];
 
   return (
     <div className="relative">
       <div
-        className="panel relative flex h-[380px] cursor-grab items-center justify-center overflow-hidden active:cursor-grabbing sm:h-[440px]"
-        onPointerDown={onPointerDown}
+        ref={panelRef}
         onPointerMove={onPointerMove}
-        onPointerUp={stop}
-        onPointerCancel={stop}
-        onPointerLeave={(e) => { stop(e); setHovered(null); }}
-        style={{ perspective: '1000px', touchAction: 'none' }}
+        className="focus-panel panel relative flex h-[380px] flex-col items-center overflow-hidden p-7 text-center sm:h-[420px]"
+        style={{ boxShadow: `0 30px 70px -30px ${glow}`, '--focus-glow': glow }}
       >
-        {/* Core readout */}
-        <div className="pointer-events-none absolute inset-0 grid place-items-center">
-          <div
-            className="absolute h-40 w-40 rounded-full blur-3xl"
-            style={{ background: glow, opacity: 0.35 }}
-          />
-          <div className="relative z-10 max-w-[16rem] px-6 text-center">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={focus?.name}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-              >
-                <p className="text-xs uppercase tracking-[0.24em] text-zinc-400">
-                  {String(focusIndex + 1).padStart(2, '0')} / {String(items.length).padStart(2, '0')}
-                </p>
-                <h3 className="mt-2 text-2xl font-black tracking-tight">{focus?.name}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{focus?.desc}</p>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
+        {/* Ambient rotating glow + pointer sheen, both clipped to the panel. */}
+        <div aria-hidden="true" className="focus-ambient" />
+        <div aria-hidden="true" className="focus-sheen" />
 
-        {/* Orbiting tokens */}
-        <div
-          ref={ringRef}
-          className="pointer-events-none relative h-full w-full"
-          style={{ transformStyle: 'preserve-3d' }}
-        >
-          {items.map((item, i) => (
-            <button
-              type="button"
-              key={item.name}
-              ref={(el) => { tokenRefs.current[i] = el; }}
-              onClick={() => onSelect(i)}
-              onPointerEnter={() => setHovered(i)}
-              onPointerLeave={() => setHovered(null)}
-              className="pointer-events-auto absolute left-1/2 top-1/2 -ml-[86px] -mt-[21px] w-[172px] rounded-full border px-4 py-2.5 text-center text-xs font-semibold backdrop-blur-md transition-colors duration-300"
-              style={{
-                transformStyle: 'preserve-3d',
-                borderColor: focusIndex === i ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.12)',
-                background: focusIndex === i ? 'rgba(255,255,255,0.14)' : 'rgba(9,9,14,0.55)',
-                color: focusIndex === i ? '#fff' : 'rgba(228,228,231,0.75)',
-                boxShadow: focusIndex === i ? `0 0 26px -4px ${glow}` : 'none',
-              }}
+        <div className="pointer-events-none relative z-10 flex flex-1 flex-col items-center justify-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={focus?.name}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="max-w-[20rem]"
             >
-              {item.name}
-            </button>
-          ))}
+              <p className="text-label">{indexLabel}</p>
+              <h3 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{focus?.name}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-400 sm:text-base">{focus?.desc}</p>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
-        <span className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-400">
-          drag to rotate
+        {/* Tech dock: small clickable pills. flex-wrap keeps long names
+            (Cloudflare Workers, React Three Fiber) inside the panel so they
+            never collide with the cards on the right. */}
+        <div
+          className="relative z-10 flex w-full flex-wrap justify-center gap-1.5"
+          role="tablist"
+          aria-label="Tech in focus"
+        >
+          {items.map((item, i) => {
+            const isActive = selected === i;
+            return (
+              <button
+                key={item.name}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-label={item.name}
+                tabIndex={0}
+                onClick={() => onSelect(i)}
+                className={`focus-pill ${isActive ? `bg-gradient-to-r ${color} is-active` : ''}`}
+                style={isActive ? { boxShadow: `0 8px 22px -10px ${glow}` } : undefined}
+              >
+                <span className="focus-pill-label">{item.name}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <span className="pointer-events-none relative z-10 mt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-400">
+          focus · click any to preview
         </span>
       </div>
     </div>
