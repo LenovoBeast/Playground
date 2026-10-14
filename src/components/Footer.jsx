@@ -36,9 +36,9 @@ export default function Footer() {
 
       {/* Ticker */}
       <div className="relative mb-16 overflow-hidden border-y border-white/5 py-5">
-        <div className="marquee-inner w-max items-center gap-10 whitespace-nowrap">
+        <div className="marquee-inner flex w-max items-center gap-10 whitespace-nowrap">
           {[0, 1].map((pass) => (
-            <div key={pass} className="flex items-center gap-10">
+            <div key={pass} className="flex shrink-0 items-center gap-10">
               {MARQUEE.map((item) => (
                 <span
                   key={`${pass}-${item}`}
