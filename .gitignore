@@ -42,3 +42,6 @@ my-game/
 *-shot.png
 *-mobile.png
 shot-*.png
+
+# Generated image drafts (source masters, not shipped)
+generated-images/

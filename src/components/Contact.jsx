@@ -185,6 +185,14 @@ export default function Contact() {
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="aurora aurora-a left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-white/10 to-white/[0.04]" />
+        {/* Generated glass-stack artwork behind the section: the frosted
+            panels (backdrop-blur) read as glass over glass. */}
+        <img
+          src={`${import.meta.env.BASE_URL}img/gen/glass-stack.jpg`}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+        />
         {/* Lazy WebGL accent (hooks/useShaderAccent): only alive while the
             section is near the viewport, and a single still frame under
             reduced motion. Decorative, so it is hidden from assistive tech. */}

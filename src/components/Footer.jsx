@@ -25,6 +25,13 @@ export default function Footer() {
 
   return (
     <footer className="relative overflow-hidden border-t border-white/8 bg-zinc-950/60 px-6 pt-20">
+      {/* Generated network-traces artwork behind the ticker and columns. */}
+      <img
+        src={`${import.meta.env.BASE_URL}img/gen/network-traces.jpg`}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25"
+      />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"

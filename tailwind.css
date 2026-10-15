@@ -100,6 +100,19 @@ body {
   transition: opacity 0.6s ease;
 }
 
+/* Static ambient artwork (generated, self-hosted in img/gen/) painted behind
+   the constellation. Same stacking level as the canvas but earlier in the DOM,
+   so the WebGL layer keeps every pixel of drag/hover/click on top. */
+.nexus-field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
 /* Static stand-in when the WebGL engine fails: the aurora blooms and
    vignette above/below still render, so the page keeps its atmosphere. */
 .nexus-canvas-fallback {

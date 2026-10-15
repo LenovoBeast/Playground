@@ -171,6 +171,17 @@ export default function World({ activeId = '', enabled = true, paused = false })
 
   return (
     <>
+      {/* Static ambient field behind the constellation (generated artwork).
+          Painted under the canvas — same stacking level, earlier in the DOM —
+          so the WebGL layer keeps full interactivity on top. */}
+      <div
+        className="nexus-field"
+        aria-hidden="true"
+        style={{
+          backgroundImage: `url(${import.meta.env.BASE_URL}img/gen/hero-ambient.jpg)`,
+        }}
+      />
+
       <canvas
         ref={canvasRef}
         id="canvas"

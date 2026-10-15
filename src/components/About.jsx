@@ -175,6 +175,12 @@ export default function About() {
             <div ref={visualRef} className="relative">
               <div className="panel corner-frame relative aspect-square overflow-hidden p-2">
                 <div className="grid-veil relative grid h-full w-full place-items-center overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-white/[0.05] to-white/[0.02]">
+                  <img
+                    src={`${import.meta.env.BASE_URL}img/gen/frontier-horizon.jpg`}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 h-full w-full object-cover opacity-45"
+                  />
                   <div
                     aria-hidden="true"
                     className="absolute inset-0 grid place-items-center"
