@@ -102,7 +102,12 @@ try {
 
   const gameResults = [];
   for (const check of GAME_CHECKS) {
-    await page.goto(base, { waitUntil: 'networkidle' });
+    // domcontentloaded, not networkidle: this loop's contract is engine
+    // behaviour (veil lift, overlay, state mirror — all waited for below),
+    // not full load quiescence. networkidle here timed out once on a loaded
+    // CI runner (the 2048px artwork added per-reload weight); the waits
+    // after this line still gate correctness.
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => !document.querySelector('.boot-veil'), null, { timeout: 8000 });
     await page.locator(`[data-game="${check.name}"]`).click();
     const opened = await page
