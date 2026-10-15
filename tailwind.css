@@ -128,7 +128,7 @@ body {
   z-index: 1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 85% 65% at 50% 45%, rgba(10, 10, 10, 0.52) 0%, rgba(10, 10, 10, 0.20) 48%, transparent 80%);
+    radial-gradient(ellipse 85% 65% at 50% 45%, rgba(10, 10, 10, 0.46) 0%, rgba(10, 10, 10, 0.18) 48%, transparent 80%);
 }
 
 /* Aurora blooms */

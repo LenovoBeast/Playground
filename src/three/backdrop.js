@@ -81,22 +81,22 @@ export function createBackdrop(canvas, options = {}) {
   const coreGeo = new THREE.IcosahedronGeometry(1.85, 1)
   const coreWire = new THREE.LineSegments(
     new THREE.WireframeGeometry(coreGeo),
-    new THREE.LineBasicMaterial({ color: 0xd4d4d4, transparent: true, opacity: 0.45 }),
+    new THREE.LineBasicMaterial({ color: 0xe4e4e7, transparent: true, opacity: 0.55 }),
   )
   coreGroup.add(coreWire)
 
   const coreSolid = new THREE.Mesh(
     new THREE.IcosahedronGeometry(1.35, 2),
-    new THREE.MeshBasicMaterial({ color: 0x1b0f33, transparent: true, opacity: 0.9 }),
+    new THREE.MeshBasicMaterial({ color: 0x101010, transparent: true, opacity: 0.85 }),
   )
   coreGroup.add(coreSolid)
 
   const coreShell = new THREE.Mesh(
     new THREE.IcosahedronGeometry(2.6, 3),
     new THREE.MeshBasicMaterial({
-      color: 0x7c3aed,
+      color: 0xe4e4e7,
       transparent: true,
-      opacity: 0.09,
+      opacity: 0.07,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       side: THREE.BackSide,
@@ -177,12 +177,12 @@ export function createBackdrop(canvas, options = {}) {
   linkGeo.setAttribute('position', new THREE.Float32BufferAttribute(linkPositions, 3))
   const links = new THREE.LineSegments(
     linkGeo,
-    new THREE.LineBasicMaterial({ color: 0x8b5cf6, transparent: true, opacity: 0.2 }),
+    new THREE.LineBasicMaterial({ color: 0xd4d4d4, transparent: true, opacity: 0.22 }),
   )
   nodeGroup.add(links)
 
   // ---------------------------------------------------------------- dust ----
-  const dustCount = reducedMotion ? 320 : 1100
+  const dustCount = reducedMotion ? 380 : 1400
   const dustPos = new Float32Array(dustCount * 3)
   const dustSeed = new Float32Array(dustCount)
   for (let i = 0; i < dustCount; i += 1) {
@@ -200,8 +200,8 @@ export function createBackdrop(canvas, options = {}) {
     dustGeo,
     new THREE.PointsMaterial({
       map: glow,
-      color: 0xb9a6ff,
-      size: 0.42,
+      color: 0xd4d4d4,
+      size: 0.4,
       sizeAttenuation: true,
       transparent: true,
       opacity: 0.5,
@@ -418,6 +418,10 @@ export function createBackdrop(canvas, options = {}) {
     camera.updateProjectionMatrix()
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
     renderer.setSize(width, height, false)
+    // Responsive framing: shrink the whole constellation on narrow viewports
+    // so it never crowds the hero copy or the cards on phones and tablets.
+    // (Labels project through the same world matrix, so they follow along.)
+    root.scale.setScalar(width < 640 ? 0.68 : width < 1024 ? 0.84 : 1)
   }
 
   function dispose() {
