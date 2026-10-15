@@ -19,17 +19,17 @@ const GAMES = [
     name: 'bytefall',
     title: 'Bytefall',
     desc: 'Original platformer. Run, stomp glitch-mites, break cache blocks for packets, and reach the terminal flag before the timer runs out.',
-    accent: 'from-blue-500 to-cyan-500',
-    tint: 'rgba(59,130,246,0.18)',
+    accent: 'from-white to-zinc-400',
+    tint: 'rgba(255,255,255,0.14)',
     span: 2,
     badge: 'new',
     controls: 'Arrows or A/D to run · Space or W to jump (hold for height) · R restart · P pause',
   },
-  { name: 'snake', title: 'Snake', desc: 'A 3D snake on a holographic grid. Arrow keys or WASD.', accent: 'from-emerald-500 to-teal-500', tint: 'rgba(52,211,153,0.18)', span: 1, controls: 'Arrow keys or WASD to steer' },
-  { name: 'breakout', title: 'Breakout', desc: 'Bounce the ball against the brick wall — three lives, and every brick is reachable. Move the paddle with the mouse or arrows.', accent: 'from-rose-500 to-pink-500', tint: 'rgba(244,114,182,0.18)', span: 1, controls: 'Mouse or ← → to move the paddle · R restart · P pause' },
-  { name: 'racer', title: 'Racer', desc: 'Ride the neon loop for three timed laps. Hold Up or W to drive; Down or S to reverse.', accent: 'from-cyan-500 to-blue-500', tint: 'rgba(34,211,238,0.18)', span: 1, controls: 'Hold ↑/W to accelerate · ↓/S to reverse · R restart · P pause' },
-  { name: 'match3', title: 'Match 3', desc: 'Swap adjacent orbs to line up three. Cascades multiply the score, and the board reshuffles if you run out of moves.', accent: 'from-fuchsia-500 to-purple-500', tint: 'rgba(217,70,239,0.18)', span: 1, controls: 'Arrows to move · Enter to select · or click two neighbours · R restart · P pause' },
-  { name: 'launch', title: 'Launch', desc: 'Eight shots to clear three targets — finish with shots to spare for an accuracy bonus. Arrows set angle and power, Space fires; or click-drag.', accent: 'from-amber-500 to-orange-500', tint: 'rgba(251,146,60,0.18)', span: 1, controls: 'Arrows to aim · Space to fire · or drag and release · R restart · P pause' },
+  { name: 'snake', title: 'Snake', desc: 'A 3D snake on a holographic grid. Arrow keys or WASD.', accent: 'from-zinc-200 to-zinc-500', tint: 'rgba(228,228,231,0.14)', span: 1, controls: 'Arrow keys or WASD to steer' },
+  { name: 'breakout', title: 'Breakout', desc: 'Bounce the ball against the brick wall — three lives, and every brick is reachable. Move the paddle with the mouse or arrows.', accent: 'from-zinc-100 to-zinc-400', tint: 'rgba(255,255,255,0.12)', span: 1, controls: 'Mouse or ← → to move the paddle · R restart · P pause' },
+  { name: 'racer', title: 'Racer', desc: 'Ride the neon loop for three timed laps. Hold Up or W to drive; Down or S to reverse.', accent: 'from-zinc-300 to-zinc-500', tint: 'rgba(212,212,216,0.14)', span: 1, controls: 'Hold ↑/W to accelerate · ↓/S to reverse · R restart · P pause' },
+  { name: 'match3', title: 'Match 3', desc: 'Swap adjacent orbs to line up three. Cascades multiply the score, and the board reshuffles if you run out of moves.', accent: 'from-white to-zinc-300', tint: 'rgba(255,255,255,0.10)', span: 1, controls: 'Arrows to move · Enter to select · or click two neighbours · R restart · P pause' },
+  { name: 'launch', title: 'Launch', desc: 'Eight shots to clear three targets — finish with shots to spare for an accuracy bonus. Arrows set angle and power, Space fires; or click-drag.', accent: 'from-zinc-200 to-zinc-400', tint: 'rgba(228,228,231,0.12)', span: 1, controls: 'Arrows to aim · Space to fire · or drag and release · R restart · P pause' },
 ];
 
 function GameOverlay({ name, title, desc, accent, controls, open, status, error, onRestart, onClose }) {
@@ -126,7 +126,7 @@ function GameOverlay({ name, title, desc, accent, controls, open, status, error,
             type="button"
             onClick={onRestart}
             disabled={loading}
-            className="play-btn magnetic-btn btn-sweep active-press relative flex flex-1 items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+            className="play-btn magnetic-btn btn-sweep active-press relative flex flex-1 items-center justify-center gap-3 overflow-hidden rounded-xl bg-white px-8 py-4 text-lg font-bold text-zinc-950 transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading && (
               <>
@@ -157,7 +157,7 @@ function GameOverlay({ name, title, desc, accent, controls, open, status, error,
         </div>
 
         {error && (
-          <p className="mt-3 text-sm text-rose-400" role="alert">
+          <p className="mt-3 text-sm text-zinc-200" role="alert">
             {error}
           </p>
         )}
@@ -201,7 +201,7 @@ function GameCard({ game, index, onOpen }) {
             <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
               {String(index + 1).padStart(2, '0')} · {game.name}
               {game.badge && (
-                <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-cyan-300">
+                <span className="rounded-full border border-white/25 bg-white/10 px-2 py-0.5 text-zinc-100">
                   {game.badge}
                 </span>
               )}
@@ -368,11 +368,11 @@ function Playroom({ onOpen }) {
         {/* Frame furniture */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/6" />
         <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
-          <Planet size={13} weight="bold" className="text-blue-400" />
+          <Planet size={13} weight="bold" className="text-zinc-200" />
           playroom · drag to orbit
         </div>
         <div className="pointer-events-none absolute bottom-4 left-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
-          <span className={`h-1.5 w-1.5 rounded-full ${live ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
+          <span className={`h-1.5 w-1.5 rounded-full ${live ? 'bg-zinc-200' : 'bg-zinc-600'}`} />
           {live ? 'engine live' : 'engine idle'}
         </div>
         {/* Shown on every pointer type: this hint used to be desktop-only, which
@@ -468,7 +468,7 @@ export default function Games({ onOverlayChange }) {
   return (
     <section id="games" className="section-gap relative px-6" aria-labelledby="games-title">
       <div className="pointer-events-none absolute inset-0">
-        <div className="aurora aurora-b right-[-6%] top-[16%] h-[400px] w-[400px] bg-rose-500/12" />
+        <div className="aurora aurora-b right-[-6%] top-[16%] h-[400px] w-[400px] bg-white/[0.06]" />
       </div>
       <div className="hairline absolute inset-x-0 top-0" />
 

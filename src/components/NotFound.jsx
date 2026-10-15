@@ -17,7 +17,7 @@ export default function NotFound() {
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <div className="aurora aurora-a left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 bg-blue-600/20" />
+        <div className="aurora aurora-a left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 bg-white/[0.06]" />
         <div className="grid-veil absolute inset-0 opacity-40" />
       </div>
 
@@ -28,11 +28,11 @@ export default function NotFound() {
             variants={itemVariants}
             whileHover={{ scale: 1.05, rotate: 4 }}
           >
-            <span className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-600/40 to-indigo-500/30 blur-xl" />
+            <span className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/15 to-white/5 blur-xl" />
             <span className="absolute inset-0 rounded-3xl border border-white/10 bg-white/[0.04]" />
             <span className="animate-spin-slower absolute -inset-3 rounded-[2rem] border border-dashed border-white/12" />
             <motion.span
-              className="relative text-4xl font-black text-blue-300"
+              className="relative text-4xl font-black text-zinc-200"
               animate={{ rotate: [0, -5, 5, -5, 0] }}
               transition={{ duration: 1, repeat: Infinity, repeatDelay: 2.4 }}
             >
@@ -61,7 +61,7 @@ export default function NotFound() {
         >
           <Link
             to="/"
-            className="magnetic-btn btn-sweep active-press relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 font-bold text-white shadow-xl shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500 sm:w-auto"
+            className="magnetic-btn btn-sweep active-press relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-8 py-4 font-bold text-zinc-950 transition-colors hover:bg-zinc-200 sm:w-auto"
           >
             <House size={18} weight="bold" />
             Back to Nexus

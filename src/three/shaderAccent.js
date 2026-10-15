@@ -15,8 +15,8 @@ void main() {
 }
 `;
 
-// Two octaves of value noise over an animated domain, ramped between the site's
-// cobalt and indigo so the accent belongs to the same palette as everything else.
+// Two octaves of value noise over an animated domain, ramped between white and
+// soft gray so the accent belongs to the same monochrome palette as the site.
 const FRAG = `
 precision mediump float;
 
@@ -47,9 +47,9 @@ void main() {
   float n = noise(p + vec2(t, -t * 0.7)) * 0.62
           + noise(p * 2.1 + vec2(-t * 1.3, t)) * 0.38;
 
-  vec3 cobalt = vec3(0.231, 0.510, 0.965);
-  vec3 indigo = vec3(0.310, 0.275, 0.898);
-  vec3 col = mix(cobalt, indigo, smoothstep(0.25, 0.85, n));
+  vec3 light = vec3(0.95, 0.95, 0.95);
+  vec3 deep = vec3(0.55, 0.55, 0.55);
+  vec3 col = mix(light, deep, smoothstep(0.25, 0.85, n));
 
   // Fade at the edges so it reads as light in the room, not as a panel.
   // Every smoothstep uses ascending edges: reversed edges are undefined in

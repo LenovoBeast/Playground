@@ -11,8 +11,8 @@ export function setupScene(canvas, getSize = defaultSize) {
   const { width, height } = getSize()
 
   const scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x0a080c)
-  scene.fog = new THREE.FogExp2(0x0a080c, 0.025)
+  scene.background = new THREE.Color(0x0a0a0a)
+  scene.fog = new THREE.FogExp2(0x0a0a0a, 0.025)
 
   const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 200)
   camera.position.set(0, 4, 12)
@@ -32,10 +32,10 @@ export function setupScene(canvas, getSize = defaultSize) {
   const controls = createOrbitControls(camera, canvas, getSize)
 
   // Lighting — dreamy: violet key + cyan rim + ambient
-  const ambient = new THREE.AmbientLight(0x6b4d8a, 0.4)
+  const ambient = new THREE.AmbientLight(0x7a7a7a, 0.4)
   scene.add(ambient)
 
-  const key = new THREE.DirectionalLight(0xc47fff, 1.2)
+  const key = new THREE.DirectionalLight(0xdedede, 1.2)
   key.position.set(8, 10, 6)
   key.castShadow = true
   key.shadow.mapSize.set(2048, 2048)
@@ -47,11 +47,11 @@ export function setupScene(canvas, getSize = defaultSize) {
   key.shadow.camera.bottom = -15
   scene.add(key)
 
-  const rim = new THREE.DirectionalLight(0x4fdfff, 0.6)
+  const rim = new THREE.DirectionalLight(0xb0b0b0, 0.6)
   rim.position.set(-6, 3, -8)
   scene.add(rim)
 
-  const fill = new THREE.PointLight(0xff6bcf, 0.8, 20)
+  const fill = new THREE.PointLight(0x909090, 0.8, 20)
   fill.position.set(-4, 2, 4)
   scene.add(fill)
 
@@ -127,7 +127,7 @@ export function buildWorld(scene) {
 
   // Floating desk — a slab that defies gravity
   const deskGeom = new THREE.BoxGeometry(10, 0.4, 6)
-  const deskMat = new THREE.MeshStandardMaterial({ color: 0x2a1f3a, roughness: 0.6, metalness: 0.1 })
+  const deskMat = new THREE.MeshStandardMaterial({ color: 0x232323, roughness: 0.6, metalness: 0.1 })
   const desk = new THREE.Mesh(deskGeom, deskMat)
   desk.position.set(0, -0.2, 0)
   desk.castShadow = true
@@ -136,7 +136,7 @@ export function buildWorld(scene) {
 
   // Glowing edge under the desk (the "impossible" element)
   const edgeGeom = new THREE.BoxGeometry(10.2, 0.05, 6.2)
-  const edgeMat = new THREE.MeshBasicMaterial({ color: 0xc47fff, transparent: true, opacity: 0.8 })
+  const edgeMat = new THREE.MeshBasicMaterial({ color: 0xd4d4d4, transparent: true, opacity: 0.8 })
   const edge = new THREE.Mesh(edgeGeom, edgeMat)
   edge.position.set(0, -0.5, 0)
   group.add(edge)
@@ -153,7 +153,7 @@ export function buildWorld(scene) {
     phases[i] = Math.random() * Math.PI * 2
   }
   pGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  const pMat = new THREE.PointsMaterial({ color: 0xc47fff, size: 0.04, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false })
+  const pMat = new THREE.PointsMaterial({ color: 0xd4d4d4, size: 0.04, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false })
   const particles = new THREE.Points(pGeom, pMat)
   group.add(particles)
 
@@ -222,13 +222,13 @@ function buildMonitor() {
   // Screen frame
   const frame = new THREE.Mesh(
     new THREE.BoxGeometry(2.4, 1.6, 0.1),
-    new THREE.MeshStandardMaterial({ color: 0x1a1525, roughness: 0.4, metalness: 0.6 })
+    new THREE.MeshStandardMaterial({ color: 0x191919, roughness: 0.4, metalness: 0.6 })
   )
   group.add(frame)
   // Screen
   const screen = new THREE.Mesh(
     new THREE.PlaneGeometry(2.2, 1.4),
-    new THREE.MeshBasicMaterial({ color: 0x0a080c })
+    new THREE.MeshBasicMaterial({ color: 0x0a0a0a })
   )
   screen.position.z = 0.06
   group.add(screen)
@@ -236,7 +236,7 @@ function buildMonitor() {
   for (let i = 0; i < 6; i++) {
     const dot = new THREE.Mesh(
       new THREE.SphereGeometry(0.05, 8, 8),
-      new THREE.MeshBasicMaterial({ color: i === 0 ? 0xc47fff : 0x4fdfff })
+      new THREE.MeshBasicMaterial({ color: i === 0 ? 0xd4d4d4 : 0xa1a1aa })
     )
     dot.position.set(-0.8 + i * 0.3, -0.3, 0.07)
     group.add(dot)
@@ -244,7 +244,7 @@ function buildMonitor() {
   // Stand — impossible, just floats
   const stand = new THREE.Mesh(
     new THREE.CylinderGeometry(0.05, 0.05, 0.8),
-    new THREE.MeshStandardMaterial({ color: 0xc47fff, emissive: 0xc47fff, emissiveIntensity: 0.3 })
+    new THREE.MeshStandardMaterial({ color: 0xd4d4d4, emissive: 0xd4d4d4, emissiveIntensity: 0.3 })
   )
   stand.position.y = -1.2
   group.add(stand)
@@ -253,7 +253,7 @@ function buildMonitor() {
 
 function buildBrickWall() {
   const group = new THREE.Group()
-  const colors = [0xc47fff, 0xff6bcf, 0x4fdfff, 0xc47fff, 0xff6bcf]
+  const colors = [0xd4d4d4, 0x8a8a8a, 0xa1a1aa, 0xd4d4d4, 0x8a8a8a]
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 8; col++) {
       const brick = new THREE.Mesh(
@@ -289,14 +289,14 @@ function buildTrack() {
   ], true)
   const tube = new THREE.Mesh(
     new THREE.TubeGeometry(curve, 100, 0.05, 8, true),
-    new THREE.MeshStandardMaterial({ color: 0x4fdfff, emissive: 0x4fdfff, emissiveIntensity: 0.4 })
+    new THREE.MeshStandardMaterial({ color: 0xa1a1aa, emissive: 0xa1a1aa, emissiveIntensity: 0.4 })
   )
   group.add(tube)
   // Toy car
   const car = new THREE.Group()
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(0.18, 0.08, 0.1),
-    new THREE.MeshStandardMaterial({ color: 0xff6bcf, emissive: 0xff6bcf, emissiveIntensity: 0.3 })
+    new THREE.MeshStandardMaterial({ color: 0x8a8a8a, emissive: 0x8a8a8a, emissiveIntensity: 0.3 })
   )
   car.add(body)
   car.position.set(-2, 0, 0)
@@ -307,7 +307,7 @@ function buildTrack() {
 function buildMatch3() {
   const group = new THREE.Group()
   // A 4x4 grid of glowing gems — surreal floating candy in space
-  const palette = [0xff6bcf, 0xc47fff, 0x4fdfff, 0xff6bcf]
+  const palette = [0x8a8a8a, 0xd4d4d4, 0xa1a1aa, 0x8a8a8a]
   for (let row = 0; row < 4; row++) {
     for (let col = 0; col < 4; col++) {
       const gem = new THREE.Mesh(
@@ -332,14 +332,14 @@ function buildLaunch() {
   // Rocket on a launch pad — the "impossible" countdown
   const pad = new THREE.Mesh(
     new THREE.CylinderGeometry(1.2, 1.4, 0.2, 32),
-    new THREE.MeshStandardMaterial({ color: 0x2a1f3a, roughness: 0.8, metalness: 0.3 })
+    new THREE.MeshStandardMaterial({ color: 0x232323, roughness: 0.8, metalness: 0.3 })
   )
   pad.position.y = -1.1
   group.add(pad)
   // Flame under the pad
   const flame = new THREE.Mesh(
     new THREE.ConeGeometry(0.5, 1.2, 16),
-    new THREE.MeshBasicMaterial({ color: 0xff6bcf, transparent: true, opacity: 0.7 })
+    new THREE.MeshBasicMaterial({ color: 0x8a8a8a, transparent: true, opacity: 0.7 })
   )
   flame.position.y = -1.8
   group.add(flame)
@@ -353,7 +353,7 @@ function buildLaunch() {
   // Nose cone
   const nose = new THREE.Mesh(
     new THREE.ConeGeometry(0.35, 0.5, 24),
-    new THREE.MeshStandardMaterial({ color: 0xc47fff, emissive: 0xc47fff, emissiveIntensity: 0.4 })
+    new THREE.MeshStandardMaterial({ color: 0xd4d4d4, emissive: 0xd4d4d4, emissiveIntensity: 0.4 })
   )
   nose.position.y = 1.1
   group.add(nose)
@@ -361,7 +361,7 @@ function buildLaunch() {
   for (let i = 0; i < 3; i++) {
     const fin = new THREE.Mesh(
       new THREE.BoxGeometry(0.05, 0.4, 0.3),
-      new THREE.MeshStandardMaterial({ color: 0x4fdfff, emissive: 0x4fdfff, emissiveIntensity: 0.3 })
+      new THREE.MeshStandardMaterial({ color: 0xa1a1aa, emissive: 0xa1a1aa, emissiveIntensity: 0.3 })
     )
     fin.position.set(Math.cos(i * 2.094) * 0.3, -0.4, Math.sin(i * 2.094) * 0.3)
     group.add(fin)
@@ -380,14 +380,14 @@ function buildProps() {
   props.push(candle)
   const flame = new THREE.Mesh(
     new THREE.SphereGeometry(0.06, 12, 12),
-    new THREE.MeshBasicMaterial({ color: 0xff6bcf })
+    new THREE.MeshBasicMaterial({ color: 0x8a8a8a })
   )
   flame.position.set(2.5, 1.45, 1.5)
   props.push(flame)
   // Floating book
   const book = new THREE.Mesh(
     new THREE.BoxGeometry(0.5, 0.08, 0.7),
-    new THREE.MeshStandardMaterial({ color: 0x4fdfff, emissive: 0x4fdfff, emissiveIntensity: 0.2 })
+    new THREE.MeshStandardMaterial({ color: 0xa1a1aa, emissive: 0xa1a1aa, emissiveIntensity: 0.2 })
   )
   book.position.set(-2.5, 1.5, 1.8)
   book.rotation.y = 0.3
@@ -395,7 +395,7 @@ function buildProps() {
   // Holographic ring
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(0.6, 0.02, 8, 64),
-    new THREE.MeshBasicMaterial({ color: 0xc47fff, transparent: true, opacity: 0.6 })
+    new THREE.MeshBasicMaterial({ color: 0xd4d4d4, transparent: true, opacity: 0.6 })
   )
   ring.position.set(0, 3.5, -2)
   ring.rotation.x = Math.PI / 2

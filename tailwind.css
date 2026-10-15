@@ -10,23 +10,23 @@
    ========================================================================== */
 
 :root {
-  /* Cobalt brand palette */
-  --c-blue:    #3b82f6;
-  --c-indigo:  #2563eb;
-  --c-cyan:    #22d3ee;
-  --c-emerald: #34d399;
-  --c-teal:    #14b8a8;
-  --c-rose:    #f43f5e;
-  --c-pink:    #ec4899;
-  --c-amber:   #f59e0b;
-  --c-fuchsia: #d946ef;
-  --c-purple:  #a855f7;
-  --c-slate:   #0f172a;
-  --c-dark:    #030712;
-  --c-body:    #e2e8f0;
-  --c-muted:   #94a3b8;
-  --c-border:  rgba(255, 255, 255, 0.06);
-  --c-border-strong: rgba(255, 255, 255, 0.14);
+  /* Monochrome brand palette — near-black canvas, white light, gray depth */
+  --c-blue:    #d4d4d4;
+  --c-indigo:  #a1a1aa;
+  --c-cyan:    #e4e4e7;
+  --c-emerald: #d4d4d4;
+  --c-teal:    #a1a1aa;
+  --c-rose:    #e4e4e7;
+  --c-pink:    #d4d4d4;
+  --c-amber:   #e4e4e7;
+  --c-fuchsia: #d4d4d4;
+  --c-purple:  #a1a1aa;
+  --c-slate:   #18181b;
+  --c-dark:    #0a0a0a;
+  --c-body:    #ededed;
+  --c-muted:   #a1a1aa;
+  --c-border:  rgba(255, 255, 255, 0.08);
+  --c-border-strong: rgba(255, 255, 255, 0.16);
 }
 
 * {
@@ -69,7 +69,7 @@ body {
 }
 
 ::selection {
-  background-color: rgba(59, 130, 246, 0.28);
+  background-color: rgba(255, 255, 255, 0.18);
   color: #ffffff;
 }
 
@@ -108,8 +108,8 @@ body {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 60% 45% at 50% 35%, rgba(59, 130, 246, 0.12) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 35% at 75% 70%, rgba(168, 85, 247, 0.08) 0%, transparent 70%);
+    radial-gradient(ellipse 60% 45% at 50% 35%, rgba(255, 255, 255, 0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 35% at 75% 70%, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
 }
 
 .nexus-canvas.is-interactive {
@@ -128,7 +128,7 @@ body {
   z-index: 1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 85% 65% at 50% 45%, rgba(3, 7, 18, 0.52) 0%, rgba(3, 7, 18, 0.20) 48%, transparent 80%);
+    radial-gradient(ellipse 85% 65% at 50% 45%, rgba(10, 10, 10, 0.52) 0%, rgba(10, 10, 10, 0.20) 48%, transparent 80%);
 }
 
 /* Aurora blooms */
@@ -163,7 +163,7 @@ body {
   position: relative;
   background:
     linear-gradient(rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.025)),
-    linear-gradient(rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.72));
+    linear-gradient(rgba(10, 10, 10, 0.72), rgba(10, 10, 10, 0.72));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -187,12 +187,12 @@ body {
 
 .panel:hover {
   border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 30px 70px -30px rgba(59, 130, 246, 0.45);
+  box-shadow: 0 30px 70px -30px rgba(255, 255, 255, 0.10);
 }
 
 /* Gradient text - cobalt */
 .gradient-text {
-  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  background: linear-gradient(90deg, #ffffff, #a1a1aa);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -230,9 +230,9 @@ body {
    ========================================================================== */
 
 :focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #e4e4e7;
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
 }
 
 /* Skip link */
@@ -254,7 +254,7 @@ body {
   left: 0;
   width: 100%;
   height: 3.5rem;
-  background: #030712;
+  background: #0a0a0a;
   color: #ffffff;
   text-align: center;
   line-height: 3.5;
@@ -284,7 +284,7 @@ body {
   border-radius: 9999px;
   background:
     linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03)),
-    linear-gradient(rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.72));
+    linear-gradient(rgba(10, 10, 10, 0.72), rgba(10, 10, 10, 0.72));
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -294,7 +294,7 @@ body {
 
 .nav-container:hover {
   border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 16px 48px -16px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 16px 48px -16px rgba(255, 255, 255, 0.10);
 }
 
 .nav-link {
@@ -336,13 +336,13 @@ body {
 /* React only emits the attribute for the active section; match the value so
    inactive links never pick up the pill. */
 .nav-link[data-active='true'] {
-  color: #ffffff;
+  color: #09090b;
 }
 
 .nav-link[data-active='true']::after {
-  background: linear-gradient(135deg, #3b82f6, #4f46e5);
+  background: #f4f4f5;
   opacity: 1;
-  box-shadow: 0 6px 18px -6px rgba(79, 70, 229, 0.55);
+  box-shadow: 0 6px 18px -6px rgba(255, 255, 255, 0.12);
 }
 
 /* Scroll progress rail */
@@ -361,7 +361,7 @@ body {
   width: 100%;
   transform-origin: left center;
   transform: scaleX(0);
-  background: linear-gradient(90deg, #3b82f6, #4f46e5);
+  background: linear-gradient(90deg, #ffffff, #a1a1aa);
 }
 
 /* Mobile drawer */
@@ -391,7 +391,7 @@ body {
   padding: 1.5rem;
   background:
     linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
-    linear-gradient(rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.72));
+    linear-gradient(rgba(10, 10, 10, 0.72), rgba(10, 10, 10, 0.72));
   backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1rem;
@@ -425,7 +425,7 @@ body {
   @apply text-lg md:text-xl leading-relaxed max-w-[60ch] text-zinc-400;
 }
 
-/* Small body copy. zinc-400 (#a1a1aa) measures ~7.7:1 on the #030712 page
+/* Small body copy. zinc-400 (#a1a1aa) measures ~7.7:1 on the #0a0a0a page
    background — zinc-500 measured ~4.1:1 and failed WCAG AA at text sizes. */
 .text-body-sm {
   @apply text-sm md:text-base leading-relaxed text-zinc-400;
@@ -486,7 +486,7 @@ body {
 
 .hover-lift:hover {
   transform: translateY(-6px);
-  box-shadow: 0 28px 56px -12px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 28px 56px -12px rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
 }
 
@@ -500,7 +500,7 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(37, 99, 233, 0.08));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06));
   opacity: 0;
   transition: opacity 0.35s ease;
 }
@@ -517,7 +517,7 @@ body {
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #ffffff, #a1a1aa);
   z-index: -1;
   opacity: 0;
   transition: opacity 0.35s ease;
@@ -547,7 +547,7 @@ body {
 
 /* Spine gradient */
 .spine {
-  background: linear-gradient(180deg, transparent 0%, rgba(59, 130, 246, 0.45) 18%, rgba(37, 99, 233, 0.45) 78%, transparent 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.30) 18%, rgba(255, 255, 255, 0.30) 78%, transparent 100%);
 }
 
 /* ==========================================================================
@@ -580,7 +580,7 @@ body {
   inset: 0;
   border-radius: inherit;
   background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
-    rgba(147, 197, 253, 0.22) 0%, transparent 58%);
+    rgba(255, 255, 255, 0.10) 0%, transparent 58%);
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
@@ -603,7 +603,7 @@ body {
   border-radius: inherit;
   background: radial-gradient(
     340px circle at var(--spot-x, 50%) var(--spot-y, 50%),
-    rgba(59, 130, 246, 0.16),
+    rgba(255, 255, 255, 0.08),
     transparent 62%
   );
   opacity: 0;
@@ -641,7 +641,7 @@ body {
   height: 4px;
   margin: -2px 0 0 -2px;
   border-radius: 9999px;
-  background: linear-gradient(135deg, #60a5fa, #818cf8);
+  background: linear-gradient(135deg, #ffffff, #d4d4d4);
   animation: click-spark 480ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
@@ -670,11 +670,11 @@ body {
   inset: -30%;
   background: conic-gradient(
     from 0deg,
-    var(--focus-glow, rgba(59, 130, 246, 0.35)) 0%,
+    var(--focus-glow, rgba(255, 255, 255, 0.30)) 0%,
     transparent 30%,
-    var(--focus-glow, rgba(59, 130, 246, 0.35)) 60%,
+    var(--focus-glow, rgba(255, 255, 255, 0.30)) 60%,
     transparent 90%,
-    var(--focus-glow, rgba(59, 130, 246, 0.35)) 100%
+    var(--focus-glow, rgba(255, 255, 255, 0.30)) 100%
   );
   filter: blur(50px);
   animation: focusAmbientSpin 30s linear infinite, focusAmbientBreathe 6.5s ease-in-out infinite;
@@ -733,7 +733,7 @@ body {
 }
 
 .focus-pill.is-active {
-  color: #fff;
+  color: #09090b;
   border-color: transparent;
   transform: scale(1.04);
 }
@@ -813,7 +813,7 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(37, 99, 233, 0.18));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.10));
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -862,14 +862,14 @@ input, textarea, select {
   border-radius: 0.75rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #e2e8f0;
+  color: #ededed;
   font-family: 'JetBrains Mono', monospace;
 }
 
 input:focus, textarea:focus {
   outline: none;
-  border-color: rgba(59, 130, 246, 0.5);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
 }
 
 input::placeholder, textarea::placeholder {
@@ -913,9 +913,9 @@ input::placeholder, textarea::placeholder {
 /* Game card focus */
 .game-card:focus-visible,
 .game-card:focus {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #e4e4e7;
   outline-offset: 3px;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
 }
 
 /* Touch targets */
@@ -943,7 +943,7 @@ input::placeholder, textarea::placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #030712;
+  background: #0a0a0a;
   transition: opacity 0.7s ease, visibility 0.7s ease;
 }
 

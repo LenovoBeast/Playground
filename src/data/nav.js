@@ -4,12 +4,12 @@
 import { CONTACT_EMAIL, CONTACT_MAILTO } from './contact.js';
 
 export const SECTIONS = [
-  { id: 'hero', label: 'Home', index: '01', color: 0x3b82f6, blurb: 'Welcome' },
-  { id: 'projects', label: 'Work', index: '02', color: 0x22d3ee, blurb: 'Shipped products' },
-  { id: 'about', label: 'About', index: '03', color: 0x34d399, blurb: 'The operator' },
-  { id: 'stack', label: 'Stack', index: '04', color: 0xf59e0b, blurb: 'Tools of the trade' },
-  { id: 'games', label: 'Playroom', index: '05', color: 0xf43f5e, blurb: 'Playable experiments' },
-  { id: 'contact', label: 'Contact', index: '06', color: 0xa855f7, blurb: 'Start a project' },
+  { id: 'hero', label: 'Home', index: '01', color: 0xffffff, blurb: 'Welcome' },
+  { id: 'projects', label: 'Work', index: '02', color: 0xd4d4d4, blurb: 'Shipped products' },
+  { id: 'about', label: 'About', index: '03', color: 0xa1a1aa, blurb: 'The operator' },
+  { id: 'stack', label: 'Stack', index: '04', color: 0xe4e4e7, blurb: 'Tools of the trade' },
+  { id: 'games', label: 'Playroom', index: '05', color: 0x8a8a8a, blurb: 'Playable experiments' },
+  { id: 'contact', label: 'Contact', index: '06', color: 0xbcbcbc, blurb: 'Start a project' },
 ];
 
 export const SECTION_IDS = SECTIONS.map((s) => s.id);

@@ -38,19 +38,19 @@ const links = [
     icon: "twitter",
     label: "Twitter",
     href: "https://twitter.com/LenovoBeast",
-    color: "group-hover:text-cyan-400",
+    color: "group-hover:text-white",
   },
   {
     icon: "linkedin",
     label: "LinkedIn",
     href: "https://linkedin.com/in/lenovobeast",
-    color: "group-hover:text-blue-400",
+    color: "group-hover:text-white",
   },
   {
     icon: "mail",
     label: "Email",
     href: CONTACT_MAILTO,
-    color: "group-hover:text-purple-400",
+    color: "group-hover:text-white",
   },
 ];
 
@@ -184,7 +184,7 @@ export default function Contact() {
       aria-labelledby="contact-title"
     >
       <div className="pointer-events-none absolute inset-0">
-        <div className="aurora aurora-a left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-blue-600/25 to-cyan-500/20" />
+        <div className="aurora aurora-a left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-white/10 to-white/[0.04]" />
         {/* Lazy WebGL accent (hooks/useShaderAccent): only alive while the
             section is near the viewport, and a single still frame under
             reduced motion. Decorative, so it is hidden from assistive tech. */}
@@ -205,7 +205,7 @@ export default function Contact() {
           <div ref={formRef} className="panel corner-frame relative p-7 md:p-9">
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"
+              className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"
             />
             <form
               onSubmit={handleSubmit}
@@ -272,12 +272,12 @@ export default function Contact() {
                   className={
                     "block font-mono text-[10px] uppercase tracking-[0.2em] transition-colors duration-300 " +
                     (focused === "message" || formData.message
-                      ? "text-blue-400"
+                      ? "text-zinc-100"
                       : "text-zinc-400")
                   }
                   aria-hidden="true"
                 >
-                  Message <span className="text-blue-400">*</span>
+                  Message <span className="text-zinc-100">*</span>
                 </span>
                 <textarea
                   id="message"
@@ -293,10 +293,10 @@ export default function Contact() {
                   disabled={formState !== "idle"}
                   aria-invalid={errors.message ? true : undefined}
                   aria-describedby={errors.message ? "message-error message-hint" : "message-hint"}
-                  className="mt-3 w-full resize-none rounded-xl border border-white/8 bg-white/[0.035] px-5 py-4 font-mono text-sm text-zinc-200 backdrop-blur-xl transition-all duration-300 placeholder:text-zinc-400 focus:border-blue-500/60 focus:outline-none focus:ring-1 focus:ring-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="mt-3 w-full resize-none rounded-xl border border-white/8 bg-white/[0.035] px-5 py-4 font-mono text-sm text-zinc-200 backdrop-blur-xl transition-all duration-300 placeholder:text-zinc-400 focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 {errors.message && (
-                  <p id="message-error" className="mt-1.5 font-mono text-xs text-rose-400">
+                  <p id="message-error" className="mt-1.5 font-mono text-xs text-zinc-200">
                     {errors.message}
                   </p>
                 )}
@@ -307,7 +307,7 @@ export default function Contact() {
               <button
                 type="submit"
                 disabled={formState !== "idle"}
-                className="magnetic-btn btn-sweep active-press relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="magnetic-btn btn-sweep active-press relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl bg-white px-8 py-4 text-lg font-bold text-zinc-950 transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label="Send message"
               >
                 {formState === "submitting" && (
@@ -342,7 +342,7 @@ export default function Contact() {
             </form>
             {formState === "success" && (
               <div
-                className="mt-5 flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-400 animate-fade-up"
+                className="mt-5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/[0.06] p-4 text-zinc-100 animate-fade-up"
                 role="status"
               >
                 <CheckCircle size={22} weight="bold" />
@@ -357,7 +357,7 @@ export default function Contact() {
             )}
             {formState === "error" && (
               <div
-                className="mt-5 flex items-center gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-400 animate-fade-up"
+                className="mt-5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/[0.06] p-4 text-zinc-100 animate-fade-up"
                 role="alert"
               >
                 <Warning size={22} weight="bold" />
@@ -464,13 +464,13 @@ const Field = ({
       <span
         className={
           "block font-mono text-[10px] uppercase tracking-[0.2em] transition-colors duration-300 " +
-          (lifted ? "text-blue-400" : "text-zinc-400")
+          (lifted ? "text-zinc-100" : "text-zinc-400")
         }
         aria-hidden="true"
       >
         {label}{" "}
         {required && (
-          <span className="text-blue-400" aria-hidden="true">
+          <span className="text-zinc-100" aria-hidden="true">
             *
           </span>
         )}
@@ -490,10 +490,10 @@ const Field = ({
         maxLength={maxLength}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${name}-error` : undefined}
-        className="mt-3 w-full rounded-xl border border-white/8 bg-white/[0.035] px-5 py-4 font-mono text-sm text-zinc-200 backdrop-blur-xl transition-all duration-300 placeholder:text-zinc-400 focus:border-blue-500/60 focus:outline-none focus:ring-1 focus:ring-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-3 w-full rounded-xl border border-white/8 bg-white/[0.035] px-5 py-4 font-mono text-sm text-zinc-200 backdrop-blur-xl transition-all duration-300 placeholder:text-zinc-400 focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50"
       />
       {error && (
-        <p id={`${name}-error`} className="mt-1.5 font-mono text-xs text-rose-400">
+        <p id={`${name}-error`} className="mt-1.5 font-mono text-xs text-zinc-200">
           {error}
         </p>
       )}

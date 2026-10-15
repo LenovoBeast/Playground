@@ -112,8 +112,8 @@ export default function About() {
       aria-labelledby="about-title"
     >
       <div className="pointer-events-none absolute inset-0">
-        <div className="aurora aurora-a left-[-10%] top-[8%] h-[420px] w-[420px] bg-blue-600/20" />
-        <div className="aurora aurora-b right-[-8%] top-[42%] h-[380px] w-[380px] bg-cyan-500/15" />
+        <div className="aurora aurora-a left-[-10%] top-[8%] h-[420px] w-[420px] bg-white/[0.06]" />
+        <div className="aurora aurora-b right-[-8%] top-[42%] h-[380px] w-[380px] bg-white/[0.04]" />
       </div>
       <div className="hairline absolute inset-x-0 top-0" />
       <div className="section-container relative z-10">
@@ -174,33 +174,33 @@ export default function About() {
           <div className="space-y-8">
             <div ref={visualRef} className="relative">
               <div className="panel corner-frame relative aspect-square overflow-hidden p-2">
-                <div className="grid-veil relative grid h-full w-full place-items-center overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-blue-600/10 to-cyan-600/10">
+                <div className="grid-veil relative grid h-full w-full place-items-center overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-white/[0.05] to-white/[0.02]">
                   <div
                     aria-hidden="true"
                     className="absolute inset-0 grid place-items-center"
                   >
-                    <span className="animate-spin-slow absolute h-[62%] w-[62%] rounded-full border border-dashed border-blue-400/25" />
-                    <span className="animate-spin-slower absolute h-[82%] w-[82%] rounded-full border border-cyan-400/20" />
-                    <span className="absolute h-[42%] w-[42%] rounded-full bg-blue-500/10 blur-2xl" />
+                    <span className="animate-spin-slow absolute h-[62%] w-[62%] rounded-full border border-dashed border-white/20" />
+                    <span className="animate-spin-slower absolute h-[82%] w-[82%] rounded-full border border-white/10" />
+                    <span className="absolute h-[42%] w-[42%] rounded-full bg-white/10 blur-2xl" />
                   </div>
                   <div className="relative grid place-items-center">
-                    <span className="absolute h-28 w-28 rounded-full bg-blue-500/20 blur-2xl" />
+                    <span className="absolute h-28 w-28 rounded-full bg-white/[0.12] blur-2xl" />
                     <Terminal
                       size={72}
                       weight="bold"
-                      className="relative text-blue-300/70"
+                      className="relative text-zinc-200"
                     />
                   </div>
                   <span className="absolute bottom-4 left-4 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-400">
                     operator // lb
                   </span>
-                  <span className="absolute right-4 top-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-emerald-400/80">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{" "}
+                  <span className="absolute right-4 top-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-200">
+                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-200" />{" "}
                     online
                   </span>
                 </div>
               </div>
-              <div className="absolute -bottom-6 -right-5 grid h-24 w-24 place-items-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-2xl shadow-blue-500/30 md:h-28 md:w-28">
+              <div className="absolute -bottom-6 -right-5 grid h-24 w-24 place-items-center rounded-2xl bg-gradient-to-br from-white to-zinc-300 text-zinc-950 shadow-2xl shadow-white/10 md:h-28 md:w-28">
                 <span className="text-2xl font-black md:text-3xl">8+</span>
               </div>
             </div>
@@ -234,15 +234,15 @@ export default function About() {
             <div ref={timelineRef} className="space-y-10">
               {timeline.map((item) => (
                 <div key={item.year} className="group relative pl-20">
-                  <span className="absolute left-0 top-1 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-lg shadow-blue-500/30 transition-transform duration-500 group-hover:scale-110">
+                  <span className="absolute left-0 top-1 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-white to-zinc-300 text-zinc-950 shadow-lg shadow-white/10 transition-transform duration-500 group-hover:scale-110">
                     <span className="text-sm font-black">{item.year}</span>
                   </span>
-                  <span className="absolute left-[31px] top-1/2 hidden h-px w-8 bg-gradient-to-r from-blue-500/40 to-transparent md:block" />
+                  <span className="absolute left-[31px] top-1/2 hidden h-px w-8 bg-gradient-to-r from-white/30 to-transparent md:block" />
                   <div className="panel spotlight p-6 transition-colors group-hover:border-white/18">
                     <h3 className="mb-2 text-xl font-black uppercase italic tracking-tight">
                       {item.title}
                     </h3>
-                    <p className="mb-3 font-mono text-sm text-cyan-400">
+                    <p className="mb-3 font-mono text-sm text-zinc-100">
                       {item.company}
                     </p>
                     <p className="leading-relaxed text-zinc-400">{item.desc}</p>

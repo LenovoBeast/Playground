@@ -6,9 +6,9 @@ import { useTilt } from '../hooks/useTilt.js';
 import { useScrollTriggerRefresh } from '../hooks/useScrollTriggerRefresh.js';
 
 const UI = {
-  TypeScript: { color: 'from-blue-500 to-indigo-500', icon: <Code size={26} weight="bold" />, tint: 'rgba(59,130,246,0.16)' },
-  JavaScript: { color: 'from-cyan-500 to-blue-500', icon: <Globe size={26} weight="bold" />, tint: 'rgba(34,211,238,0.16)' },
-  HTML: { color: 'from-emerald-500 to-teal-500', icon: <Stack size={26} weight="bold" />, tint: 'rgba(52,211,153,0.16)' },
+  TypeScript: { color: 'from-white to-zinc-300', icon: <Code size={26} weight="bold" />, tint: 'rgba(255,255,255,0.12)' },
+  JavaScript: { color: 'from-zinc-200 to-zinc-400', icon: <Globe size={26} weight="bold" />, tint: 'rgba(228,228,231,0.12)' },
+  HTML: { color: 'from-zinc-100 to-zinc-300', icon: <Stack size={26} weight="bold" />, tint: 'rgba(255,255,255,0.10)' },
 };
 
 const ProjectCard = ({ project, index }) => {
@@ -53,7 +53,7 @@ const ProjectCard = ({ project, index }) => {
 
           <div className="relative flex items-start justify-between" style={{ transform: 'translateZ(30px)' }}>
             <span
-              className="grid h-14 w-14 place-items-center rounded-2xl border border-white/8 bg-white/[0.04] text-blue-300 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"
+              className="grid h-14 w-14 place-items-center rounded-2xl border border-white/8 bg-white/[0.04] text-zinc-200 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"
               style={{ transform: 'translateZ(30px)' }}
             >
               {ui.icon}
@@ -92,7 +92,7 @@ const ProjectCard = ({ project, index }) => {
                 href={project.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group/link flex items-center gap-2 text-sm font-semibold text-cyan-400 transition-colors hover:text-cyan-300"
+                className="group/link flex items-center gap-2 text-sm font-semibold text-white transition-colors hover:text-zinc-300"
               >
                 Live Demo
                 <ArrowUpRight size={16} weight="bold" className="transition-transform group-hover/link:translate-x-1 group-hover/link:-translate-y-1" />
@@ -134,7 +134,7 @@ export default function ProjectGrid() {
   return (
     <section id="projects" className="section-gap relative px-6" aria-labelledby="projects-title">
       <div className="pointer-events-none absolute inset-0">
-        <div className="aurora aurora-b right-[-6%] top-[16%] h-[400px] w-[400px] bg-blue-500/12" />
+        <div className="aurora aurora-b right-[-6%] top-[16%] h-[400px] w-[400px] bg-white/[0.06]" />
       </div>
       <div className="hairline absolute inset-x-0 top-0" />
 
@@ -159,7 +159,7 @@ export default function ProjectGrid() {
                 aria-pressed={filter === lang}
                 className={`rounded-full border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.16em] transition-all duration-300 active-press ${
                   filter === lang
-                    ? 'border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
+                    ? 'border-transparent bg-white text-zinc-950'
                     : 'border-white/8 bg-white/[0.03] text-zinc-400 hover:border-white/15 hover:text-white'
                 }`}
               >

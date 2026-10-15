@@ -12,8 +12,8 @@ const categories = [
     id: 'frontend',
     label: 'Frontend',
     icon: <Cpu size={22} weight="bold" />,
-    color: 'from-blue-500 to-indigo-500',
-    glow: 'rgba(59,130,246,0.35)',
+    color: 'from-white to-zinc-300',
+    glow: 'rgba(255,255,255,0.28)',
     items: [
       { name: 'React 18', desc: 'Concurrent features, Suspense, Server Components' },
       { name: 'TypeScript', desc: 'Strict mode, advanced types, type-safe APIs' },
@@ -27,8 +27,8 @@ const categories = [
     id: 'backend',
     label: 'Backend',
     icon: <DesktopTower size={22} weight="bold" />,
-    color: 'from-cyan-500 to-blue-500',
-    glow: 'rgba(34,211,238,0.35)',
+    color: 'from-zinc-200 to-zinc-400',
+    glow: 'rgba(228,228,231,0.24)',
     items: [
       { name: 'Node.js', desc: 'Native ES modules, worker threads, perf hooks' },
       { name: 'PostgreSQL', desc: 'Advanced queries, JSONB, partitioning' },
@@ -42,8 +42,8 @@ const categories = [
     id: 'gamedev',
     label: 'Game Dev',
     icon: <GameController size={22} weight="bold" />,
-    color: 'from-emerald-500 to-teal-500',
-    glow: 'rgba(52,211,153,0.35)',
+    color: 'from-zinc-100 to-zinc-300',
+    glow: 'rgba(255,255,255,0.20)',
     items: [
       { name: 'React Three Fiber', desc: 'Declarative Three.js, React ecosystem' },
       { name: 'Phaser 3', desc: '2D games, WebGL/Canvas, multiplayer' },
@@ -57,8 +57,8 @@ const categories = [
     id: 'infra',
     label: 'Infrastructure',
     icon: <Database size={22} weight="bold" />,
-    color: 'from-amber-500 to-orange-500',
-    glow: 'rgba(251,146,60,0.35)',
+    color: 'from-zinc-300 to-zinc-500',
+    glow: 'rgba(212,212,216,0.22)',
     items: [
       { name: 'GitHub Actions', desc: 'CI/CD, matrix builds, custom runners' },
       { name: 'Playwright', desc: 'E2E testing, visual regression, tracing' },
@@ -120,7 +120,7 @@ export default function Stack() {
   return (
     <section ref={sectionRef} id="stack" className="section-gap relative px-6" data-tracking="stack-section" aria-labelledby="stack-title">
       <div className="pointer-events-none absolute inset-0">
-        <div className="aurora aurora-c left-1/2 top-[12%] h-[460px] w-[460px] -translate-x-1/2 bg-blue-600/12" />
+        <div className="aurora aurora-c left-1/2 top-[12%] h-[460px] w-[460px] -translate-x-1/2 bg-white/[0.06]" />
       </div>
       <div className="hairline absolute inset-x-0 top-0" />
 
@@ -150,21 +150,21 @@ export default function Stack() {
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => { setActiveTab(cat.id); setSelected(0); }}
                 className={`relative flex items-center gap-3 rounded-2xl px-5 py-4 text-sm font-semibold transition-all duration-300 active-press ${
-                  isActive ? 'text-white' : 'text-zinc-400 hover:text-white'
+                  isActive ? 'text-zinc-950' : 'text-zinc-400 hover:text-white'
                 }`}
                 style={isActive ? { boxShadow: `0 22px 48px -18px ${cat.glow}` } : undefined}
               >
                 {isActive && (
                   <motion.span
                     layoutId="stack-tab-bg"
-                    className={`absolute inset-0 -z-10 rounded-2xl bg-gradient-to-r ${cat.color}`}
+                    className={`absolute inset-0 -z-10 rounded-2xl bg-zinc-100`}
                     transition={{ type: 'spring', stiffness: 380, damping: 32 }}
                   />
                 )}
                 {!isActive && (
                   <span className="absolute inset-0 -z-10 rounded-2xl border border-white/8 bg-white/[0.03]" />
                 )}
-                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${isActive ? 'bg-white/20' : 'bg-white/5'}`}>
+                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${isActive ? 'bg-zinc-950/10' : 'bg-white/5'}`}>
                   {cat.icon}
                 </span>
                 {cat.label}
@@ -213,7 +213,7 @@ export default function Stack() {
                 >
                   <div className="flex items-center gap-3">
                     <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${category.color} transition-transform duration-300 group-hover:scale-110`}>
-                      <Check size={16} weight="bold" className="text-white" />
+                      <Check size={16} weight="bold" className="text-zinc-950" />
                     </span>
                     <h3 className="text-base font-bold tracking-tight">{item.name}</h3>
                   </div>

@@ -27,11 +27,11 @@ export default function Footer() {
     <footer className="relative overflow-hidden border-t border-white/8 bg-zinc-950/60 px-6 pt-20">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-32 left-1/2 h-[320px] w-[720px] -translate-x-1/2 rounded-full bg-blue-600/10 blur-[120px]"
+        className="pointer-events-none absolute -bottom-32 left-1/2 h-[320px] w-[720px] -translate-x-1/2 rounded-full bg-white/[0.05] blur-[120px]"
       />
 
       {/* Ticker */}
@@ -47,7 +47,7 @@ export default function Footer() {
                   <span className="font-mono text-xs uppercase tracking-[0.28em] text-zinc-400">
                     {item}
                   </span>
-                  <span className="h-1 w-1 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" />
+                  <span className="h-1 w-1 rounded-full bg-zinc-500" />
                 </span>
               ))}
             </div>
@@ -59,7 +59,7 @@ export default function Footer() {
         <div className="grid gap-12 pb-14 md:grid-cols-[1.4fr_1fr]">
           <div>
             <div className="mb-5 flex items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-500 font-black text-sm text-white">
+              <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-white to-zinc-300 font-black text-sm text-zinc-950">
                 LB
               </span>
               <span className="flex flex-col leading-tight">
@@ -80,7 +80,7 @@ export default function Footer() {
             <button
               type="button"
               onClick={() => scrollToSection("contact")}
-              className="magnetic-btn btn-sweep active-press relative mt-7 inline-flex items-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500"
+              className="magnetic-btn btn-sweep active-press relative mt-7 inline-flex items-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-zinc-200"
             >
               Start a project
             </button>
@@ -162,7 +162,7 @@ export default function Footer() {
               href="https://twitter.com/LenovoBeast"
               target="_blank"
               rel="noopener noreferrer"
-              className="social-icon grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-cyan-400 active-press"
+              className="social-icon grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-white active-press"
               aria-label="Twitter"
             >
               <TwitterLogo size={17} weight="bold" />
@@ -171,14 +171,14 @@ export default function Footer() {
               href="https://linkedin.com/in/lenovobeast"
               target="_blank"
               rel="noopener noreferrer"
-              className="social-icon grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-blue-400 active-press"
+              className="social-icon grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-white active-press"
               aria-label="LinkedIn"
             >
               <LinkedinLogo size={17} weight="bold" />
             </a>
             <a
               href={CONTACT_MAILTO}
-              className="social-icon grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-purple-400 active-press"
+              className="social-icon grid place-items-center rounded-xl border border-white/8 bg-white/[0.03] text-zinc-400 transition-colors hover:bg-white/[0.07] hover:text-white active-press"
               aria-label="Email"
             >
               <Mailbox size={17} weight="bold" />

@@ -6,9 +6,9 @@
       <stop offset="100%" stop-color="#050505"/>
     </linearGradient>
     <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#a855f7"/>
-      <stop offset="50%" stop-color="#06b6d4"/>
-      <stop offset="100%" stop-color="#3b82f6"/>
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#d4d4d4"/>
+      <stop offset="100%" stop-color="#a1a1aa"/>
     </linearGradient>
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="10" result="blur"/>
@@ -27,7 +27,7 @@
   <rect width="1200" height="630" fill="url(#grid)"/>
   <!-- Center content -->
   <text x="600" y="280" text-anchor="middle" font-family="system-ui, sans-serif" font-size="64" font-weight="900" fill="url(#textGrad)" letter-spacing="-2" style="font-variant-caps: all-small-caps;">
-    NEXUS<span style="fill:#a855f7">.</span>
+    NEXUS<span style="fill:#ffffff">.</span>
   </text>
   <text x="600" y="350" text-anchor="middle" font-family="system-ui, sans-serif" font-size="32" font-weight="700" fill="url(#textGrad)" letter-spacing="-1">
     DIGITAL FRONTIERS
@@ -36,8 +36,8 @@
     Senior Game Dev & Web Engineer
   </text>
   <!-- Decorative orbs -->
-  <circle cx="200" cy="150" r="120" fill="#a855f7" opacity="0.08" filter="url(#glow)"/>
-  <circle cx="1000" cy="480" r="100" fill="#06b6d4" opacity="0.08" filter="url(#glow)"/>
-  <circle cx="100" cy="500" r="80" fill="#3b82f6" opacity="0.06" filter="url(#glow)"/>
-  <circle cx="1100" cy="130" r="90" fill="#ec4899" opacity="0.06" filter="url(#glow)"/>
+  <circle cx="200" cy="150" r="120" fill="#d4d4d4" opacity="0.08" filter="url(#glow)"/>
+  <circle cx="1000" cy="480" r="100" fill="#b8b8b8" opacity="0.08" filter="url(#glow)"/>
+  <circle cx="100" cy="500" r="80" fill="#a3a3a3" opacity="0.06" filter="url(#glow)"/>
+  <circle cx="1100" cy="130" r="90" fill="#737373" opacity="0.06" filter="url(#glow)"/>
 </svg>

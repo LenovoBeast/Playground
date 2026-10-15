@@ -93,7 +93,7 @@ export default function Preloader({ onDone }) {
         <div className="w-[min(420px,80vw)]">
           <div className="mb-6 flex items-end justify-between">
             <span className="text-3xl font-black tracking-tighter">
-              LB<span className="text-blue-500">.</span>
+              LB<span className="text-white">.</span>
             </span>
             <span className="font-mono text-xs tabular-nums text-zinc-400">
               {String(Math.round(progress * 100)).padStart(3, '0')}%
@@ -102,8 +102,8 @@ export default function Preloader({ onDone }) {
 
           <div className="h-[3px] w-full overflow-hidden rounded-full bg-white/8">
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500"
-              style={{ width: `${progress * 100}%`, boxShadow: '0 0 12px rgba(59, 130, 246, 0.8)' }}
+              className="h-full rounded-full bg-gradient-to-r from-white via-zinc-300 to-zinc-500"
+              style={{ width: `${progress * 100}%`, boxShadow: '0 0 12px rgba(255, 255, 255, 0.35)' }}
             />
           </div>
 

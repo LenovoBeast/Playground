@@ -81,7 +81,7 @@ export function createBackdrop(canvas, options = {}) {
   const coreGeo = new THREE.IcosahedronGeometry(1.85, 1)
   const coreWire = new THREE.LineSegments(
     new THREE.WireframeGeometry(coreGeo),
-    new THREE.LineBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.45 }),
+    new THREE.LineBasicMaterial({ color: 0xd4d4d4, transparent: true, opacity: 0.45 }),
   )
   coreGroup.add(coreWire)
 
@@ -107,7 +107,7 @@ export function createBackdrop(canvas, options = {}) {
   const coreGlow = new THREE.Sprite(
     new THREE.SpriteMaterial({
       map: glow,
-      color: 0xa855f7,
+      color: 0xd4d4d4,
       transparent: true,
       opacity: 0.55,
       blending: THREE.AdditiveBlending,
@@ -118,7 +118,7 @@ export function createBackdrop(canvas, options = {}) {
   coreGroup.add(coreGlow)
 
   // Decorative containment rings
-  const ringMat = new THREE.LineBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.16 })
+  const ringMat = new THREE.LineBasicMaterial({ color: 0xa1a1aa, transparent: true, opacity: 0.16 })
   const ring1 = new THREE.LineLoop(circleGeometry(8.8, 128), ringMat)
   ring1.rotation.x = Math.PI / 2
   root.add(ring1)
@@ -139,7 +139,7 @@ export function createBackdrop(canvas, options = {}) {
     const radius = 7
     const mesh = new THREE.Mesh(
       new THREE.OctahedronGeometry(0.34, 0),
-      new THREE.MeshBasicMaterial({ color: node.color ?? 0x22d3ee, transparent: true, opacity: 0.95 }),
+      new THREE.MeshBasicMaterial({ color: node.color ?? 0xd4d4d4, transparent: true, opacity: 0.95 }),
     )
     mesh.position.set(
       Math.cos(angle) * radius,
@@ -153,7 +153,7 @@ export function createBackdrop(canvas, options = {}) {
     const halo = new THREE.Sprite(
       new THREE.SpriteMaterial({
         map: glow,
-        color: node.color ?? 0x22d3ee,
+        color: node.color ?? 0xd4d4d4,
         transparent: true,
         opacity: 0.5,
         blending: THREE.AdditiveBlending,

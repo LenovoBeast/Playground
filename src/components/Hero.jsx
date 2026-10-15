@@ -25,7 +25,7 @@ const iconMap = {
 
 const StatCard = ({ value, label, icon }) => (
   <div className="group flex items-start gap-3">
-    <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/8 bg-white/[0.04] text-blue-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110">
+    <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/8 bg-white/[0.04] text-zinc-200 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110">
       {iconMap[icon]}
     </span>
     <span className="flex flex-col">
@@ -45,18 +45,18 @@ const TerminalWindow3D = () => (
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >
-      <div className="scan-line h-16 w-full bg-gradient-to-b from-transparent via-blue-500/8 to-transparent" />
+      <div className="scan-line h-16 w-full bg-gradient-to-b from-transparent via-white/10 to-transparent" />
     </div>
     <div className="flex items-center gap-2 border-b border-white/5 bg-zinc-900/50 px-4 py-3">
       <div className="flex gap-1.5">
-        <div className="h-3 w-3 rounded-full bg-red-500/80" />
-        <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-        <div className="h-3 w-3 rounded-full bg-green-500/80" />
+        <div className="h-3 w-3 rounded-full bg-zinc-500/80" />
+        <div className="h-3 w-3 rounded-full bg-zinc-400/80" />
+        <div className="h-3 w-3 rounded-full bg-zinc-300/80" />
       </div>
       <div className="flex-1 text-center font-mono text-xs text-zinc-400">
         main.tsx
       </div>
-      <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-400/80 sm:inline">
+      <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-200 sm:inline">
         live
       </span>
     </div>
@@ -69,7 +69,7 @@ const TerminalWindow3D = () => (
         <CodeLine
           prefix="✓ "
           content="Project scaffolded in 247ms"
-          className="text-green-400"
+          className="text-zinc-300"
         />
         <CodeLine
           prefix="> "
@@ -78,18 +78,18 @@ const TerminalWindow3D = () => (
         <CodeLine
           prefix="✓ "
           content="WebGPU renderer + physics pipeline ready"
-          className="text-cyan-400"
+          className="text-zinc-200"
         />
         <CodeLine prefix="> " content="npm run dev" />
         <CodeLine
           prefix="▲ "
           content="Local:   http://localhost:5173"
-          className="text-blue-400"
+          className="text-zinc-100"
         />
         <CodeLine
           prefix="▲ "
           content="Network: http://192.168.1.47:5173"
-          className="text-blue-400"
+          className="text-zinc-100"
         />
         <div className="h-4" />
         <CodeLine
@@ -307,7 +307,7 @@ export default function Hero() {
               <button
                 type="button"
                 onClick={() => scrollToSection("projects")}
-                className="magnetic-btn btn-sweep active-press group pointer-events-auto flex items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500"
+                className="magnetic-btn btn-sweep active-press group pointer-events-auto flex items-center justify-center gap-3 rounded-xl bg-white px-8 py-4 text-lg font-bold text-zinc-950 transition-colors hover:bg-zinc-200"
                 aria-label="View projects"
               >
                 View Work
@@ -346,7 +346,7 @@ export default function Hero() {
                 className="absolute -inset-10 -z-10 rounded-full opacity-70 blur-3xl"
                 style={{
                   background:
-                    "conic-gradient(from 120deg, rgba(59,130,246,0.35), rgba(37,99,233,0.25), rgba(168,85,247,0.3), rgba(59,130,246,0.35))",
+                    "conic-gradient(from 120deg, rgba(255,255,255,0.16), rgba(255,255,255,0.10), rgba(228,228,231,0.13), rgba(255,255,255,0.16))",
                 }}
               />
               <div

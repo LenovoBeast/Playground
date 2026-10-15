@@ -71,8 +71,8 @@ export default function Nav({ active }) {
             aria-label="Back to top"
           >
             <span className="relative grid h-9 w-9 place-items-center">
-              <span className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-500 opacity-80 blur-[6px] transition-opacity group-hover:opacity-100" />
-              <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-500 font-black text-[13px] text-white">
+              <span className="absolute inset-0 rounded-xl bg-gradient-to-br from-white to-zinc-300 opacity-70 blur-[6px] transition-opacity group-hover:opacity-100" />
+              <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-white to-zinc-300 font-black text-[13px] text-zinc-950">
                 LB
               </span>
             </span>
@@ -114,7 +114,7 @@ export default function Nav({ active }) {
             <button
               type="button"
               onClick={() => go('contact')}
-              className="magnetic-btn btn-sweep active-press relative hidden items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500 sm:flex"
+              className="magnetic-btn btn-sweep active-press relative hidden items-center gap-2 overflow-hidden rounded-full bg-white px-5 py-2.5 text-sm font-bold text-zinc-950 transition-colors hover:bg-zinc-200 sm:flex"
             >
               Start a project
               <ArrowUpRight size={16} weight="bold" />
@@ -169,7 +169,7 @@ export default function Nav({ active }) {
                       data-active={active === section.id}
                       className={`flex w-full items-center justify-between rounded-xl px-4 py-4 text-left transition-colors ${
                         active === section.id
-                          ? 'bg-blue-500/15 text-white'
+                          ? 'bg-white/10 text-white'
                           : 'text-zinc-400 hover:bg-white/[0.04] hover:text-white'
                       }`}
                     >
@@ -189,7 +189,7 @@ export default function Nav({ active }) {
                 <button
                   type="button"
                   onClick={() => go('contact')}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white active-press"
+                  className="flex-1 rounded-xl bg-white px-4 py-3 text-sm font-bold text-zinc-950 active-press"
                 >
                   Start a project
                 </button>
